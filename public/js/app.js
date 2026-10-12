@@ -48,8 +48,7 @@ const DS={dispo:['Disponible','متاح','g'],livraison:['En livraison','قيد 
 const MS={affecte:['Nouvelle','جديدة','n'],accepte:['Acceptée','مقبولة','i'],livraison:['En route','في الطريق','o'],sur_place:['Arrivé','وصلت','o'],livre:['Livré','تم التسليم','g'],absent:['Client absent','الحريف غائب','r'],refuse:['Refusé','مرفوض','r'],reporte:['Reporté','مؤجل','w'],ramasse:['Ramassé','تم الاستلام','i'],numero_incorrect:['Numéro incorrect','رقم خاطئ','r'],adresse_incorrecte:['Adresse incorrecte','عنوان خاطئ','r'],endommage:['Endommagé','تالف','r'],annule:['Annulée','ملغاة','n'],retour:['En retour','في الإرجاع','w']};
 const CS=[['Nouvelle','جديدة','r'],['En cours','قيد المعالجة','o'],['Traitée','تمت المعالجة','i'],['Fermée','مغلقة','g']];
 const CATS=[['Retard','تأخير'],['Comportement du livreur','سلوك الموزع'],['Colis endommagé','طرد تالف'],["Problème d'encaissement",'مشكلة في الدفع'],["Problème d'adresse",'مشكلة في العنوان'],['Commande non livrée','طلب لم يُسلَّم'],['Autre','أخرى']];
-const BST=[['Brouillon','مسودة'],['Validé','مؤكد'],['Expédié','مشحون'],['Reçu','مستلم'],['Fermé','مغلق']];
-const BNEXT=[['Valider','تأكيد'],['Expédier','شحن'],['Réceptionner','استلام'],['Clôturer','إقفال']];
+const BST=[['Brouillon','مسودة'],['Validé','مؤكد'],['En transit','في العبور'],['Arrivé','وصل'],['Clôturé','مغلق']];
 const CASH_TYPES={Encaissement:['التحصيل','g'],'Paiement livreur':['خلاص موزع','i'],'Dépense':['مصروف','r'],'Règlement':['تسوية','o'],Transfert:['تحويل','i'],Correction:['تصحيح','w']};
 const AGENCY_POS=[34.4250,8.7842]; // fallback map centre (Gafsa) when no agency has coordinates
 const VEHICLES=['Moto','Scooter','Voiture','Vélo','Camionnette'];
@@ -349,7 +348,7 @@ function tplDash(){
   const alerts=[
     ...drivers.filter(x=>x.status==='pause'||(x.battery!=null&&x.battery<25&&x.status!=='off')).map(x=>['w',li?`${x.name} — ${x.stLabel}${x.battery!=null?'، البطارية '+x.battery+'٪':''}`:`${x.name} — ${x.stLabel.toLowerCase()}${x.battery!=null?', batterie '+x.battery+' %':''}`]),
     ...d.orders.filter(o=>o.status==='absent'&&isToday(o.updated_at)).map(o=>['r',li?`${o.ref} — الحريف غائب، يجب برمجة محاولة ثانية`:`${o.ref} — client absent, nouvelle tentative à planifier`,()=>selectOrder(o.id)]),
-    ...d.manifests.filter(m=>m.stage===0).map(m=>['o',li?`${m.ref} — غير مؤكد`:`${m.ref} — bordereau non validé`,()=>{state.selBrd=m.id;goPage('brd');}]),
+    ...d.manifests.filter(m=>m.stage===0).map(m=>['o',li?`${m.ref} — غير مؤكد`:`${m.ref} — bordereau non validé`,()=>{state.selBrd=m.id;state.brdDetail=null;goPage('brd');}]),
     ...(nWait?[['i',li?`${nWait} طلبات في انتظار الإسناد`:`${nWait} commande(s) en attente d’affectation`,()=>{state.filter='attente';goPage('orders');}]]:[]),
   ].slice(0,6);
   return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:var(--gap)">
@@ -379,9 +378,9 @@ function tplDash(){
       </div>
       <div style="${CARD};overflow:hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--pad)"><b>${esc(Lx.lastBrd)}</b><button ${on(()=>goPage('brd'))} style="background:none;border:none;color:var(--of);font-weight:600;cursor:pointer">${esc(Lx.seeAll)} →</button></div>
-        ${d.manifests.length?each(d.manifests.slice(0,4),m=>`<div ${on(()=>{state.selBrd=m.id;goPage('brd');})} style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px var(--pad);border-top:1px solid var(--line);cursor:pointer">
+        ${d.manifests.length?each(d.manifests.slice(0,4),m=>`<div ${on(()=>{state.selBrd=m.id;state.brdDetail=null;goPage('brd');})} style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px var(--pad);border-top:1px solid var(--line);cursor:pointer">
           <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:600">${esc(m.from_city)} → ${esc(m.to_city)}</span><span style="font-family:var(--mono);font-size:11.5px;color:var(--mute)">${esc(m.ref)} · ${m.n} ${esc(Lx.parcels)}</span></div>
-          <span style="${css(badge(['n','i','o','g','g'][m.stage]))}">${esc(BST[m.stage][li])}</span></div>`):empty(Lx.noBrd)}
+          <span style="${css(badge(['n','i','o','w','g'][m.stage]))}">${esc(BST[m.stage][li])}</span></div>`):empty(Lx.noBrd)}
       </div>
     </div>`;
 }
@@ -488,47 +487,7 @@ function tplOrders(){
   </div>`;
 }
 
-function tplBrd(){
-  const Lx=L(),u=Lx.tnd,li=lang()==='ar'?1:0,d=state.data,b=state.bform;
-  const ms=d.manifests,m=ms.find(x=>x.id===state.selBrd)||ms[0];
-  const createBrd=()=>act(async()=>{const cur=state.bform;const r=await api('manifests',{method:'POST',body:{origin_agency_id:cur.origin_agency_id,dest_agency_id:cur.dest_agency_id,carrier:cur.carrier}});state.selBrd=r.manifest.id;state.bform={...state.bform,open:false,carrier:''};},Lx.saved);
-  const colis=m?d.orders.filter(o=>o.manifest_id===m.id):[];
-  return `<div class="split" style="display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:var(--gap)">
-    <div class="no-print" style="display:flex;flex-direction:column;gap:10px">
-      ${b.open?`<div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:10px">
-        <b>${esc(Lx.newBrd)}</b>
-        ${when(role()==='admin',()=>field(Lx.from,select('b-from','bform','origin_agency_id',[['',L().choose],...agencyOptions()],true)))}
-        ${field(Lx.to,select('b-to','bform','dest_agency_id',[['',L().choose],...agencyOptions(a=>a.id!==(role()==='admin'?+b.origin_agency_id:myAgency()?.id))]))}
-        ${field(Lx.carrier,input('b-car','bform','carrier','placeholder="Sud Express Transport"'))}
-        <span style="font-size:12px;color:var(--mute)">${esc(Lx.brdHint)}</span>
-        <div style="display:flex;gap:8px"><button ${on(createBrd)} style="${BTN_PRIMARY};flex:1">${spin()}${esc(Lx.createBrd)}</button><button ${on(()=>{state.bform={...state.bform,open:false};render();})} style="${BTN_GHOST}">${esc(Lx.cancel)}</button></div>
-      </div>`:`<button ${on(()=>{state.bform={...state.bform,open:true};render();})} style="padding:11px;border-radius:var(--r);border:1px dashed var(--line);background:transparent;font-weight:600;cursor:pointer;color:var(--ink)">+ ${esc(Lx.newBrd)}</button>`}
-      ${ms.length?each(ms,x=>`<div ${on(set({selBrd:x.id}))} style="${css({background:'var(--surface)',border:m&&m.id===x.id?'2px solid var(--orange)':'1px solid var(--line)',borderRadius:'var(--r)',padding:'var(--pad)',display:'flex',flexDirection:'column',gap:4,cursor:'pointer'})}">
-        <div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:15px">${esc(x.from_city)} → ${esc(x.to_city)}</b><span style="${css(badge(['n','i','o','g','g'][x.stage]))}">${esc(BST[x.stage][li])}</span></div>
-        <span style="font-family:var(--mono);font-size:11.5px;color:var(--mute)">${esc(x.ref)}</span>
-        <span style="font-size:12.5px;color:var(--mute)">${dm(x.created_at)} · ${hm(x.created_at)} · ${x.n} ${esc(Lx.parcels)}</span></div>`):`<div style="${CARD}">${empty(Lx.noBrd)}</div>`}
-    </div>
-    ${m?`<div style="min-width:0;${CARD};display:flex;flex-direction:column">
-      <div style="padding:var(--pad);display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line)">
-        <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:var(--mono);font-size:12px;color:var(--mute)">${esc(m.ref)}</span><b style="font-family:var(--disp);font-size:28px">${esc(m.from_city)} → ${esc(m.to_city)}</b></div>
-        <div class="no-print" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-          <button ${on(()=>print())} style="${BTN_GHOST}">${esc(Lx.print)}</button>
-          <button ${on(()=>print())} style="${BTN_GHOST}">${esc(Lx.pdf)}</button>
-          ${when(m.stage<4,`<button ${on(()=>act(()=>api(`manifests/${m.id}/next`,{method:'POST'}),Lx.saved))} style="${BTN_PRIMARY}">${spin()}${esc(BNEXT[m.stage][li])}</button>`)}
-        </div>
-      </div>
-      <div style="padding:var(--pad);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;border-bottom:1px solid var(--line)">
-        ${each(BST,(x,j)=>`<div style="display:flex;flex-direction:column;gap:6px"><span style="height:6px;border-radius:3px;background:${j<=m.stage?'var(--orange)':'var(--surface2)'}"></span><span style="font-size:12px;font-weight:${j===m.stage?700:500};color:${j<=m.stage?'var(--ink)':'var(--mute)'}">${esc(x[li])}</span></div>`)}
-      </div>
-      <div style="padding:var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;border-bottom:1px solid var(--line)">
-        ${each([[Lx.from,Lx.agencyLbl+' '+m.from_city],[Lx.to,Lx.agencyLbl+' '+m.to_city],[Lx.date,dm(m.created_at)+' · '+hm(m.created_at)],[Lx.responsible,m.responsible||'—'],[Lx.carrier,m.carrier||'—'],[Lx.count,String(colis.length)]],([k2,v])=>`<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11.5px;color:var(--mute)">${esc(k2)}</span><b style="font-weight:600">${esc(v)}</b></div>`)}
-      </div>
-      <div style="overflow-x:auto"><div style="min-width:560px">${colis.length?each(colis,c=>`
-        <div ${on(()=>selectOrder(c.id))} style="display:grid;grid-template-columns:100px minmax(0,1fr) minmax(0,1fr) 110px 130px;gap:12px;align-items:center;padding:10px var(--pad);border-bottom:1px solid var(--line);cursor:pointer">
-          <span style="font-family:var(--mono);font-size:12px">${esc(c.ref)}</span><span>${esc(c.client_name)}</span><span style="color:var(--mute)">${esc(fmtPhone(c.client_phone))}</span><span style="text-align:end;font-weight:600">${esc(fmt(c.cod,u))}</span><span style="justify-self:end"><span style="${css(stB(c.status))}">${esc(stL(c.status))}</span></span></div>`):empty()}</div></div>
-    </div>`:''}
-  </div>`;
-}
+/* tplBrd (bordereaux) lives in js/manifests.js */
 
 function tplDrivers(){
   const Lx=L(),drivers=state.data.drivers.map(driverRow);
