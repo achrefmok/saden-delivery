@@ -175,6 +175,7 @@ async function refresh(silent){
     }else if(r==='driver'){state.drv=await api('driver/overview');startGeo();}
     else if(r==='shop'){state.shop=await api('shop/overview');}
     else if(r==='client'){state.trk=await api('track',{method:'POST',body:state.trackAuth});}
+    if(r&&r!=='client')await loadNotifs();
   }catch(e){if(!silent)toast(e.message,'err');}
   render();
 }
@@ -254,6 +255,7 @@ function tplTopBar(){
   <div style="display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:0.04em"><span style="width:12px;height:12px;background:var(--orange);border-radius:3px"></span>SADEN<span class="hide-sm" style="font-weight:500;font-size:13px;letter-spacing:0;color:oklch(0.8 0.02 262)">Delivery</span></div>
   ${when(r,`<div style="display:flex;flex-direction:column;line-height:1.2;min-width:0"><span style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${esc(u?(u.role==='shop'?u.shop_name:u.name):state.trackAuth?.ref)}</span><span style="font-size:11px;color:oklch(0.78 0.03 262)">${esc(roleL)}</span></div>`)}
   <div style="flex:1"></div>
+  ${tplBell()}
   ${when(installEvt,`<button ${on(doInstall)} style="${css(seg(true))}">⤓ <span class="hide-sm">${esc(Lx.install)}</span></button>`)}
   ${when(r==='admin'||r==='manager',segGroup([['a','A · Opérations'],['b','B · Aéré'],['c','C · Terrain']].map(([k,l])=>({label:l,st:seg(state.prefs.dir===k),go:()=>setPref({dir:k})})),'hide-sm'))}
   ${segGroup([['fr','FR'],['ar','عربي']].map(([k,l])=>({label:l,st:seg(lang()===k),go:()=>setPref({lang:k})})))}
@@ -958,7 +960,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 /* =========================================================
    boot
    ========================================================= */
-(async function start(){
+// started once every feature script (geo-admin, pricing, scan, …) is loaded
+addEventListener('DOMContentLoaded',async function start(){
   const t=new URLSearchParams(location.search).get('t');
   if(t&&!state.session){state.loginTab='track';state.track.ref=t.toUpperCase();if(state.trackAuth&&state.trackAuth.ref!==state.track.ref){state.trackAuth=null;store.del('saden.track');}}
   render();
@@ -966,4 +969,4 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   if(state.session){try{const {user,agency}=await api('me');saveSession({...state.session,user,agency});}catch{}}
   state.boot=false;render();
   if(role()){if(role()==='driver')startGeo();refresh();}
-})();
+});
