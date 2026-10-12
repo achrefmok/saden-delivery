@@ -20,8 +20,8 @@ function tplJournal(){
       ${field(Lx.actionLbl,input('j-act','jf','action','placeholder="order.status, scan., cash…"'))}
       ${field(Lx.userLbl,select('j-usr','jf','user_id',[['',Lx.any],...users.map(u=>[u.id,(u.role==='shop'?u.shop_name:u.name)+' · '+u.role])]))}
       ${field(Lx.entityId,input('j-eid','jf','entity_id','placeholder="id"'))}
-      ${field(Lx.from,`<input type="date" class="fld" ${onInput(e=>{state.jf={...state.jf,from:e.target.value};},'j-from')} value="${esc(f.from)}">`)}
-      ${field(Lx.to,`<input type="date" class="fld" ${onInput(e=>{state.jf={...state.jf,to:e.target.value};},'j-to')} value="${esc(f.to)}">`)}
+      ${field(Lx.dateFrom,`<input type="date" class="fld" ${onInput(e=>{state.jf={...state.jf,from:e.target.value};},'j-from')} value="${esc(f.from)}">`)}
+      ${field(Lx.dateTo,`<input type="date" class="fld" ${onInput(e=>{state.jf={...state.jf,to:e.target.value};},'j-to')} value="${esc(f.to)}">`)}
       <button ${on(apply)} style="${BTN_PRIMARY};min-height:42px">${esc(Lx.apply)}</button>
     </div>
     <div style="${CARD};overflow:hidden">
@@ -39,4 +39,4 @@ function tplJournal(){
     </div>`;
 }
 
-Object.assign(K,{journal:['Journal','السجل'],entity:['Objet','الكيان'],actionLbl:['Action','العملية'],userLbl:['Utilisateur','المستخدم'],entityId:['Identifiant','المعرف'],entries:['entrées','سجلات'],beforeAfter:['Avant → après','قبل ← بعد']});
+Object.assign(K,{dateFrom:['Du','من'],dateTo:['Au','إلى'],journal:['Journal','السجل'],entity:['Objet','الكيان'],actionLbl:['Action','العملية'],userLbl:['Utilisateur','المستخدم'],entityId:['Identifiant','المعرف'],entries:['entrées','سجلات'],beforeAfter:['Avant → après','قبل ← بعد']});
