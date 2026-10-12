@@ -116,7 +116,7 @@ function submitManual(){const v=(SC.manual||'').trim();if(v){SC.manual='';onCode
 
 async function onCode(raw,manual){
   if(!SC)return;
-  const m=String(raw).match(/[?&]t=([^&#]+)/);const ref=decodeURIComponent(m?m[1]:String(raw)).trim().toUpperCase();
+  const m=String(raw).match(/[?&]t=([^&#]+)/);let ref=m?m[1]:String(raw);try{ref=decodeURIComponent(ref);}catch{}ref=ref.trim().toUpperCase();
   if(!ref)return;
   const now=Date.now();if(!manual&&SC.last[ref]&&now-SC.last[ref]<2500)return;SC.last[ref]=now;
   navigator.vibrate?.(60);

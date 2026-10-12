@@ -313,7 +313,7 @@ const navFor=()=>NAV.filter(n=>!n[2]||n[2]===role());
 const scopeName=()=>role()==='manager'?myAgency()?.name||'—':(agencyById(state.agencyFilter)?.name||L().allAgencies);
 function goPage(p){
   state.page=p;state.sel=null;state.selData=null;
-  if(p!=='orders')state.q='';
+  if(p!=='orders')state.q='';state.searchOpen=false;
   render();
   if(['stats','accounts','agencies','geo','pricing','partners'].includes(p))refresh(true);
   scrollTo(0,0);
@@ -647,7 +647,7 @@ function tplAdmin(){
       <div class="hdr no-print" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 24px;background:var(--hdr);color:var(--hdrInk);border-bottom:1px solid var(--line)">
         <h1 style="margin:0;font-family:var(--disp);font-size:24px;font-weight:700;letter-spacing:-0.01em;flex:1;min-width:160px">${esc(Lx[p])}</h1>
         ${when(role()==='admin',()=>`<select class="fld no-print" ${onInput(e=>{state.agencyFilter=e.target.value;store.set('saden.agencyFilter',state.agencyFilter);state.sel=null;state.selData=null;state.stats=null;refresh();},'agf')} style="max-width:220px;background:var(--surface)" aria-label="${esc(Lx.agencyLbl)}">${each([['',Lx.allAgencies],...agencyOptions()],([v,l])=>`<option value="${esc(v)}"${String(v)===String(state.agencyFilter)?' selected':''}>${esc(l)}</option>`)}</select>`)}
-        <input type="search" class="fld" ${onInput(e=>{state.q=e.target.value;if(state.page!=='orders'&&state.q){state.page='orders';state.sel=null;}render();},'q')} value="${esc(state.q)}" placeholder="${esc(Lx.search)}" style="flex:1;min-width:180px;max-width:420px;background:var(--surface)">
+        ${tplSearchBox()}
         <button ${on(()=>openScanner())} style="${BTN_GHOST};padding:9px 14px;white-space:nowrap">📷 <span class="hide-sm">${esc(Lx.scanBtn)}</span></button>
         <button ${on(()=>setState({modal:{type:'newOrder'},oform:{...emptyOrder(),shop_id:state.oform.shop_id}}))} style="${BTN_PRIMARY};padding:9px 16px;white-space:nowrap">+ ${esc(Lx.newParcel)}</button>
       </div>
