@@ -10,7 +10,8 @@
     "dev": "node scripts/dev.js",
     "seed": "node scripts/seed.js",
     "icons": "python scripts/icons.py",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "test:permissions": "node scripts/test-permissions.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
