@@ -168,6 +168,7 @@ async function refresh(silent){
       if(state.page==='accounts'||state.page==='agencies')state.users=(await api('users'+(af&&state.page==='accounts'?'?'+af:''))).users;
       if(['agencies','geo'].includes(state.page))state.geo=await api('geo');
       if(state.page==='pricing')state.pricing=await api('pricing');
+      if(state.page==='partners')[state.partners,state.webhooks]=await Promise.all([api('partners').then(r=>r.partners),api('webhooks').then(r=>r.deliveries)]);
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
     }else if(r==='driver'){state.drv=await api('driver/overview');}
     else if(r==='shop'){state.shop=await api('shop/overview');}
@@ -306,14 +307,14 @@ function tplLogin(){
 /* =========================================================
    ADMIN
    ========================================================= */
-const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['brd','BR'],['drivers','LV'],['cash','CS'],['stats','ST'],['claims','RC'],['accounts','AC'],['pricing','TF'],['agencies','AG','admin'],['geo','VZ','admin']];
+const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['brd','BR'],['drivers','LV'],['cash','CS'],['stats','ST'],['claims','RC'],['accounts','AC'],['pricing','TF'],['agencies','AG','admin'],['geo','VZ','admin'],['partners','AP','admin']];
 const navFor=()=>NAV.filter(n=>!n[2]||n[2]===role());
 const scopeName=()=>role()==='manager'?myAgency()?.name||'—':(agencyById(state.agencyFilter)?.name||L().allAgencies);
 function goPage(p){
   state.page=p;state.sel=null;state.selData=null;
   if(p!=='orders')state.q='';
   render();
-  if(['stats','accounts','agencies','geo','pricing'].includes(p))refresh(true);
+  if(['stats','accounts','agencies','geo','pricing','partners'].includes(p))refresh(true);
   scrollTo(0,0);
 }
 function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';render();api('orders/'+id).then(d=>{if(state.sel===id){state.selData=d;render();}}).catch(e=>toast(e.message,'err'));}
@@ -689,7 +690,7 @@ function tplOrderForm(key,withShop){
 function tplAdmin(){
   const Lx=L(),p=state.page;
   if(!state.data)return `<div style="padding:40px;text-align:center;color:var(--mute)"><span class="spin"></span></div>`;
-  const page=({dash:tplDash,map:tplMap,orders:tplOrders,brd:tplBrd,drivers:tplDrivers,cash:tplCash,stats:tplStats,claims:tplClaims,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing}[p]||tplDash)();
+  const page=({dash:tplDash,map:tplMap,orders:tplOrders,brd:tplBrd,drivers:tplDrivers,cash:tplCash,stats:tplStats,claims:tplClaims,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing,partners:tplPartners}[p]||tplDash)();
   const dir=state.prefs.dir;
   return `<div class="shell" style="display:flex;flex-direction:${dir==='b'?'column':'row'};flex:1;min-height:0">
     ${tplNav()}
@@ -898,6 +899,8 @@ function tplModal(){
   let title='',inner='';
   if(m.type==='newOrder'){title=Lx.newParcel;inner=tplOrderForm('oform',true);}
   else if(m.type==='proof'){title=Lx.proof;inner=`<img src="${m.src}" alt="" style="max-width:100%;border-radius:var(--r);background:#fff">`;}
+  else if(m.type==='secret'){title=m.title;inner=`<div style="padding:10px;border-radius:var(--r);background:var(--wb);color:var(--wf);font-weight:600;font-size:12.5px">${esc(Lx.secretOnce)}</div>
+      ${each(m.rows,([k,v])=>`<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:var(--mute)">${esc(k)}</span><div style="display:flex;gap:6px"><input class="fld" readonly value="${esc(v)}" style="font-family:var(--mono);font-size:12.5px"><button ${on(()=>navigator.clipboard.writeText(v).then(()=>toast(Lx.copied)).catch(()=>{}))} style="${BTN_GHOST}">${esc(Lx.copy)}</button></div></div>`)}`;}
   else if(m.type==='reason'){title=m.title;inner=`<span style="color:var(--mute)">${esc(m.required?Lx.reasonRequired:Lx.reasonOptional)}</span>
       <textarea class="fld" rows="3" style="resize:vertical" ${onInput(e=>{state.reasonText=e.target.value;},'reason')} placeholder="${esc(Lx.reasonPh)}">${esc(state.reasonText||'')}</textarea>
       <button ${on(()=>{const n=(state.reasonText||'').trim();if(m.required&&!n)return toast(Lx.reasonRequired,'err');const fn=m.onSubmit;state.modal=null;state.reasonText='';fn(n);})} style="${BTN_PRIMARY};min-height:46px">${spin()}${esc(Lx.confirmAction)}</button>`;}
