@@ -25,7 +25,7 @@ shopSpace:['Espace boutique','فضاء المتجر'],shopPrivacy:['Vous ne voye
 track:['Suivi de colis','تتبع الطرد'],yourDriver:['Votre livreur','موزعك'],eta:['Arrivée estimée','الوصول المتوقع'],rateTitle:['Comment s’est passée la livraison ?','كيف كانت عملية التوصيل؟'],commentPh:['Ponctualité, communication, comportement…','الالتزام بالموعد، التواصل، السلوك…'],send:['Envoyer','إرسال'],thanks:['Merci pour votre retour','شكرا على ملاحظاتك'],
 reportOpen:['Signaler un problème','الإبلاغ عن مشكلة'],reportClose:['Annuler le signalement','إلغاء الإبلاغ'],
 deliveryCode:['Code de livraison','رمز التسليم'],deliveryCodeHint:['À donner au livreur uniquement à la remise du colis.','أعطه للموزع فقط عند استلام الطرد.'],otherParcel:['Suivre un autre colis','تتبع طرد آخر'],exception:['Livraison non effectuée','لم يتم التوصيل'],exceptionHint:['L’agence va vous recontacter pour une nouvelle tentative.','ستتصل بك الوكالة لمحاولة جديدة.'],updated:['Mis à jour','آخر تحديث'],
-tnd:['TND','د.ت'],loginId:['Téléphone ou e-mail','الهاتف أو البريد الإلكتروني'],email:['E-mail','البريد الإلكتروني'],optional:['facultatif','اختياري'],
+tnd:['TND','د.ت'],vManager:['Responsable d’agence','مسؤول الوكالة'],rManager:['Responsable','مسؤول'],agencies:['Agences','الوكالات'],geo:['Villes / Zones','المدن / المناطق'],allAgencies:['Toutes les agences','كل الوكالات'],tagline:['Plateforme logistique multi-agences','منصة لوجستية متعددة الوكالات'],choose:['— Choisir —','— اختر —'],originAgency:['Agence de départ','وكالة الانطلاق'],loginId:['Téléphone ou e-mail','الهاتف أو البريد الإلكتروني'],email:['E-mail','البريد الإلكتروني'],optional:['facultatif','اختياري'],
 login:['Connexion','تسجيل الدخول'],staffTab:['Espace pro','الفضاء المهني'],trackTab:['Suivre mon colis','تتبع طردي'],loginSub:['Agence, livreurs et boutiques','الوكالة، الموزعون والمتاجر'],password:['Mot de passe','كلمة المرور'],signIn:['Se connecter','دخول'],
 trackSub:['Entrez le numéro du colis et votre numéro de téléphone.','أدخل رقم الطرد ورقم هاتفك.'],parcelNo:['N° de colis','رقم الطرد'],trackBtn:['Suivre le colis','تتبع الطرد'],
 setupTitle:['Compte administrateur','حساب المشرف'],setupSub:['Première utilisation : créez le compte de l’agence.','أول استعمال: أنشئ حساب الوكالة.'],fullName:['Nom complet','الاسم الكامل'],password2:['Confirmer le mot de passe','تأكيد كلمة المرور'],createAdmin:['Créer et se connecter','إنشاء والدخول'],pwdMismatch:['Les mots de passe ne correspondent pas.','كلمتا المرور غير متطابقتين.'],
@@ -51,10 +51,7 @@ const CATS=[['Retard','تأخير'],['Comportement du livreur','سلوك الم�
 const BST=[['Brouillon','مسودة'],['Validé','مؤكد'],['Expédié','مشحون'],['Reçu','مستلم'],['Fermé','مغلق']];
 const BNEXT=[['Valider','تأكيد'],['Expédier','شحن'],['Réceptionner','استلام'],['Clôturer','إقفال']];
 const CASH_TYPES={Encaissement:['التحصيل','g'],'Paiement livreur':['خلاص موزع','i'],'Dépense':['مصروف','r'],'Règlement':['تسوية','o'],Transfert:['تحويل','i'],Correction:['تصحيح','w']};
-const ZONEPOS={'Centre-ville':[34.4250,8.7842],'Cité Ennour':[34.4335,8.7935],'Douali':[34.4372,8.7705],'El Ksar':[34.4120,8.7640],'Sidi Ahmed Zarroug':[34.4010,8.8010],'Cité Essourour':[34.4285,8.8060]};
-const ZONES=Object.keys(ZONEPOS);
-const AGENCY_POS=[34.4250,8.7842];
-const CITIES=['Gafsa','Tunis','Sfax','Sousse','Gabès','Kairouan','Bizerte','Nabeul','Monastir','Médenine','Tozeur','Kasserine','Sidi Bouzid','Kébili'];
+const AGENCY_POS=[34.4250,8.7842]; // fallback map centre (Gafsa) when no agency has coordinates
 const VEHICLES=['Moto','Scooter','Voiture','Vélo','Camionnette'];
 const ACTIVE_ST=['affecte','accepte','livraison','sur_place'],EXC=['absent','refuse','reporte'];
 
@@ -83,7 +80,24 @@ const ago=iso=>{if(!iso)return '—';const s=Math.max(0,(Date.now()-new Date(iso
 const km=(a,b)=>{if(!a||!b)return null;const R=6371,r=x=>x*Math.PI/180,dLa=r(b[0]-a[0]),dLo=r(b[1]-a[1]);const h=Math.sin(dLa/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));};
 const kmL=v=>v==null?'—':v.toLocaleString('fr-FR',{maximumFractionDigits:1})+' km';
 const posOf=x=>x&&x.lat!=null&&x.lng!=null?[x.lat,x.lng]:null;
-const orderPos=o=>posOf(o)||ZONEPOS[o.zone]||null;
+const STAFF_ROLES=['admin','manager'];
+const isStaff=()=>STAFF_ROLES.includes(role());
+/* geography (loaded from /api/geo: governorates → cities → zones, agencies) */
+const G=()=>state.geo||{governorates:[],cities:[],zones:[],agencies:[]};
+const cityById=id=>G().cities.find(c=>c.id===+id);
+const zoneById=id=>G().zones.find(z=>z.id===+id);
+const agencyById=id=>G().agencies.find(a=>a.id===+id);
+const cityPos=c=>c&&c.lat!=null?[c.lat,c.lng]:null;
+const agencyPos=a=>a?(a.lat!=null?[a.lat,a.lng]:cityPos(cityById(a.city_id))):null;
+const myAgency=()=>state.session?.agency||null;
+const homeAgency=()=>myAgency()||agencyById(state.agencyFilter)||G().agencies.find(a=>a.active)||null;
+const homePos=()=>agencyPos(homeAgency())||AGENCY_POS;
+const cityLabel=c=>{if(!c)return '—';const g=G().governorates.find(x=>x.id===c.governorate_id);return g&&g.name!==c.name?c.name+' ('+g.name+')':c.name;};
+const cityOptions=()=>G().cities.filter(c=>c.active).map(c=>[c.id,cityLabel(c)]).sort((a,b)=>a[1].localeCompare(b[1]));
+const zoneOptions=cityId=>G().zones.filter(z=>z.city_id===+cityId&&z.active).map(z=>[z.id,z.name]);
+const agencyOptions=(pred=()=>true)=>G().agencies.filter(a=>a.active&&pred(a)).map(a=>[a.id,a.name]);
+const orderPos=o=>posOf(o)||(o.zone_lat!=null?[o.zone_lat,o.zone_lng]:null)||cityPos(cityById(o.dest_city_id));
+const destLabel=o=>o.intercity?'→ '+(o.dest_city_name||'?')+(o.zone_name?' · '+o.zone_name:''):(o.zone_name||'—');
 const pad4=n=>String(n).padStart(4,'0');
 const genPwd=()=>{const a='abcdefghjkmnpqrstuvwxyz23456789';let s='';const r=crypto.getRandomValues(new Uint32Array(8));for(const x of r)s+=a[x%a.length];return s;};
 
@@ -93,16 +107,16 @@ const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.
    state
    ========================================================= */
 const prefersDark=()=>{try{return matchMedia('(prefers-color-scheme: dark)').matches;}catch{return false;}};
-const emptyOrder=()=>({shop_id:'',client_name:'',client_phone:'',zone:'Centre-ville',address:'',dest_city:'Gafsa',cod:'',lat:null,lng:null});
+const emptyOrder=()=>({shop_id:'',origin_agency_id:'',client_name:'',client_phone:'',dest_city_id:'',zone_id:'',address:'',cod:'',lat:null,lng:null});
 let state={
   prefs:{dir:'a',theme:prefersDark()?'dark':'light',lang:'fr',...store.get('saden.prefs',{})},
   session:store.get('saden.session',null), trackAuth:store.get('saden.track',null),
-  boot:true, needsSetup:false, agency:'Gafsa', offline:false, busy:false, toast:null, modal:null,
+  boot:true, needsSetup:false, geo:null, agencyFilter:store.get('saden.agencyFilter',''), offline:false, busy:false, toast:null, modal:null,
   loginTab:'staff', login:{phone:'',password:''}, setup:{name:'',email:'',phone:'',password:'',password2:''}, setupEmail:null, track:{ref:'',phone:''}, loginErr:null,
   // admin
   page:'dash', data:null, stats:null, users:null, filter:'all', q:'', sel:null, selData:null, amode:'auto', selDrv:null, selBrd:null, period:0,
-  oform:emptyOrder(), uform:{role:'driver',name:'',email:'',phone:'',password:genPwd(),zone:'Centre-ville',vehicle:'Moto',shop_name:'',address:''}, creds:null,
-  cform:{label:'',type:'Encaissement',amount:''}, bform:{open:false,to_city:'Tunis',carrier:''},
+  oform:emptyOrder(), uform:{role:'driver',name:'',email:'',phone:'',password:genPwd(),agency_id:'',zone_id:'',vehicle:'Moto',shop_name:'',address:''}, creds:null,
+  cform:{label:'',type:'Encaissement',amount:''}, bform:{open:false,origin_agency_id:'',dest_agency_id:'',carrier:''},
   // shop
   shop:null, form:emptyOrder(), shopSent:null,
   // driver
@@ -143,12 +157,15 @@ async function act(fn,okMsg){
 async function refresh(silent){
   const r=role();
   try{
-    if(r==='admin'){
-      const [d,extra]=await Promise.all([api('admin/overview'),
-        state.page==='stats'?api('stats?period='+state.period):null,
+    if((r==='admin'||r==='manager'||r==='shop')&&!state.geo)state.geo=await api('geo');
+    if(r==='admin'||r==='manager'){
+      const af=r==='admin'&&state.agencyFilter?'agency_id='+encodeURIComponent(state.agencyFilter):'';
+      const [d,extra]=await Promise.all([api('admin/overview'+(af?'?'+af:'')),
+        state.page==='stats'?api('stats?period='+state.period+(af?'&'+af:'')):null,
       ]);
       state.data=d;if(extra)state.stats=extra;
-      if(state.page==='accounts')state.users=(await api('users')).users;
+      if(state.page==='accounts'||state.page==='agencies')state.users=(await api('users'+(af&&state.page==='accounts'?'?'+af:''))).users;
+      if(['agencies','geo'].includes(state.page))state.geo=await api('geo');
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
     }else if(r==='driver'){state.drv=await api('driver/overview');}
     else if(r==='shop'){state.shop=await api('shop/overview');}
@@ -157,9 +174,10 @@ async function refresh(silent){
   render();
 }
 function saveSession(s){state.session=s;store.set('saden.session',s);}
+function resetMaps(){Object.keys(MAPS).forEach(k=>{try{MAPS[k].map.remove();}catch{}delete MAPS[k];});}
 function logout(doRender=true){
-  stopGeo();
-  state.session=null;state.trackAuth=null;state.data=state.drv=state.shop=state.trk=state.users=state.stats=null;state.sel=null;state.selData=null;state.page='dash';state.lv='home';state.cSent=null;
+  stopGeo();resetMaps();
+  state.session=null;state.trackAuth=null;state.data=state.drv=state.shop=state.trk=state.users=state.stats=state.geo=null;state.sel=null;state.selData=null;state.page='dash';state.lv='home';state.cSent=null;
   store.del('saden.session');store.del('saden.track');
   if(doRender)render();
 }
@@ -221,13 +239,13 @@ const mapBox=(key,h,extra='')=>`<div class="map" data-map="${key}" style="height
 
 function tplTopBar(){
   const Lx=L(),u=state.session?.user,r=role();
-  const roleL={admin:Lx.vAdmin,driver:Lx.vDriver,shop:Lx.vShop,client:Lx.vClient}[r];
+  const roleL={admin:Lx.vAdmin,manager:Lx.vManager,driver:Lx.vDriver,shop:Lx.vShop,client:Lx.vClient}[r]+(myAgency()?' · '+myAgency().name:'');
   return `<header class="topbar no-print" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:10px 18px;padding-top:calc(10px + env(safe-area-inset-top));background:oklch(0.15 0.03 262);color:oklch(0.97 0.005 262)">
   <div style="display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:0.04em"><span style="width:12px;height:12px;background:var(--orange);border-radius:3px"></span>SADEN<span class="hide-sm" style="font-weight:500;font-size:13px;letter-spacing:0;color:oklch(0.8 0.02 262)">Delivery</span></div>
   ${when(r,`<div style="display:flex;flex-direction:column;line-height:1.2;min-width:0"><span style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${esc(u?(u.role==='shop'?u.shop_name:u.name):state.trackAuth?.ref)}</span><span style="font-size:11px;color:oklch(0.78 0.03 262)">${esc(roleL)}</span></div>`)}
   <div style="flex:1"></div>
   ${when(installEvt,`<button ${on(doInstall)} style="${css(seg(true))}">⤓ <span class="hide-sm">${esc(Lx.install)}</span></button>`)}
-  ${when(r==='admin',segGroup([['a','A · Opérations'],['b','B · Aéré'],['c','C · Terrain']].map(([k,l])=>({label:l,st:seg(state.prefs.dir===k),go:()=>setPref({dir:k})})),'hide-sm'))}
+  ${when(r==='admin'||r==='manager',segGroup([['a','A · Opérations'],['b','B · Aéré'],['c','C · Terrain']].map(([k,l])=>({label:l,st:seg(state.prefs.dir===k),go:()=>setPref({dir:k})})),'hide-sm'))}
   ${segGroup([['fr','FR'],['ar','عربي']].map(([k,l])=>({label:l,st:seg(lang()===k),go:()=>setPref({lang:k})})))}
   ${segGroup([['light','☀'],['dark','☾']].map(([k,l])=>({label:l,st:seg(state.prefs.theme===k),go:()=>setPref({theme:k})})))}
   ${when(r,`<button ${on(()=>logout())} title="${esc(Lx.logout)}" aria-label="${esc(Lx.logout)}" style="${css({...seg(false),border:'1px solid oklch(1 0 0 / .18)',display:'flex',alignItems:'center',gap:6})}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg><span class="hide-sm">${esc(Lx.logout)}</span></button>`)}
@@ -269,7 +287,7 @@ function tplLogin(){
       <div style="display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center">
         <div style="width:64px;height:64px;border-radius:16px;background:var(--orange);color:var(--onOrange);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:26px">SD</div>
         <b style="font-family:var(--disp);font-size:26px;letter-spacing:0.03em">SADEN Delivery</b>
-        <span style="color:var(--mute)">${esc(Lx.agencyLbl)} ${esc(state.agency)}</span>
+        <span style="color:var(--mute)">${esc(Lx.tagline)}</span>
       </div>
       <div style="${CARD};padding:18px;display:flex;flex-direction:column;gap:16px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface2);padding:4px;border-radius:var(--r)">
@@ -284,12 +302,14 @@ function tplLogin(){
 /* =========================================================
    ADMIN
    ========================================================= */
-const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['brd','BR'],['drivers','LV'],['cash','CS'],['stats','ST'],['claims','RC'],['accounts','AC']];
+const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['brd','BR'],['drivers','LV'],['cash','CS'],['stats','ST'],['claims','RC'],['accounts','AC'],['agencies','AG','admin'],['geo','VZ','admin']];
+const navFor=()=>NAV.filter(n=>!n[2]||n[2]===role());
+const scopeName=()=>role()==='manager'?myAgency()?.name||'—':(agencyById(state.agencyFilter)?.name||L().allAgencies);
 function goPage(p){
   state.page=p;state.sel=null;state.selData=null;
   if(p!=='orders')state.q='';
   render();
-  if(p==='stats'||p==='accounts')refresh(true);
+  if(['stats','accounts','agencies','geo'].includes(p))refresh(true);
   scrollTo(0,0);
 }
 function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';render();api('orders/'+id).then(d=>{if(state.sel===id){state.selData=d;render();}}).catch(e=>toast(e.message,'err'));}
@@ -297,24 +317,24 @@ function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';ren
 function tplNav(){
   const Lx=L(),d=state.data,dir=state.prefs.dir;
   const nWait=d?d.orders.filter(o=>o.status==='attente').length:0,nClaim=d?d.claims.filter(c=>c.status===0).length:0;
-  const items=NAV.map(([k,code])=>{const onn=state.page===k,count=k==='orders'?nWait:k==='claims'?nClaim:0;return{k,code,label:Lx[k],count,on:onn};});
+  const items=navFor().map(([k,code])=>{const onn=state.page===k,count=k==='orders'?nWait:k==='claims'?nClaim:0;return{k,code,label:Lx[k],count,on:onn};});
   const cnt=n=>when(n.count>0,`<span style="background:var(--orange);color:var(--onOrange);font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px">${n.count}</span>`);
   if(dir==='a')return `<nav class="nav-side no-print" style="width:232px;flex-shrink:0;background:var(--navy);color:oklch(0.97 0.005 262);padding:18px 12px;display:flex;flex-direction:column;gap:4px">
-    <div class="nav-meta" style="padding:4px 12px 16px;display:flex;flex-direction:column;gap:2px"><div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.78 0.03 262)">${esc(Lx.agencyLbl)}</div><div style="font-weight:600;font-size:15px">${esc(Lx.agencyLbl)} ${esc(state.agency)}</div></div>
+    <div class="nav-meta" style="padding:4px 12px 16px;display:flex;flex-direction:column;gap:2px"><div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.78 0.03 262)">${esc(Lx.agencyLbl)}</div><div style="font-weight:600;font-size:15px">${esc(scopeName())}</div></div>
     ${each(items,n=>`<button ${on(()=>goPage(n.k))} style="${css({display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,width:'100%',padding:'9px 12px',border:'none',borderInlineStart:n.on?'3px solid var(--orange)':'3px solid transparent',borderRadius:'var(--r)',background:n.on?'oklch(1 0 0 / 0.1)':'transparent',color:n.on?'oklch(0.99 0 0)':'oklch(0.86 0.02 262)',fontWeight:n.on?600:500,cursor:'pointer',textAlign:'start',whiteSpace:'nowrap'})}"><span>${esc(n.label)}</span>${cnt(n)}</button>`)}
-    <div class="nav-meta" style="margin-top:auto;padding:12px;border-top:1px solid oklch(1 0 0 / 0.12);display:flex;flex-direction:column;gap:2px"><div style="font-weight:600">${esc(state.session.user.name)}</div><div style="font-size:12px;color:oklch(0.78 0.03 262)">${esc(Lx.vAdmin)}</div></div>
+    <div class="nav-meta" style="margin-top:auto;padding:12px;border-top:1px solid oklch(1 0 0 / 0.12);display:flex;flex-direction:column;gap:2px"><div style="font-weight:600">${esc(state.session.user.name)}</div><div style="font-size:12px;color:oklch(0.78 0.03 262)">${esc(role()==='manager'?Lx.vManager:Lx.vAdmin)}</div></div>
   </nav>`;
   if(dir==='c')return `<nav class="nav-rail no-print" style="width:88px;flex-shrink:0;background:var(--navy);color:oklch(0.97 0.005 262);padding:14px 8px;display:flex;flex-direction:column;gap:6px;align-items:stretch">
-    <div class="nav-logo" style="height:40px;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:13px;color:var(--orange)">${esc(state.agency.slice(0,3).toUpperCase())}</div>
+    <div class="nav-logo" style="height:40px;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:13px;color:var(--orange)">${esc((role()==='manager'?myAgency()?.name:agencyById(state.agencyFilter)?.name||'ALL').replace(/^Agence\s+/i,'').slice(0,3).toUpperCase())}</div>
     ${each(items,n=>`<button ${on(()=>goPage(n.k))} style="${css({display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'10px 4px',border:'none',borderRadius:'var(--r)',cursor:'pointer',background:n.on?'var(--orange)':'transparent',color:n.on?'oklch(0.18 0.03 262)':'oklch(0.88 0.02 262)',minWidth:64})}"><span style="font-family:var(--disp);font-size:20px;font-weight:700;line-height:1">${n.code}</span><span style="font-size:10.5px;line-height:1.15;text-align:center">${esc(n.label)}</span></button>`)}
   </nav>`;
   return `<nav class="no-print" style="display:flex;align-items:center;gap:6px;padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto">
-    <div style="font-weight:700;padding-inline-end:18px;white-space:nowrap">${esc(Lx.agencyLbl)} ${esc(state.agency)}</div>
+    <div style="font-weight:700;padding-inline-end:18px;white-space:nowrap">${esc(scopeName())}</div>
     ${each(items,n=>`<button ${on(()=>goPage(n.k))} style="${css({display:'flex',alignItems:'center',gap:6,padding:'8px 14px',borderRadius:999,border:'none',whiteSpace:'nowrap',cursor:'pointer',fontWeight:600,background:n.on?'var(--navy)':'transparent',color:n.on?'oklch(0.98 0.005 262)':'var(--mute)'})}">${esc(n.label)}${cnt(n)}</button>`)}
   </nav>`;
 }
 
-function driverRow(d){const t=DS[d.status]?.[2]||'n';return{...d,t,stLabel:(DS[d.status]||DS.off)[lang()==='ar'?1:0],pos:posOf(d),dist:km(posOf(d),AGENCY_POS)};}
+function driverRow(d){const t=DS[d.status]?.[2]||'n';return{...d,t,stLabel:(DS[d.status]||DS.off)[lang()==='ar'?1:0],pos:posOf(d),dist:km(posOf(d),agencyPos(agencyById(d.agency_id))||homePos())};}
 
 function tplDash(){
   const Lx=L(),d=state.data,k=d.kpis,li=lang()==='ar'?1:0,u=Lx.tnd;
@@ -398,10 +418,10 @@ function tplOrderDetail(){
   const list=state.amode==='auto'?cand.slice(0,3):cand;
   const canAssign=['attente','arrive','reporte','absent','affecte'].includes(o.status);
   const assign=x=>()=>act(()=>api(`orders/${o.id}/assign`,{method:'POST',body:{driver_id:x.id}}),Lx.saved);
-  const facts=[[Lx.sender,o.shop_name||Lx.agencyLbl],[Lx.recipient,o.client_name],[Lx.phone,fmtPhone(o.client_phone)],[Lx.address,(o.zone?o.zone+' · ':'')+o.address],[Lx.cod,fmt(o.cod,u)],[Lx.driver,o.driver_name||'—'],[Lx.otpCode,o.otp],[Lx.destCity,o.dest_city||state.agency]];
+  const facts=[[Lx.sender,o.shop_name||Lx.agencyLbl],[Lx.recipient,o.client_name],[Lx.phone,fmtPhone(o.client_phone)],[Lx.address,(o.zone_name?o.zone_name+' · ':'')+o.address],[Lx.cod,fmt(o.cod,u)],[Lx.driver,o.driver_name||'—'],[Lx.otpCode,o.otp],[Lx.destCity,o.dest_city_name||'—'],[Lx.agencies,(o.origin_agency_name||'—')+(o.dest_agency_name&&o.dest_agency_id!==o.origin_agency_id?' → '+o.dest_agency_name:'')]];
   return `<div style="${CARD};display:flex;flex-direction:column;align-self:start;min-width:0">
     <div style="padding:var(--pad);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--line)">
-      <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:var(--mute)">${esc(Lx.detail)} · ${esc(o.dest_city?Lx.inter:Lx.local)}</span><b style="font-family:var(--mono);font-size:17px">${esc(o.ref)}</b><span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span></div>
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:var(--mute)">${esc(Lx.detail)} · ${esc(o.intercity?Lx.inter:Lx.local)}</span><b style="font-family:var(--mono);font-size:17px">${esc(o.ref)}</b><span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
         <button ${on(()=>shareTrack(o.ref))} style="${BTN_GHOST};font-size:12.5px">🔗 ${esc(Lx.shareLink)}</button>
         <button ${on(set({sel:null,selData:null}))} aria-label="${esc(Lx.close)}" style="${BTN_GHOST};font-size:12.5px">✕</button>
@@ -435,7 +455,7 @@ function tplOrders(){
   const Lx=L(),u=Lx.tnd,li=lang()==='ar'?1:0,d=state.data;
   const qq=state.q.trim().toLowerCase().replace(/\s/g,'');
   const mref=Object.fromEntries(d.manifests.map(m=>[m.id,m.ref.toLowerCase()]));
-  const base=d.orders.filter(o=>!qq||[o.ref,o.client_name,o.client_phone,o.shop_name,o.driver_name,o.zone,mref[o.manifest_id]].some(v=>String(v||'').toLowerCase().replace(/\s/g,'').includes(qq)));
+  const base=d.orders.filter(o=>!qq||[o.ref,o.client_name,o.client_phone,o.shop_name,o.driver_name,o.zone_name,o.dest_city_name,mref[o.manifest_id]].some(v=>String(v||'').toLowerCase().replace(/\s/g,'').includes(qq)));
   const FL=[['all','Tous','الكل',o=>true],['attente',ST.attente[0],ST.attente[1],o=>o.status==='attente'],['livraison',ST.livraison[0],ST.livraison[1],o=>['affecte','accepte','ramasse','livraison','sur_place','transit','arrive'].includes(o.status)],['livre',ST.livre[0],ST.livre[1],o=>o.status==='livre'],['exc','Exceptions','استثناءات',o=>EXC.includes(o.status)]];
   const flt=FL.find(f=>f[0]===state.filter)||FL[0];
   const rows=base.filter(flt[3]);
@@ -450,7 +470,7 @@ function tplOrders(){
         <span style="display:flex;flex-direction:column"><span style="font-family:var(--mono);font-size:12px">${esc(o.ref)}</span><span style="font-size:11px;color:var(--mute)">${isToday(o.created_at)?hm(o.created_at):dm(o.created_at)}</span></span>
         <span style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.client_name)}</span><span style="font-size:12px;color:var(--mute)">${esc(fmtPhone(o.client_phone))}</span></span>
         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.shop_name||Lx.agencyLbl)}</span>
-        <span style="color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.dest_city?'→ '+o.dest_city:(o.zone||'—'))}</span>
+        <span style="color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(destLabel(o))}</span>
         <span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span>
         <span style="text-align:end;font-weight:600">${esc(fmt(o.cod,u))}</span></div>`):empty()}
     </div></div>
@@ -461,13 +481,14 @@ function tplOrders(){
 function tplBrd(){
   const Lx=L(),u=Lx.tnd,li=lang()==='ar'?1:0,d=state.data,b=state.bform;
   const ms=d.manifests,m=ms.find(x=>x.id===state.selBrd)||ms[0];
-  const createBrd=()=>act(async()=>{const cur=state.bform;const r=await api('manifests',{method:'POST',body:{to_city:cur.to_city,carrier:cur.carrier}});state.selBrd=r.manifest.id;state.bform={...state.bform,open:false,carrier:''};},Lx.saved);
+  const createBrd=()=>act(async()=>{const cur=state.bform;const r=await api('manifests',{method:'POST',body:{origin_agency_id:cur.origin_agency_id,dest_agency_id:cur.dest_agency_id,carrier:cur.carrier}});state.selBrd=r.manifest.id;state.bform={...state.bform,open:false,carrier:''};},Lx.saved);
   const colis=m?d.orders.filter(o=>o.manifest_id===m.id):[];
   return `<div class="split" style="display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:var(--gap)">
     <div class="no-print" style="display:flex;flex-direction:column;gap:10px">
       ${b.open?`<div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:10px">
         <b>${esc(Lx.newBrd)}</b>
-        ${field(Lx.to,select('b-to','bform','to_city',CITIES.filter(c=>c!==state.agency).map(c=>[c,c])))}
+        ${when(role()==='admin',()=>field(Lx.from,select('b-from','bform','origin_agency_id',[['',L().choose],...agencyOptions()],true)))}
+        ${field(Lx.to,select('b-to','bform','dest_agency_id',[['',L().choose],...agencyOptions(a=>a.id!==(role()==='admin'?+b.origin_agency_id:myAgency()?.id))]))}
         ${field(Lx.carrier,input('b-car','bform','carrier','placeholder="Sud Express Transport"'))}
         <span style="font-size:12px;color:var(--mute)">${esc(Lx.brdHint)}</span>
         <div style="display:flex;gap:8px"><button ${on(createBrd)} style="${BTN_PRIMARY};flex:1">${spin()}${esc(Lx.createBrd)}</button><button ${on(()=>{state.bform={...state.bform,open:false};render();})} style="${BTN_GHOST}">${esc(Lx.cancel)}</button></div>
@@ -602,9 +623,11 @@ function tplClaims(){
 
 function tplAccounts(){
   const Lx=L(),f=state.uform,users=state.users;
-  const roles=[['driver',Lx.rDriver],['shop',Lx.rShop],['admin',Lx.rAdmin]];
-  const roleB={admin:'i',driver:'o',shop:'g'};
-  const create=()=>act(async()=>{const cur=state.uform;const r=await api('users',{method:'POST',body:cur});state.creds={name:r.user.role==='shop'?r.user.shop_name:r.user.name,id:r.user.phone?fmtPhone(r.user.phone):r.user.email,password:cur.password,role:r.user.role};state.uform={...cur,name:'',email:'',phone:'',shop_name:'',address:'',password:genPwd()};},Lx.accountCreated);
+  const roles=role()==='admin'?[['driver',Lx.rDriver],['shop',Lx.rShop],['manager',Lx.rManager],['admin',Lx.rAdmin]]:[['driver',Lx.rDriver],['shop',Lx.rShop]];
+  const roleB={admin:'i',manager:'w',driver:'o',shop:'g'};
+  const agId=role()==='manager'?myAgency()?.id:+f.agency_id||homeAgency()?.id;
+  const agCity=agencyById(agId)?.city_id;
+  const create=()=>act(async()=>{const cur=state.uform;const r=await api('users',{method:'POST',body:{...cur,agency_id:cur.agency_id||agId}});state.creds={name:r.user.role==='shop'?r.user.shop_name:r.user.name,id:r.user.phone?fmtPhone(r.user.phone):r.user.email,password:cur.password,role:r.user.role};if(r.user.role==='manager')state.geo=await api('geo');state.uform={...cur,name:'',email:'',phone:'',shop_name:'',address:'',password:genPwd()};},Lx.accountCreated);
   const toggle=x=>()=>act(()=>api('users/'+x.id,{method:'PATCH',body:{active:!x.active}}),Lx.saved);
   const reset=x=>()=>{const p=prompt(Lx.resetPrompt,genPwd());if(p)act(()=>api('users/'+x.id,{method:'PATCH',body:{password:p}}).then(()=>{state.creds={name:x.role==='shop'?x.shop_name:x.name,id:x.phone?fmtPhone(x.phone):x.email,password:p,role:x.role};}),Lx.pwdChanged);};
   const copyCreds=c=>{const t=`SADEN Delivery\n${location.origin}\n${Lx.loginId} : ${c.id}\n${Lx.password} : ${c.password}`;(navigator.share?navigator.share({text:t}):navigator.clipboard.writeText(t).then(()=>toast(Lx.copied))).catch(()=>{});};
@@ -618,7 +641,8 @@ function tplAccounts(){
         ${when(f.role==='admin',()=>field(Lx.email,input('u-email','uform','email','type="email" autocapitalize="none" autocomplete="off"')))}
         ${field(f.role==='admin'?Lx.phone+' ('+Lx.optional+')':Lx.phone,input('u-phone','uform','phone','type="tel" inputmode="tel" placeholder="+216 …" autocomplete="off"'))}
         ${field(Lx.password,`<div style="display:flex;gap:6px">${input('u-pw','uform','password','autocomplete="new-password" style="font-family:var(--mono)"')}<button ${on(()=>{state.uform={...state.uform,password:genPwd()};render();})} style="${BTN_GHOST};flex-shrink:0">${esc(Lx.genPwd)}</button></div>`)}
-        ${when(f.role!=='admin',field(Lx.colZone,select('u-zone','uform','zone',ZONES.map(z=>[z,z]))))}
+        ${when(f.role!=='admin'&&role()==='admin',()=>field(Lx.agencyLbl,select('u-ag','uform','agency_id',[['',L().choose],...agencyOptions()],true)))}
+        ${when(f.role==='driver'||f.role==='shop',()=>field(Lx.colZone,select('u-zone','uform','zone_id',[['','—'],...zoneOptions(agCity)])))}
         ${when(f.role==='driver',field(Lx.vehicle,select('u-veh','uform','vehicle',VEHICLES.map(v=>[v,v]))))}
         ${when(f.role==='shop',field(Lx.address,input('u-addr','uform','address')))}
         <button ${on(create)} style="${BTN_PRIMARY};min-height:46px">${spin()}${esc(Lx.createBtn)}</button>
@@ -635,9 +659,9 @@ function tplAccounts(){
       ${!users?`<div style="padding:var(--pad)"><span class="spin"></span></div>`:`<div style="overflow-x:auto"><div style="min-width:640px">${each(users,x=>`
         <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 90px 130px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line);${x.active?'':'opacity:.6'}">
           <span style="display:flex;flex-direction:column;min-width:0"><b style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.role==='shop'?x.shop_name:x.name)}</b><span style="font-size:12px;color:var(--mute)">${esc(x.role==='shop'?x.name:(x.vehicle||''))}</span></span>
-          <span><span style="${css(badge(roleB[x.role]))}">${esc({admin:Lx.rAdmin,driver:Lx.rDriver,shop:Lx.rShop}[x.role])}</span></span>
+          <span><span style="${css(badge(roleB[x.role]))}">${esc({admin:Lx.rAdmin,manager:Lx.rManager,driver:Lx.rDriver,shop:Lx.rShop}[x.role])}</span></span>
           <span style="font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis">${esc(x.phone?fmtPhone(x.phone):x.email||'—')}</span>
-          <span style="color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.zone||'—')}</span>
+          <span style="color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc([x.agency_name,x.zone_name].filter(Boolean).join(' · ')||'—')}</span>
           <span style="display:flex;gap:6px;justify-content:flex-end">
             <button ${on(reset(x))} style="${BTN_GHOST};padding:6px 10px;font-size:12px">🔑 ${esc(Lx.resetPwd)}</button>
             ${x.id===state.session.user.id?'':`<button ${on(toggle(x))} style="${BTN_GHOST};padding:6px 10px;font-size:12px;color:${x.active?'var(--rf)':'var(--gf)'}">${esc(x.active?Lx.deactivate:Lx.activate)}</button>`}
@@ -647,16 +671,21 @@ function tplAccounts(){
 }
 
 function tplOrderForm(key,withShop){
-  const Lx=L(),u=Lx.tnd,f=state[key];
+  const Lx=L(),u=Lx.tnd;
+  // default destination: the city of the user's (or selected) agency
+  if(!state[key].dest_city_id){const c=homeAgency()?.city_id||G().cities[0]?.id;if(c)state[key]={...state[key],dest_city_id:String(c)};}
+  if(state[key].zone_id&&zoneById(state[key].zone_id)?.city_id!==+state[key].dest_city_id)state[key]={...state[key],zone_id:''};
+  const f=state[key];
   const shops=state.data?.shops||[];
   const submit=()=>act(async()=>{const r=await api('orders',{method:'POST',body:state[key]});state[key]={...emptyOrder(),shop_id:state[key].shop_id};if(key==='oform')state.modal=null;state.shopSent=r.order.ref;toast(Lx.orderCreated+' : '+r.order.ref);});
   return `<div style="display:flex;flex-direction:column;gap:12px">
+    ${when(withShop&&role()==='admin',()=>field(Lx.originAgency,select(key+'-orig',key,'origin_agency_id',[['',L().auto],...agencyOptions()])))}
     ${when(withShop,field(Lx.shopOpt,select(key+'-shop',key,'shop_id',[['',Lx.agencyDirect],...shops.filter(s=>s.active).map(s=>[s.id,s.shop_name])])))}
     ${field(Lx.name,input(key+'-name',key,'client_name','placeholder="Ex. Salma Khemiri" autocomplete="off"'))}
     ${field(Lx.phone,input(key+'-tel',key,'client_phone','type="tel" inputmode="tel" placeholder="+216 …" autocomplete="off"'))}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      ${field(Lx.destCity,select(key+'-city',key,'dest_city',CITIES.map(c=>[c,c===state.agency?c+' ('+Lx.local+')':c]),true))}
-      ${field(Lx.colZone,f.dest_city===state.agency?select(key+'-zone',key,'zone',ZONES.map(z=>[z,z])):input(key+'-zone2',key,'zone','placeholder="Quartier"'))}
+      ${field(Lx.destCity,select(key+'-city',key,'dest_city_id',cityOptions(),true))}
+      ${field(Lx.colZone,select(key+'-zone',key,'zone_id',[['','—'],...zoneOptions(f.dest_city_id)]))}
     </div>
     ${field(Lx.address,input(key+'-addr',key,'address','placeholder="Rue, quartier, repère"'))}
     <button ${on(()=>useGps(key))} style="padding:10px;border-radius:var(--r);border:1px dashed var(--line);background:transparent;font-weight:600;cursor:pointer;text-align:start;color:var(--ink)">◎ ${esc(f.lat!=null?'GPS · '+f.lat+', '+f.lng:Lx.useGps)}</button>
@@ -668,13 +697,14 @@ function tplOrderForm(key,withShop){
 function tplAdmin(){
   const Lx=L(),p=state.page;
   if(!state.data)return `<div style="padding:40px;text-align:center;color:var(--mute)"><span class="spin"></span></div>`;
-  const page={dash:tplDash,map:tplMap,orders:tplOrders,brd:tplBrd,drivers:tplDrivers,cash:tplCash,stats:tplStats,claims:tplClaims,accounts:tplAccounts}[p]();
+  const page=({dash:tplDash,map:tplMap,orders:tplOrders,brd:tplBrd,drivers:tplDrivers,cash:tplCash,stats:tplStats,claims:tplClaims,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo}[p]||tplDash)();
   const dir=state.prefs.dir;
   return `<div class="shell" style="display:flex;flex-direction:${dir==='b'?'column':'row'};flex:1;min-height:0">
     ${tplNav()}
     <div style="flex:1;min-width:0;display:flex;flex-direction:column">
       <div class="hdr no-print" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 24px;background:var(--hdr);color:var(--hdrInk);border-bottom:1px solid var(--line)">
         <h1 style="margin:0;font-family:var(--disp);font-size:24px;font-weight:700;letter-spacing:-0.01em;flex:1;min-width:160px">${esc(Lx[p])}</h1>
+        ${when(role()==='admin',()=>`<select class="fld no-print" ${onInput(e=>{state.agencyFilter=e.target.value;store.set('saden.agencyFilter',state.agencyFilter);state.sel=null;state.selData=null;state.stats=null;refresh();},'agf')} style="max-width:220px;background:var(--surface)" aria-label="${esc(Lx.agencyLbl)}">${each([['',Lx.allAgencies],...agencyOptions()],([v,l])=>`<option value="${esc(v)}"${String(v)===String(state.agencyFilter)?' selected':''}>${esc(l)}</option>`)}</select>`)}
         <input type="search" class="fld" ${onInput(e=>{state.q=e.target.value;if(state.page!=='orders'&&state.q){state.page='orders';state.sel=null;}render();},'q')} value="${esc(state.q)}" placeholder="${esc(Lx.search)}" style="flex:1;min-width:180px;max-width:420px;background:var(--surface)">
         <button ${on(()=>setState({modal:{type:'newOrder'},oform:{...emptyOrder(),shop_id:state.oform.shop_id}}))} style="${BTN_PRIMARY};padding:9px 16px;white-space:nowrap">+ ${esc(Lx.newParcel)}</button>
       </div>
@@ -711,7 +741,7 @@ function tplShop(){
           <div style="overflow-x:auto"><div style="min-width:640px">${s.orders.length?each(s.orders,o=>`
             <div style="display:grid;grid-template-columns:96px minmax(0,1.2fr) minmax(0,1fr) 140px 110px 40px;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line)">
               <span style="display:flex;flex-direction:column"><span style="font-family:var(--mono);font-size:12px">${esc(o.ref)}</span><span style="font-size:11px;color:var(--mute)">${isToday(o.created_at)?hm(o.created_at):dm(o.created_at)}</span></span>
-              <b style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.client_name)}</b><span style="color:var(--mute)">${esc(o.dest_city?'→ '+o.dest_city:(o.zone||'—'))}</span><span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span><span style="text-align:end;font-weight:600">${esc(fmt(o.cod,u))}</span>
+              <b style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.client_name)}</b><span style="color:var(--mute)">${esc(destLabel(o))}</span><span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span><span style="text-align:end;font-weight:600">${esc(fmt(o.cod,u))}</span>
               <button ${on(()=>shareTrack(o.ref))} title="${esc(Lx.shareLink)}" style="border:none;background:none;cursor:pointer;font-size:16px">🔗</button>
             </div>`):empty()}</div></div>
         </div>
@@ -751,7 +781,7 @@ function tplDriver(){
       <b>${esc(Lx.missions)}</b>
       ${ms.length?each(ms,m=>`<div ${on(()=>setState({curId:m.id,lv:m.status==='livre'?'done':'detail',doneInfo:null}))} style="${CARD};padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;${ACTIVE_ST.includes(m.status)?'':'opacity:.7'}">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:15px">${esc(m.client_name)}</b><span style="${css(msB(m.status))}">${esc(msL(m.status))}</span></div>
-        <span style="color:var(--mute);font-size:13px">${esc((m.zone?m.zone+' · ':'')+m.address)}</span>
+        <span style="color:var(--mute);font-size:13px">${esc((m.zone_name?m.zone_name+' · ':'')+m.address)}</span>
         <div style="display:flex;justify-content:space-between;font-size:13px;gap:8px"><span>${esc(kmL(km(state.myPos||posOf(me),orderPos(m))))} · ${esc(m.shop_name||Lx.agencyLbl)}</span><b>${esc(codL(m))}</b></div>
       </div>`):`<div style="${CARD};padding:24px;text-align:center;color:var(--mute)">${esc(Lx.noMissions)}</div>`}
       ${when(status!=='off',`<button ${on(()=>act(()=>api('me/status',{method:'POST',body:{status:'off'}})))} style="margin-top:8px;background:none;border:none;color:var(--mute);text-decoration:underline;cursor:pointer;padding:8px">${esc(Lx.endShift)}</button>`)}
@@ -775,7 +805,7 @@ function tplDriver(){
         <div style="display:flex;flex-direction:column;gap:2px"><b style="font-family:var(--disp);font-size:22px">${esc(cm.client_name)}</b><span style="color:var(--mute)">${esc((cm.zone?cm.zone+' · ':'')+cm.address)}</span><span style="color:var(--mute);font-size:12.5px">${esc(cm.shop_name||Lx.agencyLbl)} · ${esc(fmtPhone(cm.client_phone))}</span></div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:var(--r);background:var(--ob);color:var(--of)"><span style="font-weight:600">${esc(Lx.toCollect)}</span><b style="font-family:var(--disp);font-size:22px">${esc(codL(cm))}</b></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(posOf(cm)?cm.lat+','+cm.lng:cm.address+', '+(cm.zone||'')+', '+state.agency)}" target="_blank" rel="noopener" style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:center">➤ ${esc(Lx.navigate)}</a>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(posOf(cm)?cm.lat+','+cm.lng:cm.address+', '+(cm.zone_name||'')+', '+(cm.dest_city_name||''))}" target="_blank" rel="noopener" style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:center">➤ ${esc(Lx.navigate)}</a>
           <a href="${telHref(cm.client_phone)}" style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:center">✆ ${esc(Lx.call)}</a>
         </div>
         ${when(flow==='liste'&&ACTIVE_ST.includes(cm.status),`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${each(ACTS,([l,en,go],j)=>`<button ${en?on(go):''} ${en?'':'disabled'} style="${css({minHeight:j<4?60:48,gridColumn:j===6?'span 2':'auto',borderRadius:'var(--r)',border:en&&j<4?'none':'1px solid var(--line)',background:en&&j<4?'var(--orange)':'var(--surface)',color:en&&j<4?'var(--onOrange)':'var(--ink)',fontWeight:700,fontSize:j<4?16:13.5,opacity:en?1:0.4,cursor:en?'pointer':'default'})}">${esc(Lx[l])}</button>`)}</div>`)}
@@ -829,7 +859,7 @@ function tplClient(){
   if(!t)return `<div style="padding:40px;text-align:center;color:var(--mute)"><span class="spin"></span></div>`;
   const s=t.status,exc=EXC.includes(s);
   const firstAt=sts=>t.events.find(e=>sts.includes(e.status))?.created_at;
-  const groups=[[['Créée','تم الإنشاء'],['cree','attente']],[['Livreur affecté','تم إسناد موزع'],['affecte','accepte']],...(t.dest_city?[[['En transit','في العبور'],['transit','arrive']]]:[]),[['En livraison','قيد التوصيل'],['livraison','sur_place']],[['Livrée','تم التسليم'],['livre']]];
+  const groups=[[['Créée','تم الإنشاء'],['cree','attente']],[['Livreur affecté','تم إسناد موزع'],['affecte','accepte']],...(t.intercity?[[['En transit','في العبور'],['transit','arrive']]]:[]),[['En livraison','قيد التوصيل'],['livraison','sur_place']],[['Livrée','تم التسليم'],['livre']]];
   let idx=groups.findIndex(g=>g[1].includes(s));
   if(idx<0)idx=Math.max(0,...groups.map((g,j)=>firstAt(g[1])?j:0));
   const done=s==='livre',moving=['livraison','sur_place'].includes(s);
@@ -839,7 +869,7 @@ function tplClient(){
   const canSend=(canRate?state.stars>0:true)&&(!state.cClaim||state.cCat!==null)&&(canRate||state.cClaim);
   const send=()=>{if(!canSend)return;act(async()=>{const r=await api('track/review',{method:'POST',body:{...state.trackAuth,stars:canRate&&state.stars?state.stars:null,comment:state.comment,claim_category:state.cClaim?state.cCat:null}});state.cSent={claim:r.claim};});};
   return `<main style="flex:1;display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)"><div style="width:100%;max-width:520px;padding:18px 18px 28px;display:flex;flex-direction:column;gap:14px">
-    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:var(--mute)">${esc(Lx.track)} · ${esc(t.shop_name||'SADEN')}</span><b style="font-family:var(--mono);font-size:22px">${esc(t.ref)}</b><span style="font-size:12px;color:var(--mute)">${esc(t.client_name)} · ${esc((t.zone?t.zone+' · ':'')+t.address)}${t.dest_city?' · '+esc(t.dest_city):''}</span></div>
+    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:var(--mute)">${esc(Lx.track)} · ${esc(t.shop_name||'SADEN')}</span><b style="font-family:var(--mono);font-size:22px">${esc(t.ref)}</b><span style="font-size:12px;color:var(--mute)">${esc(t.client_name)} · ${esc((t.zone_name?t.zone_name+' · ':'')+t.address)}${t.dest_city_name?' · '+esc(t.dest_city_name):''}</span></div>
     ${when(exc,`<div style="padding:14px;border-radius:var(--r);background:var(--rb);color:var(--rf);display:flex;flex-direction:column;gap:4px"><b>${esc(Lx.exception)} — ${esc(stL(s))}</b><span>${esc(Lx.exceptionHint)}</span></div>`)}
     ${when(t.otp&&!exc,`<div style="padding:14px;border-radius:var(--r);background:var(--ob);color:var(--of);display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="display:flex;flex-direction:column;gap:2px"><b>${esc(Lx.deliveryCode)}</b><span style="font-size:12px">${esc(Lx.deliveryCodeHint)}</span></div><b style="font-family:var(--mono);font-size:28px;letter-spacing:.2em">${esc(t.otp)}</b></div>`)}
     ${when(!done&&!exc,`${mapBox('track','170px','border-radius:var(--r)')}
@@ -889,7 +919,7 @@ function mountMaps(){
     const key=ph.dataset.map;let m=MAPS[key];
     if(!m){
       const el=document.createElement('div');el.style.cssText='position:absolute;inset:0';ph.appendChild(el);
-      const map=L_.map(el,{zoomControl:key!=='track',attributionControl:true}).setView(AGENCY_POS,13);
+      const map=L_.map(el,{zoomControl:key!=='track',attributionControl:true}).setView(homePos(),13);
       L_.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
       m=MAPS[key]={el,map,layer:L_.layerGroup().addTo(map),fitKey:null};
     }else ph.appendChild(m.el);
@@ -900,24 +930,26 @@ function mountMaps(){
 function drawMap(key,m){
   m.layer.clearLayers();
   const pts=[],add=(ll,o,tip,click,perm)=>{if(!ll)return;const mk=L_.circleMarker(ll,{weight:3,color:'#fff',fillOpacity:1,...o}).addTo(m.layer);if(tip)mk.bindTooltip(esc(tip),{permanent:!!perm,direction:'right',offset:[8,0],className:''});if(click)mk.on('click',click);pts.push(ll);};
-  const agency=()=>L_.marker(AGENCY_POS,{icon:L_.divIcon({className:'',html:`<div style="width:18px;height:18px;background:${MAPC.navy};border:3px solid #fff;border-radius:4px;box-shadow:0 1px 4px #0005"></div>`,iconSize:[18,18],iconAnchor:[9,9]})}).bindTooltip(L().agencyLbl+' '+state.agency).addTo(m.layer);
-  let fitKey=key;
+  const agencyMark=a=>{const p=agencyPos(a);if(!p)return null;L_.marker(p,{icon:L_.divIcon({className:'',html:`<div style="width:18px;height:18px;background:${MAPC.navy};border:3px solid #fff;border-radius:4px;box-shadow:0 1px 4px #0005"></div>`,iconSize:[18,18],iconAnchor:[9,9]})}).bindTooltip(esc(a.name)).addTo(m.layer);return p;};
+  const agency=()=>agencyMark(homeAgency());
+  let fitKey=key+':'+role()+':'+(state.agencyFilter||'')+':'+(myAgency()?.id||'');
   if(key==='ops'||key==='opsBig'){
-    agency();pts.push(AGENCY_POS);
+    const ags=role()==='manager'?[myAgency()].filter(Boolean):state.agencyFilter?[agencyById(state.agencyFilter)].filter(Boolean):G().agencies.filter(a=>a.active);
+    ags.forEach(a=>{const p=agencyMark(agencyById(a.id)||a);if(p)pts.push(p);});
     const big=key==='opsBig';
-    if(big)state.data.orders.filter(o=>o.status==='attente'&&!o.dest_city).forEach(o=>add(orderPos(o),{radius:5,fillColor:MAPC.o,color:MAPC.o,fillOpacity:.25,weight:2},o.ref+' · '+o.client_name,()=>selectOrder(o.id)));
+    if(big)state.data.orders.filter(o=>o.status==='attente'&&!o.intercity).forEach(o=>add(orderPos(o),{radius:5,fillColor:MAPC.o,color:MAPC.o,fillOpacity:.25,weight:2},o.ref+' · '+o.client_name,()=>selectOrder(o.id)));
     state.data.drivers.filter(d=>d.active&&posOf(d)).forEach(d=>{const t=DS[d.status]?.[2]||'n',sel=big&&d.id===(state.selDrv??state.data.drivers[0]?.id);add(posOf(d),{radius:sel?10:7,fillColor:MAPC[t]},d.name.split(' ')[0],big?()=>{state.selDrv=d.id;render();}:null,big);});
   }else if(key==='mission'){
     const cm=state.drv?.missions.find(x=>x.id===state.curId);if(!cm)return;
     agency();
     add(state.myPos||posOf(state.drv.me),{radius:8,fillColor:MAPC.navy},L().vDriver);
     add(orderPos(cm),{radius:9,fillColor:MAPC.o},cm.client_name);
-    fitKey='mission'+cm.id;
+    fitKey+='mission'+cm.id;
   }else if(key==='track'){
     const t=state.trk;if(!t)return;
     add(orderPos(t),{radius:9,fillColor:MAPC.o},L().address);
     if(t.driver&&['livraison','sur_place','accepte','affecte'].includes(t.status))add(posOf(t.driver),{radius:8,fillColor:MAPC.navy},t.driver.name);
-    fitKey='track'+t.ref+(posOf(t.driver)?'d':'');
+    fitKey+='track'+t.ref+(posOf(t.driver)?'d':'');
   }
   if(m.fitKey!==fitKey&&pts.length){m.fitKey=fitKey;if(pts.length===1)m.map.setView(pts[0],15);else m.map.fitBounds(L_.latLngBounds(pts).pad(0.25),{maxZoom:15});}
 }
@@ -949,7 +981,7 @@ function render(){
   let main;
   if(state.boot)main=`<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--mute)"><span class="spin"></span></div>`;
   else if(!r)main=tplLogin();
-  else main={admin:tplAdmin,shop:tplShop,driver:tplDriver,client:tplClient}[r]();
+  else main={admin:tplAdmin,manager:tplAdmin,shop:tplShop,driver:tplDriver,client:tplClient}[r]();
   root.innerHTML=`<div data-sd="1" data-theme="${state.prefs.theme}" data-d="${state.prefs.dir}" dir="${li?'rtl':'ltr'}" style="min-height:100vh;min-height:100dvh;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs);display:flex;flex-direction:column">
     ${tplTopBar()}${main}${tplModal()}
     ${when(state.toast,`<div class="toast no-print" role="status" style="background:${state.toast?.kind==='err'?'var(--rb)':'var(--gb)'};color:${state.toast?.kind==='err'?'var(--rf)':'var(--gf)'}">${esc(state.toast?.msg)}</div>`)}
@@ -990,8 +1022,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   const t=new URLSearchParams(location.search).get('t');
   if(t&&!state.session){state.loginTab='track';state.track.ref=t.toUpperCase();if(state.trackAuth&&state.trackAuth.ref!==state.track.ref){state.trackAuth=null;store.del('saden.track');}}
   render();
-  try{const s=await api('auth/status');state.needsSetup=s.needsSetup;state.agency=s.agency;if(s.setupEmail){state.setupEmail=s.setupEmail;state.setup.email=s.setupEmail;}}catch(e){state.loginErr=e.message;}
-  if(state.session){try{const {user}=await api('me');saveSession({...state.session,user});}catch{}}
+  try{const s=await api('auth/status');state.needsSetup=s.needsSetup;if(s.setupEmail){state.setupEmail=s.setupEmail;state.setup.email=s.setupEmail;}}catch(e){state.loginErr=e.message;}
+  if(state.session){try{const {user,agency}=await api('me');saveSession({...state.session,user,agency});}catch{}}
   state.boot=false;render();
   if(role()){if(role()==='driver')startGeo();refresh();}
 })();
