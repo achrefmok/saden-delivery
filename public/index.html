@@ -87,7 +87,7 @@ shopSpace:['Espace boutique','فضاء المتجر'],shopPrivacy:['Vous ne voye
 track:['Suivi de colis','تتبع الطرد'],yourDriver:['Votre livreur','موزعك'],eta:['Arrivée estimée','الوصول المتوقع'],rateTitle:['Comment s’est passée la livraison ?','كيف كانت عملية التوصيل؟'],commentPh:['Ponctualité, communication, comportement…','الالتزام بالموعد، التواصل، السلوك…'],send:['Envoyer','إرسال'],thanks:['Merci pour votre retour','شكرا على ملاحظاتك'],
 reportOpen:['Signaler un problème','الإبلاغ عن مشكلة'],reportClose:['Annuler le signalement','إلغاء الإبلاغ'],
 deliveryCode:['Code de livraison','رمز التسليم'],deliveryCodeHint:['À donner au livreur uniquement à la remise du colis.','أعطه للموزع فقط عند استلام الطرد.'],otherParcel:['Suivre un autre colis','تتبع طرد آخر'],exception:['Livraison non effectuée','لم يتم التوصيل'],exceptionHint:['L’agence va vous recontacter pour une nouvelle tentative.','ستتصل بك الوكالة لمحاولة جديدة.'],updated:['Mis à jour','آخر تحديث'],
-tnd:['TND','د.ت'],
+tnd:['TND','د.ت'],loginId:['Téléphone ou e-mail','الهاتف أو البريد الإلكتروني'],email:['E-mail','البريد الإلكتروني'],optional:['facultatif','اختياري'],
 login:['Connexion','تسجيل الدخول'],staffTab:['Espace pro','الفضاء المهني'],trackTab:['Suivre mon colis','تتبع طردي'],loginSub:['Agence, livreurs et boutiques','الوكالة، الموزعون والمتاجر'],password:['Mot de passe','كلمة المرور'],signIn:['Se connecter','دخول'],
 trackSub:['Entrez le numéro du colis et votre numéro de téléphone.','أدخل رقم الطرد ورقم هاتفك.'],parcelNo:['N° de colis','رقم الطرد'],trackBtn:['Suivre le colis','تتبع الطرد'],
 setupTitle:['Compte administrateur','حساب المشرف'],setupSub:['Première utilisation : créez le compte de l’agence.','أول استعمال: أنشئ حساب الوكالة.'],fullName:['Nom complet','الاسم الكامل'],password2:['Confirmer le mot de passe','تأكيد كلمة المرور'],createAdmin:['Créer et se connecter','إنشاء والدخول'],pwdMismatch:['Les mots de passe ne correspondent pas.','كلمتا المرور غير متطابقتين.'],
@@ -160,10 +160,10 @@ let state={
   prefs:{dir:'a',theme:prefersDark()?'dark':'light',lang:'fr',...store.get('saden.prefs',{})},
   session:store.get('saden.session',null), trackAuth:store.get('saden.track',null),
   boot:true, needsSetup:false, agency:'Gafsa', offline:false, busy:false, toast:null, modal:null,
-  loginTab:'staff', login:{phone:'',password:''}, setup:{name:'',phone:'',password:'',password2:''}, track:{ref:'',phone:''}, loginErr:null,
+  loginTab:'staff', login:{phone:'',password:''}, setup:{name:'',email:'',phone:'',password:'',password2:''}, setupEmail:null, track:{ref:'',phone:''}, loginErr:null,
   // admin
   page:'dash', data:null, stats:null, users:null, filter:'all', q:'', sel:null, selData:null, amode:'auto', selDrv:null, selBrd:null, period:0,
-  oform:emptyOrder(), uform:{role:'driver',name:'',phone:'',password:genPwd(),zone:'Centre-ville',vehicle:'Moto',shop_name:'',address:''}, creds:null,
+  oform:emptyOrder(), uform:{role:'driver',name:'',email:'',phone:'',password:genPwd(),zone:'Centre-ville',vehicle:'Moto',shop_name:'',address:''}, creds:null,
   cform:{label:'',type:'Encaissement',amount:''}, bform:{open:false,to_city:'Tunis',carrier:''},
   // shop
   shop:null, form:emptyOrder(), shopSent:null,
@@ -303,20 +303,21 @@ ${when(state.offline,`<div class="no-print" style="background:var(--wb);color:va
 function tplLogin(){
   const Lx=L(),tab=state.loginTab;
   const err=when(state.loginErr,`<div style="padding:10px;border-radius:var(--r);background:var(--rb);color:var(--rf);font-weight:600">${esc(state.loginErr)}</div>`);
-  const submitLogin=()=>act(async()=>{const r=await api('auth/login',{method:'POST',body:state.login});saveSession(r);state.login={phone:'',password:''};await afterLogin();}).then(()=>{});
+  const submitLogin=()=>act(async()=>{const r=await api('auth/login',{method:'POST',body:{login:state.login.phone,password:state.login.password}});saveSession(r);state.login={phone:'',password:''};await afterLogin();}).then(()=>{});
   const submitSetup=()=>{const s=state.setup;if(s.password!==s.password2)return toast(Lx.pwdMismatch,'err');act(async()=>{const r=await api('auth/setup',{method:'POST',body:s});saveSession(r);state.needsSetup=false;await afterLogin();});};
   const submitTrack=()=>act(async()=>{const r=await api('track',{method:'POST',body:state.track});state.trackAuth={ref:r.ref,phone:state.track.phone};store.set('saden.track',state.trackAuth);state.trk=r;});
   let body;
   if(tab==='staff'&&state.needsSetup) body=`<form data-form="setup" style="display:flex;flex-direction:column;gap:12px">
       <div><b style="font-size:17px">${esc(Lx.setupTitle)}</b><div style="color:var(--mute);margin-top:4px">${esc(Lx.setupSub)}</div></div>
       ${field(Lx.fullName,input('s-name','setup','name','autocomplete="name" required'))}
-      ${field(Lx.phone,input('s-phone','setup','phone','type="tel" inputmode="tel" autocomplete="tel" placeholder="+216 …" required'))}
+      ${field(Lx.email,input('s-email','setup','email',`type="email" autocomplete="email" autocapitalize="none" required${state.setupEmail?' readonly':''}`))}
+      ${field(Lx.phone+' ('+Lx.optional+')',input('s-phone','setup','phone','type="tel" inputmode="tel" autocomplete="tel" placeholder="+216 …"'))}
       ${field(Lx.password,input('s-pw','setup','password','type="password" autocomplete="new-password" minlength="6" required'))}
       ${field(Lx.password2,input('s-pw2','setup','password2','type="password" autocomplete="new-password" minlength="6" required'))}
       <button ${on(submitSetup)} type="button" style="${BTN_PRIMARY};min-height:48px">${spin()}${esc(Lx.createAdmin)}</button></form>`;
   else if(tab==='staff') body=`<form data-form="login" style="display:flex;flex-direction:column;gap:12px">
       <div style="color:var(--mute)">${esc(Lx.loginSub)}</div>
-      ${field(Lx.phone,input('l-phone','login','phone','type="tel" inputmode="tel" autocomplete="username" placeholder="+216 …" required'))}
+      ${field(Lx.loginId,input('l-phone','login','phone','type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="+216 … / nom@exemple.com" required'))}
       ${field(Lx.password,input('l-pw','login','password','type="password" autocomplete="current-password" required'))}
       <button ${on(submitLogin)} type="button" data-submit style="${BTN_PRIMARY};min-height:48px">${spin()}${esc(Lx.signIn)}</button></form>`;
   else body=`<form data-form="track" style="display:flex;flex-direction:column;gap:12px">
@@ -665,10 +666,10 @@ function tplAccounts(){
   const Lx=L(),f=state.uform,users=state.users;
   const roles=[['driver',Lx.rDriver],['shop',Lx.rShop],['admin',Lx.rAdmin]];
   const roleB={admin:'i',driver:'o',shop:'g'};
-  const create=()=>act(async()=>{const cur=state.uform;const r=await api('users',{method:'POST',body:cur});state.creds={name:r.user.role==='shop'?r.user.shop_name:r.user.name,phone:r.user.phone,password:cur.password,role:r.user.role};state.uform={...cur,name:'',phone:'',shop_name:'',address:'',password:genPwd()};},Lx.accountCreated);
+  const create=()=>act(async()=>{const cur=state.uform;const r=await api('users',{method:'POST',body:cur});state.creds={name:r.user.role==='shop'?r.user.shop_name:r.user.name,id:r.user.phone?fmtPhone(r.user.phone):r.user.email,password:cur.password,role:r.user.role};state.uform={...cur,name:'',email:'',phone:'',shop_name:'',address:'',password:genPwd()};},Lx.accountCreated);
   const toggle=x=>()=>act(()=>api('users/'+x.id,{method:'PATCH',body:{active:!x.active}}),Lx.saved);
-  const reset=x=>()=>{const p=prompt(Lx.resetPrompt,genPwd());if(p)act(()=>api('users/'+x.id,{method:'PATCH',body:{password:p}}).then(()=>{state.creds={name:x.role==='shop'?x.shop_name:x.name,phone:x.phone,password:p,role:x.role};}),Lx.pwdChanged);};
-  const copyCreds=c=>{const t=`SADEN Delivery\n${location.origin}\n${Lx.phone} : ${fmtPhone(c.phone)}\n${Lx.password} : ${c.password}`;(navigator.share?navigator.share({text:t}):navigator.clipboard.writeText(t).then(()=>toast(Lx.copied))).catch(()=>{});};
+  const reset=x=>()=>{const p=prompt(Lx.resetPrompt,genPwd());if(p)act(()=>api('users/'+x.id,{method:'PATCH',body:{password:p}}).then(()=>{state.creds={name:x.role==='shop'?x.shop_name:x.name,id:x.phone?fmtPhone(x.phone):x.email,password:p,role:x.role};}),Lx.pwdChanged);};
+  const copyCreds=c=>{const t=`SADEN Delivery\n${location.origin}\n${Lx.loginId} : ${c.id}\n${Lx.password} : ${c.password}`;(navigator.share?navigator.share({text:t}):navigator.clipboard.writeText(t).then(()=>toast(Lx.copied))).catch(()=>{});};
   return `<div class="split" style="display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);gap:var(--gap);align-items:start">
     <div style="display:flex;flex-direction:column;gap:var(--gap)">
       <div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:12px">
@@ -676,7 +677,8 @@ function tplAccounts(){
         <div style="display:flex;gap:6px;flex-wrap:wrap">${each(roles,([k,l])=>`<button ${on(()=>{state.uform={...state.uform,role:k};render();})} style="${css(chip(f.role===k))}">${esc(l)}</button>`)}</div>
         ${when(f.role==='shop',field(Lx.shopName,input('u-shop','uform','shop_name','placeholder="Électro Sud"')))}
         ${field(f.role==='shop'?Lx.contact:Lx.fullName,input('u-name','uform','name','autocomplete="off"'))}
-        ${field(Lx.phone,input('u-phone','uform','phone','type="tel" inputmode="tel" placeholder="+216 …" autocomplete="off"'))}
+        ${when(f.role==='admin',()=>field(Lx.email,input('u-email','uform','email','type="email" autocapitalize="none" autocomplete="off"')))}
+        ${field(f.role==='admin'?Lx.phone+' ('+Lx.optional+')':Lx.phone,input('u-phone','uform','phone','type="tel" inputmode="tel" placeholder="+216 …" autocomplete="off"'))}
         ${field(Lx.password,`<div style="display:flex;gap:6px">${input('u-pw','uform','password','autocomplete="new-password" style="font-family:var(--mono)"')}<button ${on(()=>{state.uform={...state.uform,password:genPwd()};render();})} style="${BTN_GHOST};flex-shrink:0">${esc(Lx.genPwd)}</button></div>`)}
         ${when(f.role!=='admin',field(Lx.colZone,select('u-zone','uform','zone',ZONES.map(z=>[z,z]))))}
         ${when(f.role==='driver',field(Lx.vehicle,select('u-veh','uform','vehicle',VEHICLES.map(v=>[v,v]))))}
@@ -685,7 +687,7 @@ function tplAccounts(){
       </div>
       ${when(state.creds,()=>`<div style="padding:var(--pad);border-radius:var(--r);background:var(--gb);color:var(--gf);display:flex;flex-direction:column;gap:6px">
         <b>${esc(Lx.credsTitle)} — ${esc(state.creds.name)}</b>
-        <span style="font-family:var(--mono)">${esc(fmtPhone(state.creds.phone))}<br>${esc(state.creds.password)}</span>
+        <span style="font-family:var(--mono)">${esc(state.creds.id)}<br>${esc(state.creds.password)}</span>
         <span style="font-size:12px">${esc(Lx.credsHint)}</span>
         <div style="display:flex;gap:8px"><button ${on(()=>copyCreds(state.creds))} style="${BTN_GHOST}">🔗 ${esc(Lx.shareLink)}</button><button ${on(set({creds:null}))} style="${BTN_GHOST}">${esc(Lx.close)}</button></div>
       </div>`)}
@@ -696,7 +698,7 @@ function tplAccounts(){
         <div style="display:grid;grid-template-columns:minmax(0,1.3fr) 90px 130px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line);${x.active?'':'opacity:.6'}">
           <span style="display:flex;flex-direction:column;min-width:0"><b style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.role==='shop'?x.shop_name:x.name)}</b><span style="font-size:12px;color:var(--mute)">${esc(x.role==='shop'?x.name:(x.vehicle||''))}</span></span>
           <span><span style="${css(badge(roleB[x.role]))}">${esc({admin:Lx.rAdmin,driver:Lx.rDriver,shop:Lx.rShop}[x.role])}</span></span>
-          <span style="font-family:var(--mono);font-size:12px">${esc(fmtPhone(x.phone))}</span>
+          <span style="font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis">${esc(x.phone?fmtPhone(x.phone):x.email||'—')}</span>
           <span style="color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.zone||'—')}</span>
           <span style="display:flex;gap:6px;justify-content:flex-end">
             <button ${on(reset(x))} style="${BTN_GHOST};padding:6px 10px;font-size:12px">🔑 ${esc(Lx.resetPwd)}</button>
@@ -1050,7 +1052,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   const t=new URLSearchParams(location.search).get('t');
   if(t&&!state.session){state.loginTab='track';state.track.ref=t.toUpperCase();if(state.trackAuth&&state.trackAuth.ref!==state.track.ref){state.trackAuth=null;store.del('saden.track');}}
   render();
-  try{const s=await api('auth/status');state.needsSetup=s.needsSetup;state.agency=s.agency;}catch(e){state.loginErr=e.message;}
+  try{const s=await api('auth/status');state.needsSetup=s.needsSetup;state.agency=s.agency;if(s.setupEmail){state.setupEmail=s.setupEmail;state.setup.email=s.setupEmail;}}catch(e){state.loginErr=e.message;}
   if(state.session){try{const {user}=await api('me');saveSession({...state.session,user});}catch{}}
   state.boot=false;render();
   if(role()){if(role()==='driver')startGeo();refresh();}
