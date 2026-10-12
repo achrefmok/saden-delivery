@@ -168,6 +168,7 @@ async function refresh(silent){
       if(state.page==='accounts'||state.page==='agencies')state.users=(await api('users'+(af&&state.page==='accounts'?'?'+af:''))).users;
       if(['agencies','geo'].includes(state.page))state.geo=await api('geo');
       if(state.page==='pricing')state.pricing=await api('pricing');
+      if(state.page==='cash')await loadCash();
       if(state.page==='partners')[state.partners,state.webhooks]=await Promise.all([api('partners').then(r=>r.partners),api('webhooks').then(r=>r.deliveries)]);
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
     }else if(r==='driver'){state.drv=await api('driver/overview');}
@@ -515,34 +516,7 @@ function tplDrivers(){
   </div>`;
 }
 
-function tplCash(){
-  const Lx=L(),u=Lx.tnd,li=lang()==='ar'?1:0,d=state.data,c=d.cash,k=d.kpis;
-  const shops=Math.max(0,k.remit_today),saden=k.saden_today,drv=k.drivers_today,tot=shops+saden+drv||1;
-  const parts=[[Lx.sClient,shops,'var(--navy)'],[Lx.sSaden,saden,'var(--orange)'],[Lx.sDriver,drv,'oklch(0.7 0.1 150)']];
-  const add=()=>act(async()=>{await api('cash',{method:'POST',body:state.cform});state.cform={label:'',type:state.cform.type,amount:''};},Lx.saved);
-  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:var(--gap)">
-      ${kpiCard(Lx.income,fmt(c.income,u))}${kpiCard(Lx.expenses,fmt(c.expenses,u))}${kpiCard(Lx.balance,fmt(c.balance,u))}${kpiCard(Lx.toPay,fmt(Math.max(0,c.remit_delivered-c.settled),u))}
-    </div>
-    <div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:12px">
-      <b>${esc(Lx.split)}</b>
-      <div style="display:flex;height:16px;border-radius:999px;overflow:hidden;gap:2px;background:var(--surface2)">${each(parts,p=>p[1]>0?`<span style="flex:${p[1]};background:${p[2]}"></span>`:'')}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:22px">${each(parts,p=>`<span style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:${p[2]}"></span>${esc(p[0])} <b>${Math.round(p[1]/tot*100)} %</b> <span style="color:var(--mute)">${esc(fmt(p[1],u))}</span></span>`)}</div>
-    </div>
-    <div style="${CARD};overflow:hidden">
-      <div style="padding:var(--pad);display:flex;flex-direction:column;gap:10px">
-        <b>${esc(Lx.movements)}</b>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:8px;align-items:end">
-          ${field(Lx.label,input('c-label','cform','label','placeholder="Versement COD — …"'))}
-          ${field(Lx.type,select('c-type','cform','type',Object.keys(CASH_TYPES).map(t=>[t,li?CASH_TYPES[t][0]:t])))}
-          ${field(Lx.amount+' ('+u+')',input('c-amt','cform','amount','inputmode="decimal" placeholder="0,000"'))}
-          <button ${on(add)} style="${BTN_PRIMARY};min-height:42px">${spin()}+ ${esc(Lx.addMove)}</button>
-        </div>
-      </div>
-      <div style="overflow-x:auto"><div style="min-width:560px">${c.tx.length?each(c.tx,t=>`
-        <div style="display:grid;grid-template-columns:56px minmax(0,1fr) 150px 140px;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line)">
-          <span style="font-family:var(--mono);font-size:12px;color:var(--mute)">${hm(t.created_at)}</span><span>${esc(t.label)}</span><span><span style="${css(badge((CASH_TYPES[t.type]||[0,'n'])[1]))}">${esc(li?(CASH_TYPES[t.type]||[t.type])[0]:t.type)}</span></span><span style="text-align:end;font-weight:700;color:${t.amount>0?'var(--gf)':'var(--ink)'}">${t.amount>0?'+':'−'}${esc(fmt(Math.abs(t.amount),u))}</span></div>`):empty()}</div></div>
-    </div>`;
-}
+/* tplCash lives in js/cash.js */
 
 function tplStats(){
   const Lx=L(),u=Lx.tnd,li=lang()==='ar'?1:0,s=state.stats;
