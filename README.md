@@ -1,64 +1,94 @@
 # SADEN Delivery
 
-PWA logistique (agence, livreurs, boutiques, suivi client) — frontend statique `public/` + API Node `api/` + PostgreSQL (**Supabase**). Déployable tel quel sur Vercel.
+PWA logistique multi-agences (gouvernorats → villes → zones → agences) : super admin, responsables d'agence, livreurs, boutiques, suivi client et API partenaires (Gafsa Mall). Frontend vanilla JS (`public/`), une seule fonction Vercel (`api/index.js` → `lib/`), PostgreSQL (**Supabase**), PGlite en local.
 
-## Accès par rôle
+## Rôles
 
-| Rôle | Connexion | Interface |
+| Rôle | Connexion | Accès |
 |---|---|---|
-| Admin (agence) | e-mail ou téléphone + mot de passe | tableau de bord, carte live, commandes, bordereaux, livreurs, caisse, stats, réclamations, **comptes** |
-| Livreur | compte créé par l'admin | missions du jour, GPS, statuts, preuve de livraison (OTP / photo / signature) |
-| Boutique | compte créé par l'admin | création de commandes, suivi de ses propres commandes, lien de suivi à partager |
-| Client | sans compte : n° de colis + téléphone (ou lien `/?t=SD-xxxxx`) | suivi en direct, code de livraison, note + réclamation |
+| **Super admin** (`admin`) | e-mail ou téléphone | tout, avec filtre agence global ; agences, villes / zones, tarifs, comptes, API partenaires, journal |
+| **Responsable d'agence** (`manager`) | e-mail ou téléphone | tableau de bord, commandes, bordereaux, livreurs, caisse, statistiques, réclamations, comptes livreurs / boutiques — **de son agence uniquement** |
+| **Livreur** (`driver`) | téléphone | missions, scan, statuts et incidents (motif obligatoire), preuve OTP / photo / signature, GPS avec consentement |
+| **Boutique** (`shop`) | téléphone | création de commandes (fiche complète + devis), suivi, annulation avant prise en charge, étiquettes |
+| **Client** | sans compte : n° de colis + téléphone (lien `/?t=SD-…`) | suivi, code de livraison, note et réclamation |
+| **Partenaire API** | clé `sk_live_…` | API `/api/v1` (voir [docs/API.md](docs/API.md)) |
 
-Administrateur : **hachem.jaxdelivery@gmail.com**. Au tout premier lancement (base vide), l'écran de connexion propose de créer ce compte (seule l'adresse définie dans `ADMIN_EMAIL` est acceptée). Autre possibilité : `npm run create-admin -- hachem.jaxdelivery@gmail.com "Hachem"` crée le compte directement et affiche un mot de passe.
+Administrateur de production : **hachem.jaxdelivery@gmail.com** (création au premier lancement, réservée à `ADMIN_EMAIL`, ou `npm run create-admin`).
+
+## Fonctionnalités (Cahier des charges V1 — Phase 1)
+
+- **Multi-agences** : gouvernorats, villes, zones et agences gérés dans l'admin (sans code) ; colis inter-villes = ville de départ ≠ ville d'arrivée ; agence de destination déduite de la zone.
+- **Périmètre** : un helper unique (`lib/scope.js` → `scopeWhere`) filtre chaque requête selon le rôle.
+- **Tarification** (`lib/pricing.js`) : règles par agence / villes / zone / boutique / type / poids / distance ; la plus spécifique gagne, règle par défaut obligatoire ; montants figés sur la commande (frais, part livreur, revenu Saden, montant à reverser).
+- **Fiche colis complète**, **QR + étiquette 10×15**, **scan caméra** (réception, bordereau, expédition, arrivée, retour, inventaire, livraison, ouverture de fiche).
+- **Bordereaux** : brouillon → validé → en transit → arrivé → clôturé, composition manuelle, réception colis par colis, manquants, PDF.
+- **Machine à états** serveur (`lib/status.js`) : transitions par rôle, motifs, annulation, flux retour, historique complet.
+- **Affectation intelligente** (`lib/assign.js`) : score détaillé, mode automatique par agence.
+- **Caisse par agence** : remises COD des livreurs, règlements boutiques, transferts liés.
+- **Statistiques filtrables**, **recherche globale**, **journal d'audit**, **notifications in-app**, **limites d'essais**.
 
 ## Lancer en local
 
 ```bash
 npm install
-npm run seed   # optionnel : données de démo (mot de passe : saden123 — admin 20000000, livreur 21000001, boutique 22000001)
-npm run dev    # http://localhost:3000
+npm run seed              # données de démo dans .data/ (PGlite) — jamais dans Supabase sans --remote
+npm run dev               # http://localhost:3000 (base locale si DATABASE_URL absent, ou avec DB=local)
+npm run test:permissions  # 45 contrôles d'accès (serveur lancé)
 ```
 
-Sans `DATABASE_URL`, une base PostgreSQL embarquée (PGlite) est créée dans `.data/`. Avec `DATABASE_URL` dans `.env`, l'app utilise ce serveur PostgreSQL.
+Comptes de démo (mot de passe `saden123`) :
+
+| Compte | Identifiant |
+|---|---|
+| Super admin | `20000000` |
+| Responsable Agence Gafsa / Agence Sousse | `20000001` / `20000002` |
+| Livreurs Gafsa / Sousse | `21000001`…`21000006` / `21000007`, `21000008` |
+| Boutiques Gafsa / Sousse | `22000001`…`22000005` / `22000006` |
+| Partenaire API « Gafsa Mall » | clé affichée une fois à la fin de `npm run seed` |
+
+Avec un `.env` pointant vers Supabase, préfixez par `DB=local` (`DB=local npm run dev`) pour travailler en local sans toucher à la production.
+
+## Variables d'environnement
+
+| Variable | Rôle |
+|---|---|
+| `DATABASE_URL` | URI PostgreSQL — Supabase : *Transaction pooler* (port 6543) |
+| `JWT_SECRET` | secret des sessions (chaîne longue aléatoire) |
+| `ADMIN_EMAIL` | seule adresse autorisée à créer l'administrateur au premier lancement |
+| `APP_TZ` | fuseau des statistiques (défaut `Africa/Tunis`) |
+| `DELIVERY_FEE`, `INTERCITY_FEE`, `DRIVER_SHARE` | **valeurs de départ** des règles tarifaires par défaut (créées une fois, puis gérées dans « Tarifs ») |
+| `RL_LOGIN_ID`, `RL_LOGIN_IP`, `RL_TRACK_REF`, `RL_TRACK_IP`, `RL_REVIEW_REF`, `RL_API_MIN` | seuils des limites d'essais (optionnels) |
+
+`AGENCY_CITY` n'est plus utilisé : les agences et villes sont des données. Une base existante est migrée automatiquement, sans perte : tout ce qui existait est rattaché à « Agence Gafsa ».
 
 ## Base de données Supabase
 
-Projet : `https://igjbhbxjrktqjvqalnaq.supabase.co`
+1. Supabase → **Project Settings → Database → Connection string → Transaction pooler** (port `6543`).
+2. Remplacer `[YOUR-PASSWORD]`, mettre l'URI dans `DATABASE_URL` (`.env` en local, variables Vercel en production).
 
-1. Supabase → **Project Settings → Database → Connection string** → onglet **Transaction pooler** (port `6543`, compatible Vercel/IPv4).
-2. Copier l'URI et remplacer `[YOUR-PASSWORD]` par le mot de passe de la base (Database → *Reset database password* si oublié).
-3. Mettre cette URI dans `DATABASE_URL` (fichier `.env` en local, variables d'environnement sur Vercel).
-
-Les tables sont créées automatiquement au premier appel, avec **Row Level Security activé** : l'API publique de Supabase (clé `anon`) n'a accès à rien, seule l'application (connexion PostgreSQL) lit et écrit les données.
+Schéma et migrations : `lib/schema.js`, versionnés (`SCHEMA_VERSION`) et exécutés une seule fois dans une transaction sous verrou (pas de course entre instances). **RLS activé sur toutes les tables** : l'API publique de Supabase (clé `anon`) n'a accès à rien.
 
 ## Déployer sur Vercel
 
-1. **Vercel → Add New → Project** et importer le dépôt GitHub `achrefmok/saden-delivery` (aucun réglage de build nécessaire).
-2. **Settings → Environment Variables** :
-   - `DATABASE_URL` = URI Supabase (Transaction pooler)
-   - `JWT_SECRET` = chaîne longue aléatoire
-   - `ADMIN_EMAIL` = `hachem.jaxdelivery@gmail.com`
-   - optionnel : `AGENCY_CITY`, `DELIVERY_FEE`, `DRIVER_SHARE`, `APP_TZ`
-3. Redéployer, ouvrir l'URL, créer le compte administrateur (ou utiliser `npm run create-admin`).
-
-Pour charger les données de démo dans Supabase : mettre la même `DATABASE_URL` dans `.env` puis `npm run seed`.
+1. Importer le dépôt `achrefmok/saden-delivery` (aucun réglage de build).
+2. Variables : `DATABASE_URL`, `JWT_SECRET`, `ADMIN_EMAIL` (cocher Production **et** Preview si les déploiements de branche doivent fonctionner).
+3. Redéployer : la migration s'applique au premier appel.
 
 ## Structure
 
 ```
-public/index.html          application (vanilla JS, responsive, FR/AR + RTL, clair/sombre)
-public/sw.js, manifest     PWA (installable, hors-ligne pour l'interface)
-api/index.js               fonction Vercel unique → lib/api.js (routeur)
-lib/api.js                 routes : auth, comptes, commandes, bordereaux, caisse, stats, suivi public
-lib/db.js, lib/schema.js   connexion PostgreSQL + schéma (créé automatiquement)
-scripts/dev.js, seed.js    serveur local, données de démo
-scripts/create-admin.js    crée / promeut un administrateur par e-mail
+public/index.html              coquille PWA (styles, thèmes, FR/AR + RTL)
+public/js/app.js               cœur : état, i18n, rendu, admin, livreur, boutique, client, cartes
+public/js/*.js                 modules : geo-admin, pricing, scan, manifests, partners, cash, stats,
+                               search, journal, claims, notifications
+api/index.js                   fonction Vercel unique → lib/api.js
+lib/http.js                    routeur, contexte de requête, erreurs
+lib/scope.js                   périmètre par rôle (scopeWhere)
+lib/status.js                  machine à états + historique + hooks
+lib/pricing.js, assign.js      tarification, affectation intelligente
+lib/partners.js, notify.js     clés API + webhooks signés, notifications
+lib/audit.js, ratelimit.js     journal d'audit, limites d'essais
+lib/routes/*.js                routes par domaine (dont v1.js = API partenaires)
+docs/API.md                    documentation de l'API partenaires
+scripts/                       dev, seed, create-admin, test-permissions
 ```
-
-## À savoir
-
-- Le code OTP de livraison s'affiche sur la page de suivi du client (pas d'envoi SMS intégré).
-- Les preuves photo/signature sont stockées compressées dans PostgreSQL.
-- Pas de limitation du nombre d'essais sur la connexion et le suivi public : à ajouter avant une mise en production à grande échelle.

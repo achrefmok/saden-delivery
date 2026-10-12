@@ -44,8 +44,9 @@ const mkUser = async (role, n, agency, extra = {}) => {
 const mA = await mkUser('manager', 1, agA), mB = await mkUser('manager', 2, agB);
 const sA = await mkUser('shop', 3, agA, { shop_name: `Shop A ${sfx}` }), sB = await mkUser('shop', 4, agB, { shop_name: `Shop B ${sfx}` });
 const dA = await mkUser('driver', 5, agA), dB = await mkUser('driver', 6, agB);
-const order = async shop => (await call('POST', 'orders', shop.token, { client_name: 'Perm', client_phone: '98 000 ' + shop.id % 1000, address: 'Rue test', dest_city_id: city.id, cod: 10 })).json.order;
+const order = async shop => (await call('POST', 'orders', shop.token, { client_name: 'Perm', client_phone: '98' + String(100000 + shop.id).slice(-6), address: 'Rue test', dest_city_id: city.id, cod: 10 })).json.order;
 const oA = await order(sA), oB = await order(sB);
+if (!oA || !oB) throw new Error('fixture orders could not be created');
 await call('POST', `orders/${oA.id}/assign`, mA.token, { driver_id: dA.id });
 await call('POST', `orders/${oB.id}/assign`, mB.token, { driver_id: dB.id });
 const other = geo.agencies.find(a => a.id !== agB.id && a.active);

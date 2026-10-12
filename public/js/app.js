@@ -180,7 +180,7 @@ async function refresh(silent){
   render();
 }
 function saveSession(s){state.session=s;store.set('saden.session',s);}
-function resetMaps(){Object.keys(MAPS).forEach(k=>{try{MAPS[k].map.remove();}catch{}delete MAPS[k];});}
+function resetMaps(){Object.keys(MAPS).forEach(k=>{try{MAPS[k].map.stop();MAPS[k].map.off();MAPS[k].map.remove();}catch{}delete MAPS[k];});}
 function logout(doRender=true){
   stopGeo();resetMaps();
   state.session=null;state.trackAuth=null;state.data=state.drv=state.shop=state.trk=state.users=state.stats=state.geo=null;state.sel=null;state.selData=null;state.page='dash';state.lv='home';state.cSent=null;
@@ -893,7 +893,7 @@ function drawMap(key,m){
     if(t.driver&&['livraison','sur_place','accepte','affecte'].includes(t.status))add(posOf(t.driver),{radius:8,fillColor:MAPC.navy},t.driver.name);
     fitKey+='track'+t.ref+(posOf(t.driver)?'d':'');
   }
-  if(m.fitKey!==fitKey&&pts.length){m.fitKey=fitKey;if(pts.length===1)m.map.setView(pts[0],15);else m.map.fitBounds(L_.latLngBounds(pts).pad(0.25),{maxZoom:15});}
+  if(m.fitKey!==fitKey&&pts.length){m.fitKey=fitKey;if(pts.length===1)m.map.setView(pts[0],15,{animate:false});else m.map.fitBounds(L_.latLngBounds(pts).pad(0.25),{maxZoom:15,animate:false});}
 }
 
 /* signature pad */
