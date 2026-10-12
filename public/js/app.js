@@ -25,7 +25,7 @@ shopSpace:['Espace boutique','فضاء المتجر'],shopPrivacy:['Vous ne voye
 track:['Suivi de colis','تتبع الطرد'],yourDriver:['Votre livreur','موزعك'],eta:['Arrivée estimée','الوصول المتوقع'],rateTitle:['Comment s’est passée la livraison ?','كيف كانت عملية التوصيل؟'],commentPh:['Ponctualité, communication, comportement…','الالتزام بالموعد، التواصل، السلوك…'],send:['Envoyer','إرسال'],thanks:['Merci pour votre retour','شكرا على ملاحظاتك'],
 reportOpen:['Signaler un problème','الإبلاغ عن مشكلة'],reportClose:['Annuler le signalement','إلغاء الإبلاغ'],
 deliveryCode:['Code de livraison','رمز التسليم'],deliveryCodeHint:['À donner au livreur uniquement à la remise du colis.','أعطه للموزع فقط عند استلام الطرد.'],otherParcel:['Suivre un autre colis','تتبع طرد آخر'],exception:['Livraison non effectuée','لم يتم التوصيل'],exceptionHint:['L’agence va vous recontacter pour une nouvelle tentative.','ستتصل بك الوكالة لمحاولة جديدة.'],updated:['Mis à jour','آخر تحديث'],
-tnd:['TND','د.ت'],stalePos:['position ancienne','موقع قديم'],score:['Score','النقاط'],bkAvail:['dispo.','التوفر'],bkDist:['distance','المسافة'],bkZone:['zone','المنطقة'],bkLoad:['charge','الحمل'],bkVeh:['véhicule','المركبة'],wrongNumber:['Numéro incorrect','رقم خاطئ'],wrongAddress:['Adresse incorrecte','عنوان خاطئ'],damaged:['Endommagé','تالف'],reasonRequired:['Motif obligatoire.','السبب إجباري.'],reasonOptional:['Motif (facultatif).','السبب (اختياري).'],reasonPh:['Expliquez ce qui s’est passé…','اشرح ما حدث…'],confirmAction:['Confirmer','تأكيد'],cancelOrder:['Annuler la commande','إلغاء الطلب'],senderOverride:['modifier l’expéditeur','تعديل المرسل'],parcel:['Colis','الطرد'],description:['Description','الوصف'],descPh:['Ex. 2 paires de chaussures','مثال: زوجان من الأحذية'],pieces:['Pièces','عدد القطع'],piecesShort:['pièces','قطع'],externalRef:['Réf. externe (boutique)','مرجع المتجر'],notes:['Notes / instructions','ملاحظات'],source:['Origine','المصدر'],vManager:['Responsable d’agence','مسؤول الوكالة'],rManager:['Responsable','مسؤول'],agencies:['Agences','الوكالات'],geo:['Villes / Zones','المدن / المناطق'],allAgencies:['Toutes les agences','كل الوكالات'],tagline:['Plateforme logistique multi-agences','منصة لوجستية متعددة الوكالات'],choose:['— Choisir —','— اختر —'],originAgency:['Agence de départ','وكالة الانطلاق'],loginId:['Téléphone ou e-mail','الهاتف أو البريد الإلكتروني'],email:['E-mail','البريد الإلكتروني'],optional:['facultatif','اختياري'],
+tnd:['TND','د.ت'],gpsNotShared:['Position non partagée (pause / hors ligne)','الموقع غير مشارك (استراحة / غير متصل)'],gpsConsentTitle:['Partage de votre position','مشاركة موقعك'],gpsConsentText:['Pour vous proposer les livraisons les plus proches et permettre aux clients de suivre leur colis, SADEN utilise votre position GPS.','لاقتراح أقرب التوصيلات وتمكين الحرفاء من تتبع طرودهم، يستعمل سادن موقعك.'],gpsC1:['Uniquement pendant le service (Disponible ou En livraison).','فقط أثناء العمل (متاح أو قيد التوصيل).'],gpsC2:['Jamais en pause ni hors ligne : la transmission s’arrête.','لا يتم الإرسال أثناء الاستراحة أو عند عدم الاتصال.'],gpsC3:['Visible par votre agence et, pendant une livraison, par le client concerné.','مرئي لوكالتك وللحريف أثناء التوصيل.'],gpsAccept:['J’accepte et je passe « Disponible »','أوافق وأصبح متاحا'],gpsRefuse:['Refuser','رفض'],stalePos:['position ancienne','موقع قديم'],score:['Score','النقاط'],bkAvail:['dispo.','التوفر'],bkDist:['distance','المسافة'],bkZone:['zone','المنطقة'],bkLoad:['charge','الحمل'],bkVeh:['véhicule','المركبة'],wrongNumber:['Numéro incorrect','رقم خاطئ'],wrongAddress:['Adresse incorrecte','عنوان خاطئ'],damaged:['Endommagé','تالف'],reasonRequired:['Motif obligatoire.','السبب إجباري.'],reasonOptional:['Motif (facultatif).','السبب (اختياري).'],reasonPh:['Expliquez ce qui s’est passé…','اشرح ما حدث…'],confirmAction:['Confirmer','تأكيد'],cancelOrder:['Annuler la commande','إلغاء الطلب'],senderOverride:['modifier l’expéditeur','تعديل المرسل'],parcel:['Colis','الطرد'],description:['Description','الوصف'],descPh:['Ex. 2 paires de chaussures','مثال: زوجان من الأحذية'],pieces:['Pièces','عدد القطع'],piecesShort:['pièces','قطع'],externalRef:['Réf. externe (boutique)','مرجع المتجر'],notes:['Notes / instructions','ملاحظات'],source:['Origine','المصدر'],vManager:['Responsable d’agence','مسؤول الوكالة'],rManager:['Responsable','مسؤول'],agencies:['Agences','الوكالات'],geo:['Villes / Zones','المدن / المناطق'],allAgencies:['Toutes les agences','كل الوكالات'],tagline:['Plateforme logistique multi-agences','منصة لوجستية متعددة الوكالات'],choose:['— Choisir —','— اختر —'],originAgency:['Agence de départ','وكالة الانطلاق'],loginId:['Téléphone ou e-mail','الهاتف أو البريد الإلكتروني'],email:['E-mail','البريد الإلكتروني'],optional:['facultatif','اختياري'],
 login:['Connexion','تسجيل الدخول'],staffTab:['Espace pro','الفضاء المهني'],trackTab:['Suivre mon colis','تتبع طردي'],loginSub:['Agence, livreurs et boutiques','الوكالة، الموزعون والمتاجر'],password:['Mot de passe','كلمة المرور'],signIn:['Se connecter','دخول'],
 trackSub:['Entrez le numéro du colis et votre numéro de téléphone.','أدخل رقم الطرد ورقم هاتفك.'],parcelNo:['N° de colis','رقم الطرد'],trackBtn:['Suivre le colis','تتبع الطرد'],
 setupTitle:['Compte administrateur','حساب المشرف'],setupSub:['Première utilisation : créez le compte de l’agence.','أول استعمال: أنشئ حساب الوكالة.'],fullName:['Nom complet','الاسم الكامل'],password2:['Confirmer le mot de passe','تأكيد كلمة المرور'],createAdmin:['Créer et se connecter','إنشاء والدخول'],pwdMismatch:['Les mots de passe ne correspondent pas.','كلمتا المرور غير متطابقتين.'],
@@ -145,7 +145,7 @@ async function api(path,{method='GET',body}={}){
   state.offline=false;
   let j={};try{j=await r.json();}catch{}
   if(r.status===401&&state.session&&!path.startsWith('auth/')){logout(false);throw new Error(j.error||'Session expirée');}
-  if(!r.ok)throw new Error(j.error||('Erreur '+r.status));
+  if(!r.ok)throw Object.assign(new Error(j.error||('Erreur '+r.status)),{status:r.status,code:j.code});
   return j;
 }
 async function act(fn,okMsg){
@@ -172,7 +172,7 @@ async function refresh(silent){
       if(state.page==='cash')await loadCash();
       if(state.page==='partners')[state.partners,state.webhooks]=await Promise.all([api('partners').then(r=>r.partners),api('webhooks').then(r=>r.deliveries)]);
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
-    }else if(r==='driver'){state.drv=await api('driver/overview');}
+    }else if(r==='driver'){state.drv=await api('driver/overview');startGeo();}
     else if(r==='shop'){state.shop=await api('shop/overview');}
     else if(r==='client'){state.trk=await api('track',{method:'POST',body:state.trackAuth});}
   }catch(e){if(!silent)toast(e.message,'err');}
@@ -196,14 +196,17 @@ async function afterLogin(){
    driver geolocation
    ========================================================= */
 let geoWatch=null,lastSent=0,battery=null;
+const geoSharing=()=>{const me=state.drv?.me;return !!me&&!!me.gps_consent_at&&['dispo','livraison'].includes(me.status);};
 function startGeo(){
+  // §12: the position is shared only while on duty (Disponible / En livraison) and after explicit consent
+  if(!geoSharing()){stopGeo();return;}
   if(!('geolocation' in navigator)||geoWatch!=null){if(!('geolocation' in navigator))state.geoErr=true;return;}
   navigator.getBattery?.().then(b=>{battery=b;}).catch(()=>{});
   geoWatch=navigator.geolocation.watchPosition(p=>{
     state.myPos=[p.coords.latitude,p.coords.longitude];
     if(state.geoErr){state.geoErr=false;render();}
     const st=state.drv?.me?.status;
-    if(Date.now()-lastSent>20000&&st!=='off'){lastSent=Date.now();api('me/location',{method:'POST',body:{lat:state.myPos[0],lng:state.myPos[1],battery:battery?Math.round(battery.level*100):null}}).catch(()=>{});}
+    if(Date.now()-lastSent>20000&&geoSharing()){lastSent=Date.now();api('me/location',{method:'POST',body:{lat:state.myPos[0],lng:state.myPos[1],battery:battery?Math.round(battery.level*100):null}}).catch(()=>{});}
   },()=>{state.geoErr=true;render();},{enableHighAccuracy:true,maximumAge:15000,timeout:30000});
 }
 function stopGeo(){if(geoWatch!=null){navigator.geolocation.clearWatch(geoWatch);geoWatch=null;}}
@@ -713,11 +716,13 @@ function tplDriver(){
     const pending=ms.filter(m=>ACTIVE_ST.includes(m.status));
     const status=me.status;
     const avail=status==='dispo'||status==='livraison';
-    const toggle=()=>act(()=>api('me/status',{method:'POST',body:{status:status==='off'||status==='pause'?'dispo':'pause'}}));
+    const toggle=()=>act(async()=>{const next=status==='off'||status==='pause'?'dispo':'pause';
+      try{await api('me/status',{method:'POST',body:{status:next}});}
+      catch(e){if(e.code==='gps_consent_required'){state.modal={type:'gpsConsent'};return;}throw e;}});
     screen=`<div style="background:var(--navy);color:oklch(0.98 0.005 262);padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b style="font-family:var(--disp);font-size:24px">${esc(Lx.hello)} ${esc(me.name.split(' ')[0])}</b>
         <button ${on(toggle)} style="${css({minHeight:36,padding:'0 14px',borderRadius:999,border:'none',fontWeight:700,cursor:'pointer',background:status==='off'?'oklch(0.85 0.01 262)':avail?'oklch(0.66 0.15 150)':'oklch(0.78 0.14 85)',color:'oklch(0.18 0.03 262)',whiteSpace:'nowrap'})}">${esc(status==='off'?Lx.startShift:(DS[status]||DS.off)[li])}</button></div>
-      <span style="font-size:12px;color:oklch(0.82 0.03 262)">◎ ${esc(state.geoErr?Lx.gpsOff:Lx.gpsShare)}</span>
+      <span style="font-size:12px;display:flex;align-items:center;gap:6px;color:oklch(0.82 0.03 262)"><span style="width:8px;height:8px;border-radius:50%;background:${geoSharing()&&!state.geoErr?'oklch(0.72 0.17 150)':'oklch(0.6 0.02 262)'}"></span>${esc(!geoSharing()?Lx.gpsNotShared:state.geoErr?Lx.gpsOff:Lx.gpsShare)}</span>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
         ${each([[pending.length,Lx.toDeliver],[ms.filter(m=>m.status==='livre').length,Lx.done],[pending.reduce((a,m)=>a+m.cod,0).toLocaleString('fr-FR'),Lx.toCollect+' ('+u+')']],([v,l])=>`<div style="background:oklch(1 0 0 / 0.08);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:2px"><span style="font-family:var(--disp);font-size:22px;font-weight:700">${esc(v)}</span><span style="font-size:11px;color:oklch(0.85 0.02 262)">${esc(l)}</span></div>`)}
       </div>
@@ -851,6 +856,10 @@ function tplModal(){
   else if(m.type==='proof'){title=Lx.proof;inner=`<img src="${m.src}" alt="" style="max-width:100%;border-radius:var(--r);background:#fff">`;}
   else if(m.type==='secret'){title=m.title;inner=`<div style="padding:10px;border-radius:var(--r);background:var(--wb);color:var(--wf);font-weight:600;font-size:12.5px">${esc(Lx.secretOnce)}</div>
       ${each(m.rows,([k,v])=>`<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:var(--mute)">${esc(k)}</span><div style="display:flex;gap:6px"><input class="fld" readonly value="${esc(v)}" style="font-family:var(--mono);font-size:12.5px"><button ${on(()=>navigator.clipboard.writeText(v).then(()=>toast(Lx.copied)).catch(()=>{}))} style="${BTN_GHOST}">${esc(Lx.copy)}</button></div></div>`)}`;}
+  else if(m.type==='gpsConsent'){title=Lx.gpsConsentTitle;inner=`<p style="margin:0;line-height:1.5">${esc(Lx.gpsConsentText)}</p>
+      <ul style="margin:0;padding-inline-start:18px;line-height:1.6;color:var(--mute)"><li>${esc(Lx.gpsC1)}</li><li>${esc(Lx.gpsC2)}</li><li>${esc(Lx.gpsC3)}</li></ul>
+      <button ${on(()=>act(async()=>{await api('me/status',{method:'POST',body:{status:'dispo',gps_consent:true}});state.modal=null;}))} style="${BTN_PRIMARY};min-height:48px">${spin()}${esc(Lx.gpsAccept)}</button>
+      <button ${on(set({modal:null}))} style="${BTN_GHOST}">${esc(Lx.gpsRefuse)}</button>`;}
   else if(m.type==='reason'){title=m.title;inner=`<span style="color:var(--mute)">${esc(m.required?Lx.reasonRequired:Lx.reasonOptional)}</span>
       <textarea class="fld" rows="3" style="resize:vertical" ${onInput(e=>{state.reasonText=e.target.value;},'reason')} placeholder="${esc(Lx.reasonPh)}">${esc(state.reasonText||'')}</textarea>
       <button ${on(()=>{const n=(state.reasonText||'').trim();if(m.required&&!n)return toast(Lx.reasonRequired,'err');const fn=m.onSubmit;state.modal=null;state.reasonText='';fn(n);})} style="${BTN_PRIMARY};min-height:46px">${spin()}${esc(Lx.confirmAction)}</button>`;}
