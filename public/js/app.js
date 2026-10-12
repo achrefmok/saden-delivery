@@ -107,11 +107,11 @@ const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.
    state
    ========================================================= */
 const prefersDark=()=>{try{return matchMedia('(prefers-color-scheme: dark)').matches;}catch{return false;}};
-const emptyOrder=()=>({shop_id:'',origin_agency_id:'',client_name:'',client_phone:'',dest_city_id:'',zone_id:'',address:'',cod:'',lat:null,lng:null});
+const emptyOrder=()=>({shop_id:'',origin_agency_id:'',client_name:'',client_phone:'',dest_city_id:'',zone_id:'',address:'',cod:'',payment_mode:'cod',weight:'',parcel_type:'',lat:null,lng:null});
 let state={
   prefs:{dir:'a',theme:prefersDark()?'dark':'light',lang:'fr',...store.get('saden.prefs',{})},
   session:store.get('saden.session',null), trackAuth:store.get('saden.track',null),
-  boot:true, needsSetup:false, geo:null, agencyFilter:store.get('saden.agencyFilter',''), offline:false, busy:false, toast:null, modal:null,
+  boot:true, needsSetup:false, geo:null, pricing:null, quotes:{}, agencyFilter:store.get('saden.agencyFilter',''), offline:false, busy:false, toast:null, modal:null,
   loginTab:'staff', login:{phone:'',password:''}, setup:{name:'',email:'',phone:'',password:'',password2:''}, setupEmail:null, track:{ref:'',phone:''}, loginErr:null,
   // admin
   page:'dash', data:null, stats:null, users:null, filter:'all', q:'', sel:null, selData:null, amode:'auto', selDrv:null, selBrd:null, period:0,
@@ -166,6 +166,7 @@ async function refresh(silent){
       state.data=d;if(extra)state.stats=extra;
       if(state.page==='accounts'||state.page==='agencies')state.users=(await api('users'+(af&&state.page==='accounts'?'?'+af:''))).users;
       if(['agencies','geo'].includes(state.page))state.geo=await api('geo');
+      if(state.page==='pricing')state.pricing=await api('pricing');
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
     }else if(r==='driver'){state.drv=await api('driver/overview');}
     else if(r==='shop'){state.shop=await api('shop/overview');}
@@ -230,6 +231,8 @@ const pill=on=>({padding:'5px 11px',borderRadius:999,border:'none',cursor:'point
 const segGroup=(list,cls='')=>`<div class="${cls}" style="display:flex;gap:2px;background:oklch(0.22 0.035 262);padding:3px;border-radius:8px">${each(list,v=>`<button ${on(v.go)} style="${css(v.st)}">${esc(v.label)}</button>`)}</div>`;
 const kpiCard=(label,value,sub)=>`<div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font-size:12px;color:var(--mute);font-weight:500">${esc(label)}</span><span style="font-family:var(--disp);font-size:var(--kpi);font-weight:700;line-height:1;overflow-wrap:anywhere">${esc(value)}</span>${when(sub!=null,`<span style="font-size:12px;color:var(--mute)">${esc(sub)}</span>`)}</div>`;
 const field=(label,inner)=>`<label style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:12px;color:var(--mute)">${esc(label)}</span>${inner}</label>`;
+// input that also refreshes the live price quote of an order form
+const inputQ=(key,obj,prop,attrs='')=>`<input class="fld" ${onInput(e=>{state[obj]={...state[obj],[prop]:e.target.value};requestQuote(obj);},key)} value="${esc(state[obj][prop])}" ${attrs}>`;
 const input=(key,obj,prop,attrs='')=>`<input class="fld" ${onInput(e=>{state[obj]={...state[obj],[prop]:e.target.value};},key)} value="${esc(state[obj][prop])}" ${attrs}>`;
 const select=(key,obj,prop,opts,rerender=false)=>`<select class="fld" ${onInput(e=>{state[obj]={...state[obj],[prop]:e.target.value};if(rerender)render();},key)}>${each(opts,([v,l])=>`<option value="${esc(v)}"${String(v)===String(state[obj][prop])?' selected':''}>${esc(l)}</option>`)}</select>`;
 const stL=k=>(ST[k]||[k,k])[lang()==='ar'?1:0],stB=k=>badge((ST[k]||[0,0,'n'])[2]);
@@ -302,14 +305,14 @@ function tplLogin(){
 /* =========================================================
    ADMIN
    ========================================================= */
-const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['brd','BR'],['drivers','LV'],['cash','CS'],['stats','ST'],['claims','RC'],['accounts','AC'],['agencies','AG','admin'],['geo','VZ','admin']];
+const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['brd','BR'],['drivers','LV'],['cash','CS'],['stats','ST'],['claims','RC'],['accounts','AC'],['pricing','TF'],['agencies','AG','admin'],['geo','VZ','admin']];
 const navFor=()=>NAV.filter(n=>!n[2]||n[2]===role());
 const scopeName=()=>role()==='manager'?myAgency()?.name||'—':(agencyById(state.agencyFilter)?.name||L().allAgencies);
 function goPage(p){
   state.page=p;state.sel=null;state.selData=null;
   if(p!=='orders')state.q='';
   render();
-  if(['stats','accounts','agencies','geo'].includes(p))refresh(true);
+  if(['stats','accounts','agencies','geo','pricing'].includes(p))refresh(true);
   scrollTo(0,0);
 }
 function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';render();api('orders/'+id).then(d=>{if(state.sel===id){state.selData=d;render();}}).catch(e=>toast(e.message,'err'));}
@@ -418,7 +421,7 @@ function tplOrderDetail(){
   const list=state.amode==='auto'?cand.slice(0,3):cand;
   const canAssign=['attente','arrive','reporte','absent','affecte'].includes(o.status);
   const assign=x=>()=>act(()=>api(`orders/${o.id}/assign`,{method:'POST',body:{driver_id:x.id}}),Lx.saved);
-  const facts=[[Lx.sender,o.shop_name||Lx.agencyLbl],[Lx.recipient,o.client_name],[Lx.phone,fmtPhone(o.client_phone)],[Lx.address,(o.zone_name?o.zone_name+' · ':'')+o.address],[Lx.cod,fmt(o.cod,u)],[Lx.driver,o.driver_name||'—'],[Lx.otpCode,o.otp],[Lx.destCity,o.dest_city_name||'—'],[Lx.agencies,(o.origin_agency_name||'—')+(o.dest_agency_name&&o.dest_agency_id!==o.origin_agency_id?' → '+o.dest_agency_name:'')]];
+  const facts=[[Lx.sender,o.shop_name||Lx.agencyLbl],[Lx.recipient,o.client_name],[Lx.phone,fmtPhone(o.client_phone)],[Lx.address,(o.zone_name?o.zone_name+' · ':'')+o.address],[Lx.cod,fmt(o.cod,u)],[Lx.driver,o.driver_name||'—'],[Lx.otpCode,o.otp],[Lx.payment,pmL(o.payment_mode)],[Lx.deliveryFee,fmt(o.delivery_fee,u)],[Lx.toRemit,fmt(o.amount_to_remit,u)],[Lx.destCity,o.dest_city_name||'—'],[Lx.agencies,(o.origin_agency_name||'—')+(o.dest_agency_name&&o.dest_agency_id!==o.origin_agency_id?' → '+o.dest_agency_name:'')]];
   return `<div style="${CARD};display:flex;flex-direction:column;align-self:start;min-width:0">
     <div style="padding:var(--pad);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--line)">
       <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:var(--mute)">${esc(Lx.detail)} · ${esc(o.intercity?Lx.inter:Lx.local)}</span><b style="font-family:var(--mono);font-size:17px">${esc(o.ref)}</b><span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span></div>
@@ -542,11 +545,11 @@ function tplDrivers(){
 
 function tplCash(){
   const Lx=L(),u=Lx.tnd,li=lang()==='ar'?1:0,d=state.data,c=d.cash,k=d.kpis;
-  const nDel=k.delivered,shops=k.cod_today,saden=nDel*(d.fee-d.driverShare),drv=nDel*d.driverShare,tot=shops+saden+drv||1;
+  const shops=Math.max(0,k.remit_today),saden=k.saden_today,drv=k.drivers_today,tot=shops+saden+drv||1;
   const parts=[[Lx.sClient,shops,'var(--navy)'],[Lx.sSaden,saden,'var(--orange)'],[Lx.sDriver,drv,'oklch(0.7 0.1 150)']];
   const add=()=>act(async()=>{await api('cash',{method:'POST',body:state.cform});state.cform={label:'',type:state.cform.type,amount:''};},Lx.saved);
   return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:var(--gap)">
-      ${kpiCard(Lx.income,fmt(c.income,u))}${kpiCard(Lx.expenses,fmt(c.expenses,u))}${kpiCard(Lx.balance,fmt(c.balance,u))}${kpiCard(Lx.toPay,fmt(Math.max(0,c.cod_delivered-c.settled),u))}
+      ${kpiCard(Lx.income,fmt(c.income,u))}${kpiCard(Lx.expenses,fmt(c.expenses,u))}${kpiCard(Lx.balance,fmt(c.balance,u))}${kpiCard(Lx.toPay,fmt(Math.max(0,c.remit_delivered-c.settled),u))}
     </div>
     <div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:12px">
       <b>${esc(Lx.split)}</b>
@@ -677,7 +680,7 @@ function tplOrderForm(key,withShop){
   if(state[key].zone_id&&zoneById(state[key].zone_id)?.city_id!==+state[key].dest_city_id)state[key]={...state[key],zone_id:''};
   const f=state[key];
   const shops=state.data?.shops||[];
-  const submit=()=>act(async()=>{const r=await api('orders',{method:'POST',body:state[key]});state[key]={...emptyOrder(),shop_id:state[key].shop_id};if(key==='oform')state.modal=null;state.shopSent=r.order.ref;toast(Lx.orderCreated+' : '+r.order.ref);});
+  const submit=()=>act(async()=>{const r=await api('orders',{method:'POST',body:state[key]});state[key]={...emptyOrder(),shop_id:state[key].shop_id};delete state.quotes[key];if(key==='oform')state.modal=null;state.shopSent=r.order.ref;toast(Lx.orderCreated+' : '+r.order.ref);});
   return `<div style="display:flex;flex-direction:column;gap:12px">
     ${when(withShop&&role()==='admin',()=>field(Lx.originAgency,select(key+'-orig',key,'origin_agency_id',[['',L().auto],...agencyOptions()])))}
     ${when(withShop,field(Lx.shopOpt,select(key+'-shop',key,'shop_id',[['',Lx.agencyDirect],...shops.filter(s=>s.active).map(s=>[s.id,s.shop_name])])))}
@@ -689,7 +692,15 @@ function tplOrderForm(key,withShop){
     </div>
     ${field(Lx.address,input(key+'-addr',key,'address','placeholder="Rue, quartier, repère"'))}
     <button ${on(()=>useGps(key))} style="padding:10px;border-radius:var(--r);border:1px dashed var(--line);background:transparent;font-weight:600;cursor:pointer;text-align:start;color:var(--ink)">◎ ${esc(f.lat!=null?'GPS · '+f.lat+', '+f.lng:Lx.useGps)}</button>
-    ${field(Lx.cod+' ('+u+')',input(key+'-cod',key,'cod','inputmode="decimal" placeholder="0,000"'))}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${field(Lx.payment,select(key+'-pm',key,'payment_mode',Object.keys(PAYMENT_MODES).map(k=>[k,pmL(k)]),true))}
+      ${f.payment_mode==='prepaid'?field(Lx.cod+' ('+u+')',`<input class="fld" value="0,000" disabled>`):field(Lx.cod+' ('+u+')',inputQ(key+'-cod',key,'cod','inputmode="decimal" placeholder="0,000"'))}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${field(Lx.weight,inputQ(key+'-w',key,'weight','inputmode="decimal" placeholder="—"'))}
+      ${field(Lx.parcelType,select(key+'-pt',key,'parcel_type',[['','—'],...Object.keys(PARCEL_TYPES).map(k=>[k,ptL(k)])],true))}
+    </div>
+    ${tplQuote(key)}
     <button ${on(submit)} style="${BTN_PRIMARY};min-height:46px">${spin()}${esc(Lx.submit)}</button>
   </div>`;
 }
@@ -697,7 +708,7 @@ function tplOrderForm(key,withShop){
 function tplAdmin(){
   const Lx=L(),p=state.page;
   if(!state.data)return `<div style="padding:40px;text-align:center;color:var(--mute)"><span class="spin"></span></div>`;
-  const page=({dash:tplDash,map:tplMap,orders:tplOrders,brd:tplBrd,drivers:tplDrivers,cash:tplCash,stats:tplStats,claims:tplClaims,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo}[p]||tplDash)();
+  const page=({dash:tplDash,map:tplMap,orders:tplOrders,brd:tplBrd,drivers:tplDrivers,cash:tplCash,stats:tplStats,claims:tplClaims,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing}[p]||tplDash)();
   const dir=state.prefs.dir;
   return `<div class="shell" style="display:flex;flex-direction:${dir==='b'?'column':'row'};flex:1;min-height:0">
     ${tplNav()}
