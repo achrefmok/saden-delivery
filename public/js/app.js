@@ -25,7 +25,7 @@ shopSpace:['Espace boutique','فضاء المتجر'],shopPrivacy:['Vous ne voye
 track:['Suivi de colis','تتبع الطرد'],yourDriver:['Votre livreur','موزعك'],eta:['Arrivée estimée','الوصول المتوقع'],rateTitle:['Comment s’est passée la livraison ?','كيف كانت عملية التوصيل؟'],commentPh:['Ponctualité, communication, comportement…','الالتزام بالموعد، التواصل، السلوك…'],send:['Envoyer','إرسال'],thanks:['Merci pour votre retour','شكرا على ملاحظاتك'],
 reportOpen:['Signaler un problème','الإبلاغ عن مشكلة'],reportClose:['Annuler le signalement','إلغاء الإبلاغ'],
 deliveryCode:['Code de livraison','رمز التسليم'],deliveryCodeHint:['À donner au livreur uniquement à la remise du colis.','أعطه للموزع فقط عند استلام الطرد.'],otherParcel:['Suivre un autre colis','تتبع طرد آخر'],exception:['Livraison non effectuée','لم يتم التوصيل'],exceptionHint:['L’agence va vous recontacter pour une nouvelle tentative.','ستتصل بك الوكالة لمحاولة جديدة.'],updated:['Mis à jour','آخر تحديث'],
-tnd:['TND','د.ت'],senderOverride:['modifier l’expéditeur','تعديل المرسل'],parcel:['Colis','الطرد'],description:['Description','الوصف'],descPh:['Ex. 2 paires de chaussures','مثال: زوجان من الأحذية'],pieces:['Pièces','عدد القطع'],piecesShort:['pièces','قطع'],externalRef:['Réf. externe (boutique)','مرجع المتجر'],notes:['Notes / instructions','ملاحظات'],source:['Origine','المصدر'],vManager:['Responsable d’agence','مسؤول الوكالة'],rManager:['Responsable','مسؤول'],agencies:['Agences','الوكالات'],geo:['Villes / Zones','المدن / المناطق'],allAgencies:['Toutes les agences','كل الوكالات'],tagline:['Plateforme logistique multi-agences','منصة لوجستية متعددة الوكالات'],choose:['— Choisir —','— اختر —'],originAgency:['Agence de départ','وكالة الانطلاق'],loginId:['Téléphone ou e-mail','الهاتف أو البريد الإلكتروني'],email:['E-mail','البريد الإلكتروني'],optional:['facultatif','اختياري'],
+tnd:['TND','د.ت'],wrongNumber:['Numéro incorrect','رقم خاطئ'],wrongAddress:['Adresse incorrecte','عنوان خاطئ'],damaged:['Endommagé','تالف'],reasonRequired:['Motif obligatoire.','السبب إجباري.'],reasonOptional:['Motif (facultatif).','السبب (اختياري).'],reasonPh:['Expliquez ce qui s’est passé…','اشرح ما حدث…'],confirmAction:['Confirmer','تأكيد'],cancelOrder:['Annuler la commande','إلغاء الطلب'],senderOverride:['modifier l’expéditeur','تعديل المرسل'],parcel:['Colis','الطرد'],description:['Description','الوصف'],descPh:['Ex. 2 paires de chaussures','مثال: زوجان من الأحذية'],pieces:['Pièces','عدد القطع'],piecesShort:['pièces','قطع'],externalRef:['Réf. externe (boutique)','مرجع المتجر'],notes:['Notes / instructions','ملاحظات'],source:['Origine','المصدر'],vManager:['Responsable d’agence','مسؤول الوكالة'],rManager:['Responsable','مسؤول'],agencies:['Agences','الوكالات'],geo:['Villes / Zones','المدن / المناطق'],allAgencies:['Toutes les agences','كل الوكالات'],tagline:['Plateforme logistique multi-agences','منصة لوجستية متعددة الوكالات'],choose:['— Choisir —','— اختر —'],originAgency:['Agence de départ','وكالة الانطلاق'],loginId:['Téléphone ou e-mail','الهاتف أو البريد الإلكتروني'],email:['E-mail','البريد الإلكتروني'],optional:['facultatif','اختياري'],
 login:['Connexion','تسجيل الدخول'],staffTab:['Espace pro','الفضاء المهني'],trackTab:['Suivre mon colis','تتبع طردي'],loginSub:['Agence, livreurs et boutiques','الوكالة، الموزعون والمتاجر'],password:['Mot de passe','كلمة المرور'],signIn:['Se connecter','دخول'],
 trackSub:['Entrez le numéro du colis et votre numéro de téléphone.','أدخل رقم الطرد ورقم هاتفك.'],parcelNo:['N° de colis','رقم الطرد'],trackBtn:['Suivre le colis','تتبع الطرد'],
 setupTitle:['Compte administrateur','حساب المشرف'],setupSub:['Première utilisation : créez le compte de l’agence.','أول استعمال: أنشئ حساب الوكالة.'],fullName:['Nom complet','الاسم الكامل'],password2:['Confirmer le mot de passe','تأكيد كلمة المرور'],createAdmin:['Créer et se connecter','إنشاء والدخول'],pwdMismatch:['Les mots de passe ne correspondent pas.','كلمتا المرور غير متطابقتين.'],
@@ -43,9 +43,9 @@ period:[['14 jours','14 يوما'],['7 jours','7 أيام'],['Trimestre','الث
 ordersToday:["Commandes aujourd'hui",'طلبات اليوم'],deliveredK:['Livrées','تم تسليمها'],driversAvail:['Livreurs disponibles','موزعون متاحون'],codToday:['Encaissé (COD)','المبالغ المحصلة'],vsYesterday:['vs hier','مقارنة بالأمس'],
 monthOrders:['Commandes du mois','طلبات الشهر'],inProgressK:['En cours','جارية'],toReceive:['COD livré ce mois','المبالغ المحصلة هذا الشهر'],noReviews:['Aucun avis pour le moment.','لا توجد تقييمات بعد.'],paid:['Payé','مدفوع'],
 deliv:['liv.','توصيل']};
-const ST={cree:['Créé','تم الإنشاء','n'],attente:['En attente','في الانتظار','w'],affecte:['Affecté','مُسند','i'],accepte:['Accepté','مقبول','i'],ramasse:['Ramassé','تم الاستلام','i'],transit:['En transit','في العبور','i'],arrive:['Arrivé agence dest.','وصل لوكالة الوجهة','i'],livraison:['En livraison','قيد التوصيل','o'],sur_place:['Livreur sur place','الموزع في المكان','o'],livre:['Livré','تم التسليم','g'],absent:['Client absent','الحريف غائب','r'],refuse:['Refusé','مرفوض','r'],reporte:['Reporté','مؤجل','w']};
+const ST={cree:['Créé','تم الإنشاء','n'],attente:['En attente','في الانتظار','w'],affecte:['Affecté','مُسند','i'],accepte:['Accepté','مقبول','i'],ramasse:['Ramassé','تم الاستلام','i'],transit:['En transit','في العبور','i'],arrive:['Arrivé agence dest.','وصل لوكالة الوجهة','i'],livraison:['En livraison','قيد التوصيل','o'],sur_place:['Livreur sur place','الموزع في المكان','o'],livre:['Livré','تم التسليم','g'],absent:['Client absent','الحريف غائب','r'],refuse:['Refusé','مرفوض','r'],reporte:['Reporté','مؤجل','w'],en_agence:['Reçu en agence','في الوكالة','i'],numero_incorrect:['Numéro incorrect','رقم خاطئ','r'],adresse_incorrecte:['Adresse incorrecte','عنوان خاطئ','r'],endommage:['Endommagé','تالف','r'],perdu:['Perdu','مفقود','r'],annule:['Annulé','ملغى','n'],retour:['En retour','في الإرجاع','w'],retour_agence:['Retour en agence','عاد إلى الوكالة','w'],restitue:['Restitué à l’expéditeur','أعيد إلى المرسل','n']};
 const DS={dispo:['Disponible','متاح','g'],livraison:['En livraison','قيد التوصيل','o'],pause:['En pause','في استراحة','w'],off:['Hors ligne','غير متصل','n']};
-const MS={affecte:['Nouvelle','جديدة','n'],accepte:['Acceptée','مقبولة','i'],livraison:['En route','في الطريق','o'],sur_place:['Arrivé','وصلت','o'],livre:['Livré','تم التسليم','g'],absent:['Client absent','الحريف غائب','r'],refuse:['Refusé','مرفوض','r'],reporte:['Reporté','مؤجل','w']};
+const MS={affecte:['Nouvelle','جديدة','n'],accepte:['Acceptée','مقبولة','i'],livraison:['En route','في الطريق','o'],sur_place:['Arrivé','وصلت','o'],livre:['Livré','تم التسليم','g'],absent:['Client absent','الحريف غائب','r'],refuse:['Refusé','مرفوض','r'],reporte:['Reporté','مؤجل','w'],ramasse:['Ramassé','تم الاستلام','i'],numero_incorrect:['Numéro incorrect','رقم خاطئ','r'],adresse_incorrecte:['Adresse incorrecte','عنوان خاطئ','r'],endommage:['Endommagé','تالف','r'],annule:['Annulée','ملغاة','n'],retour:['En retour','في الإرجاع','w']};
 const CS=[['Nouvelle','جديدة','r'],['En cours','قيد المعالجة','o'],['Traitée','تمت المعالجة','i'],['Fermée','مغلقة','g']];
 const CATS=[['Retard','تأخير'],['Comportement du livreur','سلوك الموزع'],['Colis endommagé','طرد تالف'],["Problème d'encaissement",'مشكلة في الدفع'],["Problème d'adresse",'مشكلة في العنوان'],['Commande non livrée','طلب لم يُسلَّم'],['Autre','أخرى']];
 const BST=[['Brouillon','مسودة'],['Validé','مؤكد'],['Expédié','مشحون'],['Reçu','مستلم'],['Fermé','مغلق']];
@@ -53,7 +53,9 @@ const BNEXT=[['Valider','تأكيد'],['Expédier','شحن'],['Réceptionner','�
 const CASH_TYPES={Encaissement:['التحصيل','g'],'Paiement livreur':['خلاص موزع','i'],'Dépense':['مصروف','r'],'Règlement':['تسوية','o'],Transfert:['تحويل','i'],Correction:['تصحيح','w']};
 const AGENCY_POS=[34.4250,8.7842]; // fallback map centre (Gafsa) when no agency has coordinates
 const VEHICLES=['Moto','Scooter','Voiture','Vélo','Camionnette'];
-const ACTIVE_ST=['affecte','accepte','livraison','sur_place'],EXC=['absent','refuse','reporte'];
+const ACTIVE_ST=['affecte','accepte','ramasse','livraison','sur_place'],DRIVER_EXC=['absent','refuse','reporte','numero_incorrect','adresse_incorrecte','endommage'],EXC=[...DRIVER_EXC,'perdu'],RETURNS=['retour','retour_agence','restitue'];
+// verbs for the status buttons computed by the server (GET /orders/:id → allowed)
+const ACTION={attente:['Remettre en attente','إعادة للانتظار'],en_agence:['Reçu en agence','استلام في الوكالة'],retour:['Retour à l’expéditeur','إرجاع للمرسل'],retour_agence:['Retour reçu en agence','استلام الإرجاع'],restitue:['Restitué à l’expéditeur','تسليم للمرسل'],annule:['Annuler le colis','إلغاء الطرد'],perdu:['Déclarer perdu','التصريح بالضياع'],endommage:['Déclarer endommagé','التصريح بالتلف'],arrive:['Arrivé en agence','وصل إلى الوكالة']};
 
 /* =========================================================
    helpers
@@ -433,7 +435,8 @@ function tplOrderDetail(){
     <div style="padding:var(--pad);display:grid;grid-template-columns:1fr 1fr;gap:12px;border-bottom:1px solid var(--line)">
       ${each(facts,([k2,v])=>`<div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:11.5px;color:var(--mute)">${esc(k2)}</span><span style="font-weight:600;overflow-wrap:anywhere;${k2===Lx.otpCode?'font-family:var(--mono);letter-spacing:.15em':''}">${esc(v)}</span></div>`)}
     </div>
-    ${when(EXC.includes(o.status),`<div style="padding:var(--pad);border-bottom:1px solid var(--line)"><button ${on(()=>act(()=>api(`orders/${o.id}/status`,{method:'POST',body:{status:'attente'}}),Lx.saved))} style="${BTN_GHOST};width:100%">↺ ${esc(Lx.replan)}</button></div>`)}
+    ${when((sd.allowed||[]).length,()=>`<div class="no-print" style="padding:var(--pad);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px">${each(sd.allowed,a=>{const lbl=(ACTION[a.status]||ST[a.status]||[a.status,a.status])[li];const go=note=>act(()=>api(`orders/${o.id}/status`,{method:'POST',body:{status:a.status,note}}),Lx.saved);
+      return `<button ${on(()=>a.note_required||a.status==='annule'?askReason(lbl+' · '+o.ref,a.note_required,go):go(''))} style="${BTN_GHOST};font-size:12.5px;padding:7px 11px;${['annule','perdu'].includes(a.status)?'color:var(--rf)':''}">${esc(lbl)}</button>`;})}</div>`)}
     ${when(canAssign,`<div style="padding:var(--pad);display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);background:var(--surface2)">
       <div style="display:flex;justify-content:space-between;align-items:center"><b>${esc(Lx.assign)}</b>
         <div style="display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px">${each([['auto',Lx.auto],['manual',Lx.manual]],([k2,l])=>`<button ${on(set({amode:k2}))} style="${css(pill(state.amode===k2))}">${esc(l)}</button>`)}</div>
@@ -448,7 +451,7 @@ function tplOrderDetail(){
       ${each([...sd.events].reverse(),(h,j)=>{const t=(ST[h.status]||[0,0,'n'])[2];return `<div style="display:grid;grid-template-columns:44px 14px 1fr;gap:8px;min-height:44px">
         <span style="font-family:var(--mono);font-size:12px;color:var(--mute)">${hm(h.created_at)}</span>
         <span style="display:flex;flex-direction:column;align-items:center"><span style="${css({...dot(t,12),marginTop:2,boxShadow:j===0?`0 0 0 4px var(--${t}b)`:'none'})}"></span><span style="flex:1;width:2px;background:var(--line)"></span></span>
-        <span style="display:flex;flex-direction:column;gap:1px;padding-bottom:10px"><b style="font-weight:600">${esc(stL(h.status))} <span style="font-weight:400;color:var(--mute);font-size:12px">${isToday(h.created_at)?'':dm(h.created_at)}</span></b><span style="font-size:12px;color:var(--mute)">${esc(h.actor||'')}${h.lat!=null?' · GPS '+h.lat.toFixed(4)+', '+h.lng.toFixed(4):''}${h.proof_type?' · '+esc(h.proof_type.toUpperCase()):''}</span>
+        <span style="display:flex;flex-direction:column;gap:1px;padding-bottom:10px"><b style="font-weight:600">${esc(stL(h.status))} <span style="font-weight:400;color:var(--mute);font-size:12px">${h.old_status?'← '+esc(stL(h.old_status))+' · ':''}${isToday(h.created_at)?'':dm(h.created_at)}</span></b>${when(h.note,()=>`<span style="font-size:12.5px;font-style:italic">« ${esc(h.note)} »</span>`)}<span style="font-size:12px;color:var(--mute)">${esc(h.actor||'')}${h.lat!=null?' · GPS '+h.lat.toFixed(4)+', '+h.lng.toFixed(4):''}${h.proof_type?' · '+esc(h.proof_type.toUpperCase()):''}</span>
         ${when(h.proof_type&&h.proof_type!=='otp',`<button ${on(()=>api('events/'+h.id+'/proof').then(p=>setState({modal:{type:'proof',src:p.proof}})).catch(e=>toast(e.message,'err')))} style="align-self:flex-start;margin-top:4px;background:none;border:none;padding:0;color:var(--of);font-weight:600;cursor:pointer">${esc(Lx.viewProof)} →</button>`)}</span></div>`;})}
     </div>
   </div>`;
@@ -459,7 +462,7 @@ function tplOrders(){
   const qq=state.q.trim().toLowerCase().replace(/\s/g,'');
   const mref=Object.fromEntries(d.manifests.map(m=>[m.id,m.ref.toLowerCase()]));
   const base=d.orders.filter(o=>!qq||[o.ref,o.client_name,o.client_phone,o.shop_name,o.driver_name,o.zone_name,o.dest_city_name,mref[o.manifest_id]].some(v=>String(v||'').toLowerCase().replace(/\s/g,'').includes(qq)));
-  const FL=[['all','Tous','الكل',o=>true],['attente',ST.attente[0],ST.attente[1],o=>o.status==='attente'],['livraison',ST.livraison[0],ST.livraison[1],o=>['affecte','accepte','ramasse','livraison','sur_place','transit','arrive'].includes(o.status)],['livre',ST.livre[0],ST.livre[1],o=>o.status==='livre'],['exc','Exceptions','استثناءات',o=>EXC.includes(o.status)]];
+  const FL=[['all','Tous','الكل',o=>true],['attente',ST.attente[0],ST.attente[1],o=>o.status==='attente'],['livraison',ST.livraison[0],ST.livraison[1],o=>['affecte','accepte','ramasse','livraison','sur_place','transit','arrive'].includes(o.status)],['livre',ST.livre[0],ST.livre[1],o=>o.status==='livre'],['exc','Exceptions','استثناءات',o=>EXC.includes(o.status)],['ret','Retours / annulés','الإرجاع / الملغاة',o=>RETURNS.includes(o.status)||o.status==='annule']];
   const flt=FL.find(f=>f[0]===state.filter)||FL[0];
   const rows=base.filter(flt[3]);
   const grid='96px minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) 140px 104px';
@@ -760,10 +763,10 @@ function tplShop(){
         <div style="${CARD};overflow:hidden">
           <div style="padding:var(--pad)"><b>${esc(Lx.myOrders)}</b></div>
           <div style="overflow-x:auto"><div style="min-width:640px">${s.orders.length?each(s.orders,o=>`
-            <div style="display:grid;grid-template-columns:96px minmax(0,1.2fr) minmax(0,1fr) 140px 110px 40px;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line)">
+            <div style="display:grid;grid-template-columns:96px minmax(0,1.2fr) minmax(0,1fr) 140px 110px 76px;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line)">
               <span style="display:flex;flex-direction:column"><span style="font-family:var(--mono);font-size:12px">${esc(o.ref)}</span><span style="font-size:11px;color:var(--mute)">${isToday(o.created_at)?hm(o.created_at):dm(o.created_at)}</span></span>
               <b style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.client_name)}</b><span style="color:var(--mute)">${esc(destLabel(o))}</span><span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span><span style="text-align:end;font-weight:600">${esc(fmt(o.cod,u))}</span>
-              <button ${on(()=>shareTrack(o.ref))} title="${esc(Lx.shareLink)}" style="border:none;background:none;cursor:pointer;font-size:16px">🔗</button>
+              <span style="display:flex;gap:2px;justify-content:flex-end">${when(['cree','attente'].includes(o.status),()=>`<button ${on(()=>askReason(Lx.cancelOrder+' · '+o.ref,false,note=>act(()=>api('orders/'+o.id+'/cancel',{method:'POST',body:{note}}),Lx.saved)))} title="${esc(Lx.cancelOrder)}" style="border:none;background:none;cursor:pointer;font-size:15px;color:var(--rf)">✕</button>`)}<button ${on(()=>shareTrack(o.ref))} title="${esc(Lx.shareLink)}" style="border:none;background:none;cursor:pointer;font-size:16px">🔗</button></span>
             </div>`):empty()}</div></div>
         </div>
       </div>
@@ -783,6 +786,7 @@ function tplDriver(){
   const msL=s=>(MS[s]||ST[s]||[s,s])[li],msB=s=>badge((MS[s]||ST[s]||[0,0,'n'])[2]);
   const codL=m=>m.cod?fmt(m.cod,u):Lx.paid;
   const doStatus=(m,st,extra={})=>act(async()=>{await api(`orders/${m.id}/status`,{method:'POST',body:{status:st,lat:state.myPos?.[0],lng:state.myPos?.[1],...extra}});if(EXC.includes(st))state.lv='home';});
+  const EXL={absent:'absent',refuse:'refused',reporte:'postponed',numero_incorrect:'wrongNumber',adresse_incorrecte:'wrongAddress',endommage:'damaged'};
   let screen='';
   const lv=cm?state.lv:'home';
   if(lv==='home'){
@@ -808,12 +812,12 @@ function tplDriver(){
       ${when(status!=='off',`<button ${on(()=>act(()=>api('me/status',{method:'POST',body:{status:'off'}})))} style="margin-top:8px;background:none;border:none;color:var(--mute);text-decoration:underline;cursor:pointer;padding:8px">${esc(Lx.endShift)}</button>`)}
     </div>`;
   }else if(lv==='detail'){
-    const NEXT={affecte:['accept','accepte'],accepte:['route','livraison'],livraison:['arrived','sur_place'],sur_place:['delivered','proof']};
+    const NEXT={affecte:['accept','accepte'],accepte:['route','livraison'],ramasse:['route','livraison'],livraison:['arrived','sur_place'],sur_place:['delivered','proof']};
     const n=NEXT[cm.status];
     const goNext=()=>{if(!n)return;if(n[1]==='proof')setState({lv:'proof',otp:'',photo:null,sig:null});else doStatus(cm,n[1]);};
-    const canIssue=['accepte','livraison','sur_place'].includes(cm.status);
-    const issue=k=>()=>doStatus(cm,k);
-    const ACTS=[['accept',cm.status==='affecte',()=>doStatus(cm,'accepte')],['route',cm.status==='accepte',()=>doStatus(cm,'livraison')],['arrived',cm.status==='livraison',()=>doStatus(cm,'sur_place')],['delivered',cm.status==='sur_place',goNext],['absent',canIssue,issue('absent')],['refused',canIssue,issue('refuse')],['postponed',canIssue,issue('reporte')]];
+    const canIssue=['accepte','ramasse','livraison','sur_place'].includes(cm.status);
+    const issue=k=>()=>askReason(Lx[EXL[k]]+' · '+cm.ref,true,note=>doStatus(cm,k,{note}));
+    const ACTS=[['accept',cm.status==='affecte',()=>doStatus(cm,'accepte')],['route',cm.status==='accepte',()=>doStatus(cm,'livraison')],['arrived',cm.status==='livraison',()=>doStatus(cm,'sur_place')],['delivered',cm.status==='sur_place',goNext],...DRIVER_EXC.map(k=>[EXL[k],canIssue,issue(k)])];
     const STEPS=['affecte','accepte','livraison','sur_place','livre'];
     const dest=orderPos(cm);
     screen=`<div style="flex:1;display:flex;flex-direction:column">
@@ -830,12 +834,12 @@ function tplDriver(){
           <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(posOf(cm)?cm.lat+','+cm.lng:cm.address+', '+(cm.zone_name||'')+', '+(cm.dest_city_name||''))}" target="_blank" rel="noopener" style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:center">➤ ${esc(Lx.navigate)}</a>
           <a href="${telHref(cm.client_phone)}" style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:center">✆ ${esc(Lx.call)}</a>
         </div>
-        ${when(flow==='liste'&&ACTIVE_ST.includes(cm.status),`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${each(ACTS,([l,en,go],j)=>`<button ${en?on(go):''} ${en?'':'disabled'} style="${css({minHeight:j<4?60:48,gridColumn:j===6?'span 2':'auto',borderRadius:'var(--r)',border:en&&j<4?'none':'1px solid var(--line)',background:en&&j<4?'var(--orange)':'var(--surface)',color:en&&j<4?'var(--onOrange)':'var(--ink)',fontWeight:700,fontSize:j<4?16:13.5,opacity:en?1:0.4,cursor:en?'pointer':'default'})}">${esc(Lx[l])}</button>`)}</div>`)}
+        ${when(flow==='liste'&&ACTIVE_ST.includes(cm.status),`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${each(ACTS,([l,en,go],j)=>`<button ${en?on(go):''} ${en?'':'disabled'} style="${css({minHeight:j<4?60:48,gridColumn:'auto',borderRadius:'var(--r)',border:en&&j<4?'none':'1px solid var(--line)',background:en&&j<4?'var(--orange)':'var(--surface)',color:en&&j<4?'var(--onOrange)':'var(--ink)',fontWeight:700,fontSize:j<4?16:13.5,opacity:en?1:0.4,cursor:en?'pointer':'default'})}">${esc(Lx[l])}</button>`)}</div>`)}
         ${when(flow!=='liste',`<div style="display:flex;flex-direction:column;gap:10px">
           ${when(n,`<div style="display:flex;gap:4px">${each(STEPS,(k,j)=>`<span style="flex:1;height:5px;border-radius:3px;background:${j<=STEPS.indexOf(cm.status)?'var(--orange)':'var(--surface2)'}"></span>`)}</div>
             <button ${on(goNext)} style="min-height:68px;border-radius:var(--r);border:none;background:var(--orange);color:var(--onOrange);font-family:var(--disp);font-size:22px;font-weight:700;cursor:pointer">${spin()}${esc(n?Lx[n[0]]:'')} →</button>`)}
           ${when(canIssue,`<span style="font-size:12px;color:var(--mute)">${esc(Lx.problem)}</span>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${each([['absent','absent'],['refused','refuse'],['postponed','reporte']],([l,k])=>`<button ${on(issue(k))} style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:12.5px;cursor:pointer">${esc(Lx[l])}</button>`)}</div>`)}
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${each(DRIVER_EXC.map(k=>[EXL[k],k]),([l,k])=>`<button ${on(issue(k))} style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:12.5px;cursor:pointer">${esc(Lx[l])}</button>`)}</div>`)}
         </div>`)}
       </div>
     </div>`;
@@ -918,11 +922,16 @@ function tplClient(){
   </div></main>`;
 }
 
+/** Opens the reason dialog, then calls onSubmit(note). */
+function askReason(title,required,onSubmit){state.reasonText='';setState({modal:{type:'reason',title,required,onSubmit}});}
 function tplModal(){
   const m=state.modal,Lx=L();if(!m)return '';
   let title='',inner='';
   if(m.type==='newOrder'){title=Lx.newParcel;inner=tplOrderForm('oform',true);}
   else if(m.type==='proof'){title=Lx.proof;inner=`<img src="${m.src}" alt="" style="max-width:100%;border-radius:var(--r);background:#fff">`;}
+  else if(m.type==='reason'){title=m.title;inner=`<span style="color:var(--mute)">${esc(m.required?Lx.reasonRequired:Lx.reasonOptional)}</span>
+      <textarea class="fld" rows="3" style="resize:vertical" ${onInput(e=>{state.reasonText=e.target.value;},'reason')} placeholder="${esc(Lx.reasonPh)}">${esc(state.reasonText||'')}</textarea>
+      <button ${on(()=>{const n=(state.reasonText||'').trim();if(m.required&&!n)return toast(Lx.reasonRequired,'err');const fn=m.onSubmit;state.modal=null;state.reasonText='';fn(n);})} style="${BTN_PRIMARY};min-height:46px">${spin()}${esc(Lx.confirmAction)}</button>`;}
   return `<div class="no-print" ${on(set({modal:null}))} style="position:fixed;inset:0;z-index:1500;background:oklch(0.1 0.03 262 / .55);display:flex;align-items:flex-start;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 12px 16px;overflow:auto">
     <div ${on(()=>{})} role="dialog" aria-modal="true" style="${CARD};width:100%;max-width:480px;margin:auto 0;padding:18px;display:flex;flex-direction:column;gap:14px">
       <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">${esc(title)}</b><button ${on(set({modal:null}))} aria-label="${esc(Lx.close)}" style="${BTN_GHOST};padding:6px 10px">✕</button></div>
