@@ -25,7 +25,7 @@ shopSpace:['Espace boutique','فضاء المتجر'],shopPrivacy:['Vous ne voye
 track:['Suivi de colis','تتبع الطرد'],yourDriver:['Votre livreur','موزعك'],eta:['Arrivée estimée','الوصول المتوقع'],rateTitle:['Comment s’est passée la livraison ?','كيف كانت عملية التوصيل؟'],commentPh:['Ponctualité, communication, comportement…','الالتزام بالموعد، التواصل، السلوك…'],send:['Envoyer','إرسال'],thanks:['Merci pour votre retour','شكرا على ملاحظاتك'],
 reportOpen:['Signaler un problème','الإبلاغ عن مشكلة'],reportClose:['Annuler le signalement','إلغاء الإبلاغ'],
 deliveryCode:['Code de livraison','رمز التسليم'],deliveryCodeHint:['À donner au livreur uniquement à la remise du colis.','أعطه للموزع فقط عند استلام الطرد.'],otherParcel:['Suivre un autre colis','تتبع طرد آخر'],exception:['Livraison non effectuée','لم يتم التوصيل'],exceptionHint:['L’agence va vous recontacter pour une nouvelle tentative.','ستتصل بك الوكالة لمحاولة جديدة.'],updated:['Mis à jour','آخر تحديث'],
-tnd:['TND','د.ت'],vManager:['Responsable d’agence','مسؤول الوكالة'],rManager:['Responsable','مسؤول'],agencies:['Agences','الوكالات'],geo:['Villes / Zones','المدن / المناطق'],allAgencies:['Toutes les agences','كل الوكالات'],tagline:['Plateforme logistique multi-agences','منصة لوجستية متعددة الوكالات'],choose:['— Choisir —','— اختر —'],originAgency:['Agence de départ','وكالة الانطلاق'],loginId:['Téléphone ou e-mail','الهاتف أو البريد الإلكتروني'],email:['E-mail','البريد الإلكتروني'],optional:['facultatif','اختياري'],
+tnd:['TND','د.ت'],senderOverride:['modifier l’expéditeur','تعديل المرسل'],parcel:['Colis','الطرد'],description:['Description','الوصف'],descPh:['Ex. 2 paires de chaussures','مثال: زوجان من الأحذية'],pieces:['Pièces','عدد القطع'],piecesShort:['pièces','قطع'],externalRef:['Réf. externe (boutique)','مرجع المتجر'],notes:['Notes / instructions','ملاحظات'],source:['Origine','المصدر'],vManager:['Responsable d’agence','مسؤول الوكالة'],rManager:['Responsable','مسؤول'],agencies:['Agences','الوكالات'],geo:['Villes / Zones','المدن / المناطق'],allAgencies:['Toutes les agences','كل الوكالات'],tagline:['Plateforme logistique multi-agences','منصة لوجستية متعددة الوكالات'],choose:['— Choisir —','— اختر —'],originAgency:['Agence de départ','وكالة الانطلاق'],loginId:['Téléphone ou e-mail','الهاتف أو البريد الإلكتروني'],email:['E-mail','البريد الإلكتروني'],optional:['facultatif','اختياري'],
 login:['Connexion','تسجيل الدخول'],staffTab:['Espace pro','الفضاء المهني'],trackTab:['Suivre mon colis','تتبع طردي'],loginSub:['Agence, livreurs et boutiques','الوكالة، الموزعون والمتاجر'],password:['Mot de passe','كلمة المرور'],signIn:['Se connecter','دخول'],
 trackSub:['Entrez le numéro du colis et votre numéro de téléphone.','أدخل رقم الطرد ورقم هاتفك.'],parcelNo:['N° de colis','رقم الطرد'],trackBtn:['Suivre le colis','تتبع الطرد'],
 setupTitle:['Compte administrateur','حساب المشرف'],setupSub:['Première utilisation : créez le compte de l’agence.','أول استعمال: أنشئ حساب الوكالة.'],fullName:['Nom complet','الاسم الكامل'],password2:['Confirmer le mot de passe','تأكيد كلمة المرور'],createAdmin:['Créer et se connecter','إنشاء والدخول'],pwdMismatch:['Les mots de passe ne correspondent pas.','كلمتا المرور غير متطابقتين.'],
@@ -107,7 +107,7 @@ const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.
    state
    ========================================================= */
 const prefersDark=()=>{try{return matchMedia('(prefers-color-scheme: dark)').matches;}catch{return false;}};
-const emptyOrder=()=>({shop_id:'',origin_agency_id:'',client_name:'',client_phone:'',dest_city_id:'',zone_id:'',address:'',cod:'',payment_mode:'cod',weight:'',parcel_type:'',lat:null,lng:null});
+const emptyOrder=()=>({shop_id:'',origin_agency_id:'',sender_name:'',sender_phone:'',sender_address:'',client_name:'',client_phone:'',dest_city_id:'',zone_id:'',address:'',description:'',pieces:'1',external_ref:'',notes:'',cod:'',payment_mode:'cod',weight:'',parcel_type:'',lat:null,lng:null});
 let state={
   prefs:{dir:'a',theme:prefersDark()?'dark':'light',lang:'fr',...store.get('saden.prefs',{})},
   session:store.get('saden.session',null), trackAuth:store.get('saden.track',null),
@@ -421,7 +421,7 @@ function tplOrderDetail(){
   const list=state.amode==='auto'?cand.slice(0,3):cand;
   const canAssign=['attente','arrive','reporte','absent','affecte'].includes(o.status);
   const assign=x=>()=>act(()=>api(`orders/${o.id}/assign`,{method:'POST',body:{driver_id:x.id}}),Lx.saved);
-  const facts=[[Lx.sender,o.shop_name||Lx.agencyLbl],[Lx.recipient,o.client_name],[Lx.phone,fmtPhone(o.client_phone)],[Lx.address,(o.zone_name?o.zone_name+' · ':'')+o.address],[Lx.cod,fmt(o.cod,u)],[Lx.driver,o.driver_name||'—'],[Lx.otpCode,o.otp],[Lx.payment,pmL(o.payment_mode)],[Lx.deliveryFee,fmt(o.delivery_fee,u)],[Lx.toRemit,fmt(o.amount_to_remit,u)],[Lx.destCity,o.dest_city_name||'—'],[Lx.agencies,(o.origin_agency_name||'—')+(o.dest_agency_name&&o.dest_agency_id!==o.origin_agency_id?' → '+o.dest_agency_name:'')]];
+  const facts=[[Lx.sender,[o.sender_name||o.shop_name||Lx.agencyLbl,o.sender_phone?fmtPhone(o.sender_phone):''].filter(Boolean).join(' · ')],[Lx.recipient,o.client_name],[Lx.phone,fmtPhone(o.client_phone)],[Lx.address,(o.zone_name?o.zone_name+' · ':'')+o.address],[Lx.cod,fmt(o.cod,u)],[Lx.driver,o.driver_name||'—'],[Lx.otpCode,o.otp],[Lx.parcel,[o.description,o.pieces>1?o.pieces+' '+Lx.piecesShort:'',o.weight?o.weight+' kg':'',o.parcel_type?ptL(o.parcel_type):''].filter(Boolean).join(' · ')||'—'],[Lx.externalRef,o.external_ref||'—'],[Lx.source,o.source],[Lx.payment,pmL(o.payment_mode)],[Lx.deliveryFee,fmt(o.delivery_fee,u)],[Lx.toRemit,fmt(o.amount_to_remit,u)],[Lx.destCity,o.dest_city_name||'—'],[Lx.agencies,(o.origin_agency_name||'—')+(o.dest_agency_name&&o.dest_agency_id!==o.origin_agency_id?' → '+o.dest_agency_name:'')]];
   return `<div style="${CARD};display:flex;flex-direction:column;align-self:start;min-width:0">
     <div style="padding:var(--pad);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--line)">
       <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:var(--mute)">${esc(Lx.detail)} · ${esc(o.intercity?Lx.inter:Lx.local)}</span><b style="font-family:var(--mono);font-size:17px">${esc(o.ref)}</b><span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span></div>
@@ -680,26 +680,36 @@ function tplOrderForm(key,withShop){
   if(state[key].zone_id&&zoneById(state[key].zone_id)?.city_id!==+state[key].dest_city_id)state[key]={...state[key],zone_id:''};
   const f=state[key];
   const shops=state.data?.shops||[];
+  // sender defaults shown as placeholders: the shop, else the origin agency
+  const sh=role()==='shop'?state.session.user:shops.find(x=>x.id===+f.shop_id);
+  const ag=role()==='admin'?agencyById(f.origin_agency_id)||homeAgency():myAgency();
+  const dflt={name:sh?.shop_name||ag?.name||'',phone:sh?.phone?fmtPhone(sh.phone):'',address:sh?.address||''};
   const submit=()=>act(async()=>{const r=await api('orders',{method:'POST',body:state[key]});state[key]={...emptyOrder(),shop_id:state[key].shop_id};delete state.quotes[key];if(key==='oform')state.modal=null;state.shopSent=r.order.ref;toast(Lx.orderCreated+' : '+r.order.ref);});
+  const sec=t=>`<div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:4px">${esc(t)}</div>`;
+  const two=(a,b)=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${a}${b}</div>`;
   return `<div style="display:flex;flex-direction:column;gap:12px">
-    ${when(withShop&&role()==='admin',()=>field(Lx.originAgency,select(key+'-orig',key,'origin_agency_id',[['',L().auto],...agencyOptions()])))}
-    ${when(withShop,field(Lx.shopOpt,select(key+'-shop',key,'shop_id',[['',Lx.agencyDirect],...shops.filter(s=>s.active).map(s=>[s.id,s.shop_name])])))}
+    ${when(withShop&&role()==='admin',()=>field(Lx.originAgency,select(key+'-orig',key,'origin_agency_id',[['',L().auto],...agencyOptions()],true)))}
+    ${when(withShop,()=>field(Lx.shopOpt,select(key+'-shop',key,'shop_id',[['',Lx.agencyDirect],...shops.filter(s=>s.active).map(s=>[s.id,s.shop_name])],true)))}
+    ${sec(Lx.sender)}
+    <details ${f.sender_name||f.sender_phone||f.sender_address?'open':''}><summary style="cursor:pointer;color:var(--mute);font-size:12.5px">${esc(dflt.name||'—')}${dflt.phone?' · '+esc(dflt.phone):''} — ${esc(Lx.senderOverride)}</summary>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+        ${two(field(Lx.name2,input(key+'-sn',key,'sender_name',`placeholder="${esc(dflt.name)}"`)),field(Lx.phone,input(key+'-sp',key,'sender_phone',`type="tel" inputmode="tel" placeholder="${esc(dflt.phone||'+216 …')}"`)))}
+        ${field(Lx.address,input(key+'-sa',key,'sender_address',`placeholder="${esc(dflt.address)}"`))}
+      </div></details>
+    ${sec(Lx.recipient)}
     ${field(Lx.name,input(key+'-name',key,'client_name','placeholder="Ex. Salma Khemiri" autocomplete="off"'))}
     ${field(Lx.phone,input(key+'-tel',key,'client_phone','type="tel" inputmode="tel" placeholder="+216 …" autocomplete="off"'))}
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      ${field(Lx.destCity,select(key+'-city',key,'dest_city_id',cityOptions(),true))}
-      ${field(Lx.colZone,select(key+'-zone',key,'zone_id',[['','—'],...zoneOptions(f.dest_city_id)]))}
-    </div>
+    ${two(field(Lx.destCity,select(key+'-city',key,'dest_city_id',cityOptions(),true)),field(Lx.colZone,select(key+'-zone',key,'zone_id',[['','—'],...zoneOptions(f.dest_city_id)],true)))}
     ${field(Lx.address,input(key+'-addr',key,'address','placeholder="Rue, quartier, repère"'))}
     <button ${on(()=>useGps(key))} style="padding:10px;border-radius:var(--r);border:1px dashed var(--line);background:transparent;font-weight:600;cursor:pointer;text-align:start;color:var(--ink)">◎ ${esc(f.lat!=null?'GPS · '+f.lat+', '+f.lng:Lx.useGps)}</button>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      ${field(Lx.payment,select(key+'-pm',key,'payment_mode',Object.keys(PAYMENT_MODES).map(k=>[k,pmL(k)]),true))}
-      ${f.payment_mode==='prepaid'?field(Lx.cod+' ('+u+')',`<input class="fld" value="0,000" disabled>`):field(Lx.cod+' ('+u+')',inputQ(key+'-cod',key,'cod','inputmode="decimal" placeholder="0,000"'))}
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      ${field(Lx.weight,inputQ(key+'-w',key,'weight','inputmode="decimal" placeholder="—"'))}
-      ${field(Lx.parcelType,select(key+'-pt',key,'parcel_type',[['','—'],...Object.keys(PARCEL_TYPES).map(k=>[k,ptL(k)])],true))}
-    </div>
+    ${sec(Lx.parcel)}
+    ${field(Lx.description,input(key+'-desc',key,'description',`placeholder="${esc(Lx.descPh)}"`))}
+    ${two(field(Lx.pieces,input(key+'-pcs',key,'pieces','inputmode="numeric"')),field(Lx.externalRef,input(key+'-ext',key,'external_ref','placeholder="CMD-1234"')))}
+    ${two(field(Lx.weight,inputQ(key+'-w',key,'weight','inputmode="decimal" placeholder="—"')),field(Lx.parcelType,select(key+'-pt',key,'parcel_type',[['','—'],...Object.keys(PARCEL_TYPES).map(k=>[k,ptL(k)])],true)))}
+    ${sec(Lx.payment)}
+    ${two(field(Lx.payment,select(key+'-pm',key,'payment_mode',Object.keys(PAYMENT_MODES).map(k=>[k,pmL(k)]),true)),
+      f.payment_mode==='prepaid'?field(Lx.cod+' ('+u+')',`<input class="fld" value="0,000" disabled>`):field(Lx.cod+' ('+u+')',inputQ(key+'-cod',key,'cod','inputmode="decimal" placeholder="0,000"')))}
+    ${field(Lx.notes,`<textarea class="fld" rows="2" style="resize:vertical" ${onInput(e=>{state[key]={...state[key],notes:e.target.value};},key+'-notes')}>${esc(f.notes)}</textarea>`)}
     ${tplQuote(key)}
     <button ${on(submit)} style="${BTN_PRIMARY};min-height:46px">${spin()}${esc(Lx.submit)}</button>
   </div>`;
@@ -813,7 +823,8 @@ function tplDriver(){
       </div>
       ${mapBox('mission','180px')}
       <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
-        <div style="display:flex;flex-direction:column;gap:2px"><b style="font-family:var(--disp);font-size:22px">${esc(cm.client_name)}</b><span style="color:var(--mute)">${esc((cm.zone?cm.zone+' · ':'')+cm.address)}</span><span style="color:var(--mute);font-size:12.5px">${esc(cm.shop_name||Lx.agencyLbl)} · ${esc(fmtPhone(cm.client_phone))}</span></div>
+        <div style="display:flex;flex-direction:column;gap:2px"><b style="font-family:var(--disp);font-size:22px">${esc(cm.client_name)}</b><span style="color:var(--mute)">${esc((cm.zone_name?cm.zone_name+' · ':'')+cm.address)}</span><span style="color:var(--mute);font-size:12.5px">${esc(cm.sender_name||cm.shop_name||Lx.agencyLbl)} · ${esc(fmtPhone(cm.client_phone))}</span></div>
+        ${when(cm.description||cm.pieces>1||cm.notes,()=>`<div style="padding:10px 12px;border-radius:var(--r);background:var(--surface2);display:flex;flex-direction:column;gap:3px;font-size:13px">${when(cm.description||cm.pieces>1,()=>`<span><b>${esc(cm.description||Lx.parcel)}</b>${cm.pieces>1?' · '+cm.pieces+' '+esc(Lx.piecesShort):''}${cm.weight?' · '+cm.weight+' kg':''}</span>`)}${when(cm.notes,()=>`<span style="color:var(--mute)">📝 ${esc(cm.notes)}</span>`)}</div>`)}
         <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:var(--r);background:var(--ob);color:var(--of)"><span style="font-weight:600">${esc(Lx.toCollect)}</span><b style="font-family:var(--disp);font-size:22px">${esc(codL(cm))}</b></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(posOf(cm)?cm.lat+','+cm.lng:cm.address+', '+(cm.zone_name||'')+', '+(cm.dest_city_name||''))}" target="_blank" rel="noopener" style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:center">➤ ${esc(Lx.navigate)}</a>
@@ -880,7 +891,7 @@ function tplClient(){
   const canSend=(canRate?state.stars>0:true)&&(!state.cClaim||state.cCat!==null)&&(canRate||state.cClaim);
   const send=()=>{if(!canSend)return;act(async()=>{const r=await api('track/review',{method:'POST',body:{...state.trackAuth,stars:canRate&&state.stars?state.stars:null,comment:state.comment,claim_category:state.cClaim?state.cCat:null}});state.cSent={claim:r.claim};});};
   return `<main style="flex:1;display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)"><div style="width:100%;max-width:520px;padding:18px 18px 28px;display:flex;flex-direction:column;gap:14px">
-    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:var(--mute)">${esc(Lx.track)} · ${esc(t.shop_name||'SADEN')}</span><b style="font-family:var(--mono);font-size:22px">${esc(t.ref)}</b><span style="font-size:12px;color:var(--mute)">${esc(t.client_name)} · ${esc((t.zone_name?t.zone_name+' · ':'')+t.address)}${t.dest_city_name?' · '+esc(t.dest_city_name):''}</span></div>
+    <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:var(--mute)">${esc(Lx.track)} · ${esc(t.shop_name||'SADEN')}</span><b style="font-family:var(--mono);font-size:22px">${esc(t.ref)}</b><span style="font-size:12px;color:var(--mute)">${esc(t.client_name)} · ${esc((t.zone_name?t.zone_name+' · ':'')+t.address)}${t.dest_city_name?' · '+esc(t.dest_city_name):''}</span>${when(t.description||t.pieces>1,()=>`<span style="font-size:12px;color:var(--mute)">${esc(t.description||'')}${t.pieces>1?' · '+t.pieces+' '+esc(Lx.piecesShort):''} · ${esc(pmL(t.payment_mode))}</span>`)}</div>
     ${when(exc,`<div style="padding:14px;border-radius:var(--r);background:var(--rb);color:var(--rf);display:flex;flex-direction:column;gap:4px"><b>${esc(Lx.exception)} — ${esc(stL(s))}</b><span>${esc(Lx.exceptionHint)}</span></div>`)}
     ${when(t.otp&&!exc,`<div style="padding:14px;border-radius:var(--r);background:var(--ob);color:var(--of);display:flex;justify-content:space-between;align-items:center;gap:12px"><div style="display:flex;flex-direction:column;gap:2px"><b>${esc(Lx.deliveryCode)}</b><span style="font-size:12px">${esc(Lx.deliveryCodeHint)}</span></div><b style="font-family:var(--mono);font-size:28px;letter-spacing:.2em">${esc(t.otp)}</b></div>`)}
     ${when(!done&&!exc,`${mapBox('track','170px','border-radius:var(--r)')}
