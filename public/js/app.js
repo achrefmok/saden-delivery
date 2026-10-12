@@ -162,7 +162,7 @@ async function refresh(silent){
     if(r==='admin'||r==='manager'){
       const af=r==='admin'&&state.agencyFilter?'agency_id='+encodeURIComponent(state.agencyFilter):'';
       const [d,extra]=await Promise.all([api('admin/overview'+(af?'?'+af:'')),
-        state.page==='stats'?api('stats?period='+state.period+(af?'&'+af:'')):null,
+        state.page==='stats'?api(statsQuery()):null,
       ]);
       state.data=d;if(extra)state.stats=extra;
       if(state.page==='accounts'||state.page==='agencies')state.users=(await api('users'+(af&&state.page==='accounts'?'?'+af:''))).users;
@@ -518,32 +518,7 @@ function tplDrivers(){
 
 /* tplCash lives in js/cash.js */
 
-function tplStats(){
-  const Lx=L(),u=Lx.tnd,li=lang()==='ar'?1:0,s=state.stats;
-  const periods=`<div style="display:flex;flex-wrap:wrap;gap:8px">${each(Lx.period,(p,j)=>`<button ${on(()=>{state.period=j;state.stats=null;render();refresh(true);})} style="${css(chip(state.period===j))}">${esc(p)}</button>`)}</div>`;
-  if(!s)return periods+`<div style="${CARD};padding:24px"><span class="spin"></span></div>`;
-  const k=s.kpis,mx=Math.max(1,...s.bars.map(b=>b.v));
-  return `${periods}
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:var(--gap)">
-    ${kpiCard(Lx.revenue,fmt(k.revenue,u).replace(',000',''))}${kpiCard(Lx.rate,k.finals?(k.delivered/k.finals*100).toFixed(1).replace('.',',')+' %':'—')}${kpiCard(Lx.delay,k.avg_min!=null?k.avg_min+' min':'—')}${kpiCard(Lx.returns,k.total?(k.refused/k.total*100).toFixed(1).replace('.',',')+' %':'—')}
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:var(--gap)">
-    <div class="span2" style="grid-column:span 2;min-width:0;${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:14px">
-      <b>${esc(Lx.volume)}</b>
-      <div style="display:flex;align-items:flex-end;gap:6px;height:220px;overflow-x:auto">
-        ${each(s.bars,(b,j)=>`<div style="flex:1;min-width:22px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px"><span style="font-size:10.5px;color:var(--mute)">${b.v}</span><span style="width:100%;max-width:34px;height:${b.v/mx*150}px;background:${j===s.bars.length-1?'var(--orange)':'var(--navy)'};border-radius:calc(var(--r) / 2) calc(var(--r) / 2) 0 0"></span><span style="font-size:10.5px;color:var(--mute);white-space:nowrap">${esc(b.l)}</span></div>`)}
-      </div>
-    </div>
-    <div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:12px">
-      <b>${esc(Lx.byZone)}</b>
-      ${s.zones.length?each(s.zones,z=>`<div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between"><span>${esc(z.name)}</span><b>${z.v} %</b></div><div style="height:8px;background:var(--surface2);border-radius:999px;overflow:hidden"><div style="width:${z.v}%;height:100%;background:${z.v>90?'var(--navy)':'var(--orange)'};border-radius:999px"></div></div></div>`):`<span style="color:var(--mute)">${esc(Lx.empty)}</span>`}
-    </div>
-  </div>
-  <div style="${CARD};overflow:hidden">
-    <div style="padding:var(--pad)"><b>${esc(Lx.topDrivers)}</b></div>
-    <div style="overflow-x:auto"><div style="min-width:520px">${s.top.length?each(s.top,(d,j)=>`<div style="display:grid;grid-template-columns:28px minmax(0,1fr) 90px 90px 90px;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line)"><span style="font-family:var(--disp);font-weight:700;color:var(--of)">${j+1}</span><b style="font-weight:600">${esc(d.name)}</b><span>★ ${d.rating!=null?String(d.rating).replace('.',','):'—'}</span><span>${d.delivered} ${esc(Lx.deliv)}</span><span>${d.finals?Math.round(d.delivered/d.finals*100)+' %':'—'}</span></div>`):empty()}</div></div>
-  </div>`;
-}
+/* tplStats lives in js/stats.js */
 
 function tplClaims(){
   const Lx=L(),li=lang()==='ar'?1:0,d=state.data,r=d.ratings;
