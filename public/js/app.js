@@ -252,7 +252,7 @@ function tplTopBar(){
   const Lx=L(),u=state.session?.user,r=role();
   const roleL={admin:Lx.vAdmin,manager:Lx.vManager,driver:Lx.vDriver,shop:Lx.vShop,client:Lx.vClient}[r]+(myAgency()?' · '+myAgency().name:'');
   return `<header class="topbar no-print" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:10px 18px;padding-top:calc(10px + env(safe-area-inset-top));background:oklch(0.15 0.03 262);color:oklch(0.97 0.005 262)">
-  <div style="display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:0.04em"><span style="width:12px;height:12px;background:var(--orange);border-radius:3px"></span>SADEN<span class="hide-sm" style="font-weight:500;font-size:13px;letter-spacing:0;color:oklch(0.8 0.02 262)">Delivery</span></div>
+  <div style="display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:0.04em">${brandLogo(34)}${esc(BRAND.name)}<span class="hide-sm" style="font-weight:500;font-size:13px;letter-spacing:0;color:oklch(0.8 0.02 262)">Delivery</span></div>
   ${when(r,`<div style="display:flex;flex-direction:column;line-height:1.2;min-width:0"><span style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${esc(u?(u.role==='shop'?u.shop_name:u.name):state.trackAuth?.ref)}</span><span style="font-size:11px;color:oklch(0.78 0.03 262)">${esc(roleL)}</span></div>`)}
   <div style="flex:1"></div>
   ${tplBell()}
@@ -297,8 +297,8 @@ function tplLogin(){
   return `<main style="flex:1;display:flex;align-items:center;justify-content:center;padding:28px 16px calc(28px + env(safe-area-inset-bottom))">
     <div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px">
       <div style="display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center">
-        <div style="width:64px;height:64px;border-radius:16px;background:var(--orange);color:var(--onOrange);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:26px">SD</div>
-        <b style="font-family:var(--disp);font-size:26px;letter-spacing:0.03em">SADEN Delivery</b>
+        ${brandLogo(128,28)}
+        <b style="font-family:var(--disp);font-size:26px;letter-spacing:0.03em">${esc(BRAND.full)}</b>
         <span style="color:var(--mute)">${esc(Lx.tagline)}</span>
       </div>
       <div style="${CARD};padding:18px;display:flex;flex-direction:column;gap:16px">

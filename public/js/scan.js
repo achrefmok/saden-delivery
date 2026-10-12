@@ -31,7 +31,7 @@ function labelHtml(o){
   .qr{width:34mm;height:34mm}.qr svg{width:100%;height:100%}
   @media screen{body{background:#ddd}.l{margin:10px auto;background:#fff;box-shadow:0 2px 10px #0003}}
   </style></head><body><div class="l">
-  <div class="row"><div style="display:flex;flex-direction:column;gap:1mm"><div style="font-weight:800;font-size:14pt;letter-spacing:.06em">■ SADEN</div><div style="font-family:monospace;font-size:17pt;font-weight:700">${esc(o.ref)}</div>
+  <div class="row"><div style="display:flex;flex-direction:column;gap:1mm"><div style="display:flex;align-items:center;gap:2mm"><img src="${BRAND.logoPrint}" alt="" style="width:13mm;height:13mm;object-fit:contain"><b style="font-size:13pt;letter-spacing:.06em">${esc(BRAND.full.toUpperCase())}</b></div><div style="font-family:monospace;font-size:17pt;font-weight:700">${esc(o.ref)}</div>
     <div style="font-size:8pt">${esc(dm(o.created_at))} · ${esc(o.intercity?'INTER-VILLES':'LOCAL')}${o.external_ref?' · '+esc(o.external_ref):''}</div></div>
     <div class="qr">${qr}</div></div>
   <div class="box" style="border-width:0.7mm"><div class="k">Destinataire</div><div class="big">${esc(o.client_name)}</div><div class="v">${esc(fmtPhone(o.client_phone))}</div>

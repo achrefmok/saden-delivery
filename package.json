@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "node scripts/dev.js",
     "seed": "node scripts/seed.js",
-    "icons": "python scripts/icons.py",
+    "brand": "python scripts/brand.py",
     "create-admin": "node scripts/create-admin.js",
     "test:permissions": "node scripts/test-permissions.js"
   },
