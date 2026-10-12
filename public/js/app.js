@@ -388,7 +388,8 @@ function tplDash(){
           <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:600">${esc(m.from_city)} → ${esc(m.to_city)}</span><span style="font-family:var(--mono);font-size:11.5px;color:var(--mute)">${esc(m.ref)} · ${m.n} ${esc(Lx.parcels)}</span></div>
           <span style="${css(badge(['n','i','o','w','g'][m.stage]))}">${esc(BST[m.stage][li])}</span></div>`):empty(Lx.noBrd)}
       </div>
-    </div>`;
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--gap)">${tplRatingsCard()}</div>`;
 }
 
 function tplMap(){
@@ -524,30 +525,7 @@ function tplDrivers(){
 
 /* tplStats lives in js/stats.js */
 
-function tplClaims(){
-  const Lx=L(),li=lang()==='ar'?1:0,d=state.data,r=d.ratings;
-  const dist=[5,4,3,2,1].map(s=>({s,p:r.n?Math.round(r['s'+s]/r.n*100):0}));
-  return `<div class="split" style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:var(--gap)">
-    <div style="min-width:0;${CARD};overflow:hidden">
-      ${d.claims.length?each(d.claims,c=>`<div style="padding:var(--pad);border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center">
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-family:var(--mono);font-size:12px">RC-${pad4(c.id)}</span><b>${esc(CATS[c.category]?.[li]||'—')}</b><span style="color:var(--mute);font-size:12.5px">${esc(c.order_ref)} · ${esc(c.driver_name||'—')}</span></div>
-          <button ${on(()=>act(()=>api(`claims/${c.id}/advance`,{method:'POST'})))} style="${css({...badge(CS[c.status][2]),cursor:'pointer'})}">${esc(CS[c.status][li])} →</button>
-        </div>
-        ${when(c.text,`<div style="line-height:1.45;text-wrap:pretty">${esc(c.text)}</div>`)}
-        <div style="font-size:12px;color:var(--mute)">${esc(c.client_name)} · ${dm(c.created_at)}</div></div>`):empty()}
-    </div>
-    <div style="display:flex;flex-direction:column;gap:var(--gap)">
-      <div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:10px">
-        <span style="font-size:12px;color:var(--mute)">${esc(Lx.rating)} · 30 j</span>
-        <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:var(--disp);font-size:44px;font-weight:700;line-height:1">${r.n?String(r.avg).replace('.',','):'—'}</span><span style="color:var(--orange);font-size:20px">${'★'.repeat(Math.round(r.avg||0))}<span style="color:var(--line)">${'★'.repeat(5-Math.round(r.avg||0))}</span></span></div>
-        <span style="font-size:12px;color:var(--mute)">${r.n} ${esc(Lx.reviews)}</span>
-        ${each(dist,x=>`<div style="display:grid;grid-template-columns:22px 1fr 38px;gap:8px;align-items:center;font-size:12px"><span>${x.s}★</span><div style="height:8px;background:var(--surface2);border-radius:999px;overflow:hidden"><div style="width:${x.p}%;height:100%;background:var(--orange)"></div></div><span style="text-align:end;color:var(--mute)">${x.p} %</span></div>`)}
-      </div>
-      <div style="${CARD};padding:var(--pad);font-size:12.5px;line-height:1.5;color:var(--mute);text-wrap:pretty">${esc(Lx.claimRule)}</div>
-    </div>
-  </div>`;
-}
+/* tplClaims lives in js/claims.js */
 
 function tplAccounts(){
   const Lx=L(),f=state.uform,users=state.users;
