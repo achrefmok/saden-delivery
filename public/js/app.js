@@ -165,6 +165,7 @@ async function refresh(silent){
         state.page==='stats'?api(statsQuery()):null,
       ]);
       state.data=d;if(extra)state.stats=extra;
+      if(state.page==='journal'){if(!state.users)state.users=(await api('users')).users;await loadJournal();}
       if(state.page==='accounts'||state.page==='agencies')state.users=(await api('users'+(af&&state.page==='accounts'?'?'+af:''))).users;
       if(['agencies','geo'].includes(state.page))state.geo=await api('geo');
       if(state.page==='pricing')state.pricing=await api('pricing');
@@ -308,14 +309,14 @@ function tplLogin(){
 /* =========================================================
    ADMIN
    ========================================================= */
-const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['brd','BR'],['drivers','LV'],['cash','CS'],['stats','ST'],['claims','RC'],['accounts','AC'],['pricing','TF'],['agencies','AG','admin'],['geo','VZ','admin'],['partners','AP','admin']];
+const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['brd','BR'],['drivers','LV'],['cash','CS'],['stats','ST'],['claims','RC'],['accounts','AC'],['pricing','TF'],['agencies','AG','admin'],['geo','VZ','admin'],['partners','AP','admin'],['journal','JR','admin']];
 const navFor=()=>NAV.filter(n=>!n[2]||n[2]===role());
 const scopeName=()=>role()==='manager'?myAgency()?.name||'—':(agencyById(state.agencyFilter)?.name||L().allAgencies);
 function goPage(p){
   state.page=p;state.sel=null;state.selData=null;
   if(p!=='orders')state.q='';state.searchOpen=false;
   render();
-  if(['stats','accounts','agencies','geo','pricing','partners'].includes(p))refresh(true);
+  if(['stats','accounts','agencies','geo','pricing','partners','journal'].includes(p))refresh(true);
   scrollTo(0,0);
 }
 function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';render();api('orders/'+id).then(d=>{if(state.sel===id){state.selData=d;render();}}).catch(e=>toast(e.message,'err'));}
@@ -639,7 +640,7 @@ function tplOrderForm(key,withShop){
 function tplAdmin(){
   const Lx=L(),p=state.page;
   if(!state.data)return `<div style="padding:40px;text-align:center;color:var(--mute)"><span class="spin"></span></div>`;
-  const page=({dash:tplDash,map:tplMap,orders:tplOrders,brd:tplBrd,drivers:tplDrivers,cash:tplCash,stats:tplStats,claims:tplClaims,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing,partners:tplPartners}[p]||tplDash)();
+  const page=({dash:tplDash,map:tplMap,orders:tplOrders,brd:tplBrd,drivers:tplDrivers,cash:tplCash,stats:tplStats,claims:tplClaims,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing,partners:tplPartners,journal:tplJournal}[p]||tplDash)();
   const dir=state.prefs.dir;
   return `<div class="shell" style="display:flex;flex-direction:${dir==='b'?'column':'row'};flex:1;min-height:0">
     ${tplNav()}
