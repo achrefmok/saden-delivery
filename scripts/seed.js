@@ -2,7 +2,10 @@
 // Accounts created — password for all: saden123
 //   Admin     20000000      Livreurs 21000001…21000006      Boutiques 22000001…22000005
 try { process.loadEnvFile('.env'); } catch {}
-const { q, one, close } = await import('../lib/db.js');
+// Safety: demo data goes to the local PGlite database unless --remote is passed explicitly.
+if (!process.argv.includes('--remote')) process.env.DB = 'local';
+const { q, one, close, usingLocalDb } = await import('../lib/db.js');
+console.log(usingLocalDb() ? 'Base : PGlite locale (.data/)' : 'Base : PostgreSQL distant (--remote)');
 const { hashPassword } = await import('../lib/auth.js');
 
 if ((await one(`SELECT count(*)::int AS n FROM orders`)).n > 0) {

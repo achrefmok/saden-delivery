@@ -27,5 +27,5 @@ http.createServer(async (req, res) => {
     res.end(data);
   } catch { res.statusCode = 404; res.end('Not found'); }
 }).listen(PORT, () => {
-  console.log(`SADEN → http://localhost:${PORT}  (${process.env.DATABASE_URL || process.env.POSTGRES_URL ? 'PostgreSQL' : 'PGlite local ./.data'})`);
+  console.log(`SADEN → http://localhost:${PORT}  (${process.env.DB !== 'local' && (process.env.DATABASE_URL || process.env.POSTGRES_URL) ? 'PostgreSQL distant' : 'PGlite local ./.data'})`);
 });

@@ -1,6 +1,6 @@
 // SADEN service worker: app shell offline, API always from network.
-const VERSION = 'saden-v1';
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png',
+const VERSION = 'saden-v2';
+const SHELL = ['/', '/index.html', '/js/app.js', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'];
 
 self.addEventListener('install', e => {
@@ -24,7 +24,13 @@ self.addEventListener('fetch', e => {
       .catch(() => caches.match('/')));
     return;
   }
-  // static assets & fonts: stale-while-revalidate
+  // own scripts/assets: network first so a new deployment is picked up immediately, cache when offline
+  if (url.origin === location.origin) {
+    e.respondWith(fetch(req).then(r => { if (r.ok) { const copy = r.clone(); caches.open(VERSION).then(c => c.put(req, copy)); } return r; })
+      .catch(() => caches.match(req)));
+    return;
+  }
+  // CDN libraries & fonts: stale-while-revalidate
   e.respondWith(caches.match(req).then(hit => {
     const net = fetch(req).then(r => { if (r.ok || r.type === 'opaque') { const copy = r.clone(); caches.open(VERSION).then(c => c.put(req, copy)); } return r; }).catch(() => hit);
     return hit || net;
