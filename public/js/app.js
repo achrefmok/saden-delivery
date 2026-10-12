@@ -428,8 +428,12 @@ function tplOrderDetail(){
     <div style="padding:var(--pad);display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid var(--line)">
       <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:var(--mute)">${esc(Lx.detail)} · ${esc(o.intercity?Lx.inter:Lx.local)}</span><b style="font-family:var(--mono);font-size:17px">${esc(o.ref)}</b><span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-        <button ${on(()=>shareTrack(o.ref))} style="${BTN_GHOST};font-size:12.5px">🔗 ${esc(Lx.shareLink)}</button>
-        <button ${on(set({sel:null,selData:null}))} aria-label="${esc(Lx.close)}" style="${BTN_GHOST};font-size:12.5px">✕</button>
+        ${qrSvg(o.ref,64)}
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button ${on(()=>printLabel(o))} style="${BTN_GHOST};font-size:12.5px">🏷 ${esc(Lx.label)}</button>
+          <button ${on(()=>shareTrack(o.ref))} style="${BTN_GHOST};font-size:12.5px">🔗 ${esc(Lx.shareLink)}</button>
+        </div>
+        <button ${on(set({sel:null,selData:null}))} aria-label="${esc(Lx.close)}" style="${BTN_GHOST};font-size:12.5px;align-self:flex-start">✕</button>
       </div>
     </div>
     <div style="padding:var(--pad);display:grid;grid-template-columns:1fr 1fr;gap:12px;border-bottom:1px solid var(--line)">
@@ -730,6 +734,7 @@ function tplAdmin(){
         <h1 style="margin:0;font-family:var(--disp);font-size:24px;font-weight:700;letter-spacing:-0.01em;flex:1;min-width:160px">${esc(Lx[p])}</h1>
         ${when(role()==='admin',()=>`<select class="fld no-print" ${onInput(e=>{state.agencyFilter=e.target.value;store.set('saden.agencyFilter',state.agencyFilter);state.sel=null;state.selData=null;state.stats=null;refresh();},'agf')} style="max-width:220px;background:var(--surface)" aria-label="${esc(Lx.agencyLbl)}">${each([['',Lx.allAgencies],...agencyOptions()],([v,l])=>`<option value="${esc(v)}"${String(v)===String(state.agencyFilter)?' selected':''}>${esc(l)}</option>`)}</select>`)}
         <input type="search" class="fld" ${onInput(e=>{state.q=e.target.value;if(state.page!=='orders'&&state.q){state.page='orders';state.sel=null;}render();},'q')} value="${esc(state.q)}" placeholder="${esc(Lx.search)}" style="flex:1;min-width:180px;max-width:420px;background:var(--surface)">
+        <button ${on(()=>openScanner())} style="${BTN_GHOST};padding:9px 14px;white-space:nowrap">📷 <span class="hide-sm">${esc(Lx.scanBtn)}</span></button>
         <button ${on(()=>setState({modal:{type:'newOrder'},oform:{...emptyOrder(),shop_id:state.oform.shop_id}}))} style="${BTN_PRIMARY};padding:9px 16px;white-space:nowrap">+ ${esc(Lx.newParcel)}</button>
       </div>
       <div class="pg" style="padding:24px;display:flex;flex-direction:column;gap:var(--gap)">${page}</div>
@@ -763,10 +768,10 @@ function tplShop(){
         <div style="${CARD};overflow:hidden">
           <div style="padding:var(--pad)"><b>${esc(Lx.myOrders)}</b></div>
           <div style="overflow-x:auto"><div style="min-width:640px">${s.orders.length?each(s.orders,o=>`
-            <div style="display:grid;grid-template-columns:96px minmax(0,1.2fr) minmax(0,1fr) 140px 110px 76px;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line)">
+            <div style="display:grid;grid-template-columns:96px minmax(0,1.2fr) minmax(0,1fr) 140px 110px 96px;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line)">
               <span style="display:flex;flex-direction:column"><span style="font-family:var(--mono);font-size:12px">${esc(o.ref)}</span><span style="font-size:11px;color:var(--mute)">${isToday(o.created_at)?hm(o.created_at):dm(o.created_at)}</span></span>
               <b style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.client_name)}</b><span style="color:var(--mute)">${esc(destLabel(o))}</span><span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span></span><span style="text-align:end;font-weight:600">${esc(fmt(o.cod,u))}</span>
-              <span style="display:flex;gap:2px;justify-content:flex-end">${when(['cree','attente'].includes(o.status),()=>`<button ${on(()=>askReason(Lx.cancelOrder+' · '+o.ref,false,note=>act(()=>api('orders/'+o.id+'/cancel',{method:'POST',body:{note}}),Lx.saved)))} title="${esc(Lx.cancelOrder)}" style="border:none;background:none;cursor:pointer;font-size:15px;color:var(--rf)">✕</button>`)}<button ${on(()=>shareTrack(o.ref))} title="${esc(Lx.shareLink)}" style="border:none;background:none;cursor:pointer;font-size:16px">🔗</button></span>
+              <span style="display:flex;gap:2px;justify-content:flex-end">${when(['cree','attente'].includes(o.status),()=>`<button ${on(()=>askReason(Lx.cancelOrder+' · '+o.ref,false,note=>act(()=>api('orders/'+o.id+'/cancel',{method:'POST',body:{note}}),Lx.saved)))} title="${esc(Lx.cancelOrder)}" style="border:none;background:none;cursor:pointer;font-size:15px;color:var(--rf)">✕</button>`)}<button ${on(()=>printLabel(o))} title="${esc(Lx.label)}" style="border:none;background:none;cursor:pointer;font-size:15px">🏷</button><button ${on(()=>shareTrack(o.ref))} title="${esc(Lx.shareLink)}" style="border:none;background:none;cursor:pointer;font-size:16px">🔗</button></span>
             </div>`):empty()}</div></div>
         </div>
       </div>
@@ -803,7 +808,7 @@ function tplDriver(){
       </div>
     </div>
     <div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:10px">
-      <b>${esc(Lx.missions)}</b>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(Lx.missions)}</b><button ${on(()=>openScanner('delivery'))} style="${BTN_GHOST};padding:8px 12px">📷 ${esc(Lx.scanBtn)}</button></div>
       ${ms.length?each(ms,m=>`<div ${on(()=>setState({curId:m.id,lv:m.status==='livre'?'done':'detail',doneInfo:null}))} style="${CARD};padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;${ACTIVE_ST.includes(m.status)?'':'opacity:.7'}">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:15px">${esc(m.client_name)}</b><span style="${css(msB(m.status))}">${esc(msL(m.status))}</span></div>
         <span style="color:var(--mute);font-size:13px">${esc((m.zone_name?m.zone_name+' · ':'')+m.address)}</span>
