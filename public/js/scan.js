@@ -29,11 +29,13 @@ function labelHtml(o){
   .row{display:flex;justify-content:space-between;align-items:center;gap:3mm}.box{border:0.4mm solid #000;border-radius:1.5mm;padding:2.5mm}
   .k{font-size:7pt;text-transform:uppercase;letter-spacing:.06em;color:#333}.v{font-size:10pt;font-weight:700}.big{font-size:15pt;font-weight:800}
   .qr{width:34mm;height:34mm}.qr svg{width:100%;height:100%}
+  .bc{display:flex;justify-content:center}.bc svg{width:72mm;height:auto;display:block}
   @media screen{body{background:#ddd}.l{margin:10px auto;background:#fff;box-shadow:0 2px 10px #0003}}
   </style></head><body><div class="l">
   <div class="row"><div style="display:flex;flex-direction:column;gap:1mm"><div style="display:flex;align-items:center;gap:2mm"><img src="${BRAND.logoPrint}" alt="" style="width:13mm;height:13mm;object-fit:contain"><b style="font-size:13pt;letter-spacing:.06em">${esc(BRAND.full.toUpperCase())}</b></div><div style="font-family:monospace;font-size:17pt;font-weight:700">${esc(o.ref)}</div>
     <div style="font-size:8pt">${esc(dm(o.created_at))} · ${esc(o.intercity?'INTER-VILLES':'LOCAL')}${o.external_ref?' · '+esc(o.external_ref):''}</div></div>
     <div class="qr">${qr}</div></div>
+  <div class="bc">${code128Svg(o.ref,{h:46,module:2,font:13})}</div>
   <div class="box" style="border-width:0.7mm"><div class="k">Destinataire</div><div class="big">${esc(o.client_name)}</div><div class="v">${esc(fmtPhone(o.client_phone))}</div>
     <div style="font-size:9.5pt;margin-top:1mm">${esc(o.address)}</div><div class="big" style="margin-top:1mm">${esc(o.dest_city_name||'')}${o.zone_name?' — '+esc(o.zone_name):''}</div></div>
   <div class="box"><div class="k">Expéditeur</div><div class="v">${esc(o.sender_name||o.shop_name||'')}</div><div style="font-size:8.5pt">${esc(o.sender_phone?fmtPhone(o.sender_phone):'')} ${esc(o.sender_address||'')}</div></div>
@@ -120,6 +122,12 @@ async function onCode(raw,manual){
   if(!ref)return;
   const now=Date.now();if(!manual&&SC.last[ref]&&now-SC.last[ref]<2500)return;SC.last[ref]=now;
   navigator.vibrate?.(60);
+  if(SC.handler){
+    // screen-specific scan (stock entry, bordereau…): the screen decides what a code means
+    try{const r=await SC.handler(ref)||{};SC.results.unshift({ref,ok:!r.extra&&!r.error,msg:r.message||'OK'});if(r.extra)navigator.vibrate?.([40,60,40]);}
+    catch(e){SC.results.unshift({ref,ok:false,msg:e.message});navigator.vibrate?.([40,60,40]);}
+    SC.results=SC.results.slice(0,30);renderScan();return;
+  }
   if(SC.action==='inventory'&&!SC.scanned.includes(ref))SC.scanned.unshift(ref);
   const body={code:ref,action:SC.action,agency_id:SC.agency_id||undefined,manifest_id:SC.manifest_id||undefined,lat:state.myPos?.[0],lng:state.myPos?.[1]};
   try{
@@ -151,9 +159,10 @@ function renderScan(){
   const inv=SC.action==='inventory';
   const exp=SC.expected||[],expRefs=exp.map(o=>o.ref);
   const missing=exp.filter(o=>!SC.scanned.includes(o.ref)),unexpected=SC.scanned.filter(r=>!expRefs.includes(r));
-  const needAgency=staff&&(inv||['reception','return'].includes(SC.action))&&role()==='admin';
+  const needAgency=staff&&!SC.handler&&(inv||['reception','return'].includes(SC.action))&&role()==='admin';
   ui.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">📷 ${esc(Lx.scanner)}</b><button data-sact="close" class="sbtn">✕</button></div>
-    ${staff?`<label class="slab">${esc(Lx.scanAction)}<select class="fld" data-sch="action">${acts.map(([k,l])=>opt(k,l[li],SC.action)).join('')}</select></label>`:''}
+    ${SC.title?`<div style="font-weight:600">${esc(SC.title)}</div>`:''}
+    ${staff&&!SC.handler?`<label class="slab">${esc(Lx.scanAction)}<select class="fld" data-sch="action">${acts.map(([k,l])=>opt(k,l[li],SC.action)).join('')}</select></label>`:''}
     ${SC.extraUi?SC.extraUi():''}
     ${needAgency?`<label class="slab">${esc(Lx.agencyLbl)}<select class="fld" data-sch="agency_id">${opt('',inv?Lx.choose:Lx.auto,SC.agency_id)}${G().agencies.filter(a=>a.active).map(a=>opt(a.id,a.name,SC.agency_id)).join('')}</select></label>`:''}
     <div style="font-size:12.5px;color:${SC.camera==='error'?'var(--rf)':'var(--mute)'}">${esc(SC.camera==='on'?Lx.camOn:SC.camera==='error'?Lx.camErr:Lx.camStarting)}${SC.camera==='error'?` <button data-sact="retry" class="sbtn">↻</button>`:''}</div>

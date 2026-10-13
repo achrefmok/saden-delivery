@@ -21,7 +21,9 @@ Administrateur de production : **hachem.jaxdelivery@gmail.com** (création au pr
 - **Périmètre** : un helper unique (`lib/scope.js` → `scopeWhere`) filtre chaque requête selon le rôle.
 - **Tarification** (`lib/pricing.js`) : règles par agence / villes / zone / boutique / type / poids / distance ; la plus spécifique gagne, règle par défaut obligatoire ; montants figés sur la commande (frais, part livreur, revenu Saden, montant à reverser).
 - **Fiche colis complète**, **QR + étiquette 10×15**, **scan caméra** (réception, bordereau, expédition, arrivée, retour, inventaire, livraison, ouverture de fiche).
-- **Bordereaux** : brouillon → validé → en transit → arrivé → clôturé, composition manuelle, réception colis par colis, manquants, PDF.
+- **Stock par agence** (`lib/stock.js`) : un colis n'est présent qu'après confirmation de sa réception (`orders.in_stock`) ; chaque entrée / sortie écrit un mouvement (`stock_movements`) dans la même transaction que le changement de statut ; double réception impossible ; anomalies (manquant, supplémentaire, endommagé, code inconnu) corrigées uniquement après validation.
+- **Bordereaux** (7 types, une seule table `manifests.type`) : expédition (remise au livreur), retour (motifs), échange (récupération liée), inter-agences (réception partielle / complète / avec anomalie, réserves), émission d'appel (sans changement de statut), inventaire (écarts), solde (écriture de caisse liée). Brouillons modifiables / supprimables ; annulation motivée avec contre-mouvements et contre-passation ; PDF A4 avec Code 128 sur le document et chaque ligne.
+- **Identité visuelle** : un seul point de configuration, `public/brand/` (voir plus bas).
 - **Machine à états** serveur (`lib/status.js`) : transitions par rôle, motifs, annulation, flux retour, historique complet.
 - **Affectation intelligente** (`lib/assign.js`) : score détaillé, mode automatique par agence.
 - **Caisse par agence** : remises COD des livreurs, règlements boutiques, transferts liés.
@@ -34,6 +36,8 @@ npm install
 npm run seed              # données de démo dans .data/ (PGlite) — jamais dans Supabase sans --remote
 npm run dev               # http://localhost:3000 (base locale si DATABASE_URL absent, ou avec DB=local)
 npm run test:permissions  # 45 contrôles d'accès (serveur lancé)
+npm run test:stock        # 101 contrôles stock + bordereaux (serveur LOCAL, base fraîchement seedée)
+npm run brand             # régénère logo, version N&B, favicon et icônes PWA depuis public/brand/logo-source.*
 ```
 
 Comptes de démo (mot de passe `saden123`) :
@@ -74,21 +78,30 @@ Schéma et migrations : `lib/schema.js`, versionnés (`SCHEMA_VERSION`) et exéc
 2. Variables : `DATABASE_URL`, `JWT_SECRET`, `ADMIN_EMAIL` (cocher Production **et** Preview si les déploiements de branche doivent fonctionner).
 3. Redéployer : la migration s'applique au premier appel.
 
+## Logo
+
+Remplacez `public/brand/logo-source.png` (ou `.jpg`) puis lancez `npm run brand` (Python + Pillow). Le script produit
+`logo.png` (couleur, fond transparent : barre, connexion, tableau de bord), `logo-print.png` (noir et blanc contrasté :
+PDF des bordereaux, étiquettes 10×15), les favicons et les icônes PWA. Le nom affiché et les couleurs sont dans
+`public/brand/brand.js`.
+
 ## Structure
 
 ```
 public/index.html              coquille PWA (styles, thèmes, FR/AR + RTL)
 public/js/app.js               cœur : état, i18n, rendu, admin, livreur, boutique, client, cartes
-public/js/*.js                 modules : geo-admin, pricing, scan, manifests, partners, cash, stats,
-                               search, journal, claims, notifications
+public/js/*.js                 modules : geo-admin, pricing, scan, barcode (Code 128 + PDF A4), manifests (bordereaux),
+                               stock, partners, cash, stats, search, journal, claims, notifications
+public/brand/                  logo source + fichiers générés, brand.js (configuration unique de l'identité)
 api/index.js                   fonction Vercel unique → lib/api.js
 lib/http.js                    routeur, contexte de requête, erreurs
 lib/scope.js                   périmètre par rôle (scopeWhere)
-lib/status.js                  machine à états + historique + hooks
+lib/status.js                  machine à états + historique + hooks (synchronise le stock)
+lib/stock.js, flows.js         présence en stock, mouvements, anomalies ; flux physiques (retour, remise, échange)
 lib/pricing.js, assign.js      tarification, affectation intelligente
 lib/partners.js, notify.js     clés API + webhooks signés, notifications
 lib/audit.js, ratelimit.js     journal d'audit, limites d'essais
 lib/routes/*.js                routes par domaine (dont v1.js = API partenaires)
 docs/API.md                    documentation de l'API partenaires
-scripts/                       dev, seed, create-admin, test-permissions
+scripts/                       dev, seed, create-admin, brand, test-permissions, test-stock
 ```

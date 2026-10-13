@@ -40,7 +40,7 @@ function tplSearchBox(){
     <button ${on(()=>openScanner('lookup'))} title="${esc(Lx.scanOpen)}" style="${BTN_GHOST};padding:8px 10px">📷</button>
     ${when(open,()=>`<div style="position:absolute;top:calc(100% + 4px);inset-inline:0;z-index:900;${CARD};box-shadow:0 12px 30px oklch(0 0 0 / .18);max-height:70vh;overflow:auto">
       ${total?group(Lx.parcelsTotal,r.orders,o=>row('order',o.id,`<span style="font-family:var(--mono)">${esc(o.ref)}</span> · ${esc(o.client_name)}`,`${esc(stL(o.status))} · ${esc(fmtPhone(o.client_phone))}${o.external_ref?' · '+esc(o.external_ref):''} · ${esc(o.shop_name||o.sender_name||'')}`))
-        +group(Lx.brd,r.manifests,m=>row('manifest',m.id,`<span style="font-family:var(--mono)">${esc(m.ref)}</span>`,`${esc(m.from_city)} → ${esc(m.to_city)}`))
+        +group(Lx.brd,r.manifests,m=>row('manifest',m.id,`<span style="font-family:var(--mono)">${esc(m.ref)}</span>`,`${esc(btL(m.type||'transfer'))} · ${esc(m.from_city)}${m.to_city!==m.from_city?' → '+esc(m.to_city):''}`))
         +group(Lx.rShop,r.shops,s=>row('shop',s.id,esc(s.shop_name||s.name),esc(fmtPhone(s.phone))))
         +group(Lx.drivers,r.drivers,d=>row('driver',d.id,esc(d.name),esc(fmtPhone(d.phone))))
         :`<div style="padding:12px;color:var(--mute)">${esc(Lx.noResult)}</div>`}

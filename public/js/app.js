@@ -5,7 +5,7 @@ const L_=window.L; // Leaflet (captured before the i18n helper L() below)
    i18n
    ========================================================= */
 const K={vAdmin:['Admin','الإدارة'],vDriver:['Livreur','الموزع'],vShop:['Boutique','المتجر'],vClient:['Client','الحريف'],light:['Clair','فاتح'],dark:['Sombre','داكن'],
-dash:['Tableau de bord','لوحة القيادة'],map:['Carte live','الخريطة المباشرة'],orders:['Commandes & colis','الطلبات والطرود'],brd:['Bordereaux','البوليصات'],drivers:['Livreurs','الموزعون'],cash:['Caisse','الخزينة'],stats:['Statistiques','الإحصائيات'],claims:['Réclamations','الشكاوى'],accounts:['Comptes','الحسابات'],
+dash:['Tableau de bord','لوحة القيادة'],settings:['Paramètres','الإعدادات'],shops:['Boutiques','المتاجر'],newShopAccount:['Nouvelle boutique','متجر جديد'],inProgressK:['En cours','جارية'],dueShort:['Livré à reverser','للتحويل'],settleK:['Solde','تسوية'],shopsHint:['Chiffres calculés sur les 500 dernières commandes ; le solde exact se fait par bordereau de solde.','الأرقام محسوبة على آخر 500 طلب ؛ التسوية الدقيقة عبر بوليصة التسوية.'],map:['Carte live','الخريطة المباشرة'],orders:['Commandes & colis','الطلبات والطرود'],brd:['Bordereaux','البوليصات'],drivers:['Livreurs','الموزعون'],cash:['Caisse','الخزينة'],stats:['Statistiques','الإحصائيات'],claims:['Réclamations','الشكاوى'],accounts:['Comptes','الحسابات'],
 agencyLbl:['Agence','الوكالة'],search:['Colis, téléphone, client, bordereau…','طرد، هاتف، حريف، بوليصة…'],newParcel:['Nouveau colis','طرد جديد'],
 liveMap:['Carte live','الخريطة المباشرة'],alerts:['Alertes','التنبيهات'],recent:['Commandes récentes','الطلبات الأخيرة'],lastBrd:['Derniers bordereaux','آخر البوليصات'],seeAll:['Tout voir','عرض الكل'],
 colRef:['Réf.','المرجع'],colClient:['Client','الحريف'],colShop:['Boutique','المتجر'],colZone:['Zone','المنطقة'],colStatus:['Statut','الحالة'],colAmount:['COD','المبلغ'],
@@ -162,15 +162,17 @@ async function refresh(silent){
     if(r==='admin'||r==='manager'){
       const af=r==='admin'&&state.agencyFilter?'agency_id='+encodeURIComponent(state.agencyFilter):'';
       const [d,extra]=await Promise.all([api('admin/overview'+(af?'?'+af:'')),
-        state.page==='stats'?api(statsQuery()):null,
+        curPage()==='stats'?api(statsQuery()):null,
       ]);
       state.data=d;if(extra)state.stats=extra;
-      if(state.page==='journal'){if(!state.users)state.users=(await api('users')).users;await loadJournal();}
-      if(state.page==='accounts'||state.page==='agencies')state.users=(await api('users'+(af&&state.page==='accounts'?'?'+af:''))).users;
-      if(['agencies','geo'].includes(state.page))state.geo=await api('geo');
-      if(state.page==='pricing')state.pricing=await api('pricing');
-      if(state.page==='cash')await loadCash();
-      if(state.page==='partners')[state.partners,state.webhooks]=await Promise.all([api('partners').then(r=>r.partners),api('webhooks').then(r=>r.deliveries)]);
+      if(curPage()==='journal'){if(!state.users)state.users=(await api('users')).users;await loadJournal();}
+      if(curPage()==='accounts'||curPage()==='agencies')state.users=(await api('users'+(af&&curPage()==='accounts'?'?'+af:''))).users;
+      if(['agencies','geo'].includes(curPage()))state.geo=await api('geo');
+      if(curPage()==='pricing')state.pricing=await api('pricing');
+      if(curPage()==='cash')await loadCash();
+      if(curPage()==='partners')[state.partners,state.webhooks]=await Promise.all([api('partners').then(r=>r.partners),api('webhooks').then(r=>r.deliveries)]);
+      if(state.page==='stock')await loadStock().catch(()=>{});
+      if(state.page==='brd')await loadBrdList().catch(()=>{});
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
     }else if(r==='driver'){state.drv=await api('driver/overview');startGeo();}
     else if(r==='shop'){state.shop=await api('shop/overview');}
@@ -314,14 +316,19 @@ function tplLogin(){
 /* =========================================================
    ADMIN
    ========================================================= */
-const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['brd','BR'],['drivers','LV'],['cash','CS'],['stats','ST'],['claims','RC'],['accounts','AC'],['pricing','TF'],['agencies','AG','admin'],['geo','VZ','admin'],['partners','AP','admin'],['journal','JR','admin']];
+const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['stock','SK'],['brd','BR'],['drivers','LV'],['shops','BQ'],['agencies','AG','admin'],['cash','CS'],['stats','ST'],['claims','RC'],['journal','JR','admin'],['settings','PA']];
+/* « Paramètres » groups the configuration screens (each still follows its own permissions) */
+const SETTINGS=[['accounts'],['pricing'],['geo','admin'],['partners','admin']];
+const settingsFor=()=>SETTINGS.filter(x=>!x[1]||x[1]===role()).map(x=>x[0]);
+/* page actually displayed (settings → its active sub-page) */
+const curPage=()=>state.page==='settings'?(settingsFor().includes(state.setTab)?state.setTab:'accounts'):state.page;
 const navFor=()=>NAV.filter(n=>!n[2]||n[2]===role());
 const scopeName=()=>role()==='manager'?myAgency()?.name||'—':(agencyById(state.agencyFilter)?.name||L().allAgencies);
 function goPage(p){
   state.page=p;state.sel=null;state.selData=null;
   if(p!=='orders')state.q='';state.searchOpen=false;
   render();
-  if(['stats','accounts','agencies','geo','pricing','partners','journal'].includes(p))refresh(true);
+  if(['stats','accounts','agencies','geo','pricing','partners','journal','settings','stock'].includes(p))refresh(true);
   scrollTo(0,0);
 }
 function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';render();api('orders/'+id).then(d=>{if(state.sel===id){state.selData=d;render();}}).catch(e=>toast(e.message,'err'));}
@@ -356,7 +363,7 @@ function tplDash(){
   const alerts=[
     ...drivers.filter(x=>x.status==='pause'||(x.battery!=null&&x.battery<25&&x.status!=='off')).map(x=>['w',li?`${x.name} — ${x.stLabel}${x.battery!=null?'، البطارية '+x.battery+'٪':''}`:`${x.name} — ${x.stLabel.toLowerCase()}${x.battery!=null?', batterie '+x.battery+' %':''}`]),
     ...d.orders.filter(o=>o.status==='absent'&&isToday(o.updated_at)).map(o=>['r',li?`${o.ref} — الحريف غائب، يجب برمجة محاولة ثانية`:`${o.ref} — client absent, nouvelle tentative à planifier`,()=>selectOrder(o.id)]),
-    ...d.manifests.filter(m=>m.stage===0).map(m=>['o',li?`${m.ref} — غير مؤكد`:`${m.ref} — bordereau non validé`,()=>{state.selBrd=m.id;state.brdDetail=null;goPage('brd');}]),
+    ...d.manifests.filter(m=>m.stage===0).map(m=>['o',li?`${m.ref} — غير مؤكد`:`${m.ref} — bordereau non validé`,()=>selectBrd(m.id,m.type)]),
     ...(nWait?[['i',li?`${nWait} طلبات في انتظار الإسناد`:`${nWait} commande(s) en attente d’affectation`,()=>{state.filter='attente';goPage('orders');}]]:[]),
   ].slice(0,6);
   return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:var(--gap)">
@@ -386,9 +393,9 @@ function tplDash(){
       </div>
       <div style="${CARD};overflow:hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--pad)"><b>${esc(Lx.lastBrd)}</b><button ${on(()=>goPage('brd'))} style="background:none;border:none;color:var(--of);font-weight:600;cursor:pointer">${esc(Lx.seeAll)} →</button></div>
-        ${d.manifests.length?each(d.manifests.slice(0,4),m=>`<div ${on(()=>{state.selBrd=m.id;state.brdDetail=null;goPage('brd');})} style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px var(--pad);border-top:1px solid var(--line);cursor:pointer">
-          <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:600">${esc(m.from_city)} → ${esc(m.to_city)}</span><span style="font-family:var(--mono);font-size:11.5px;color:var(--mute)">${esc(m.ref)} · ${m.n} ${esc(Lx.parcels)}</span></div>
-          <span style="${css(badge(['n','i','o','w','g'][m.stage]))}">${esc(BST[m.stage][li])}</span></div>`):empty(Lx.noBrd)}
+        ${d.manifests.length?each(d.manifests.slice(0,4),m=>`<div ${on(()=>selectBrd(m.id,m.type))} style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px var(--pad);border-top:1px solid var(--line);cursor:pointer">
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:600">${esc(btL(m.type))} · ${esc(brdTitle(m))}</span><span style="font-family:var(--mono);font-size:11.5px;color:var(--mute)">${esc(m.ref)} · ${m.n} ${esc(Lx.lines)}</span></div>
+          ${stageBadge(m)}</div>`):empty(Lx.noBrd)}
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--gap)">${tplRatingsCard()}</div>`;
@@ -620,10 +627,33 @@ function tplOrderForm(key,withShop){
   </div>`;
 }
 
+function tplSettings(){
+  const tabs=settingsFor(),cur=curPage();
+  const go=k=>()=>{state.setTab=k;render();refresh(true);};
+  return `<div class="no-print" style="display:flex;gap:6px;overflow-x:auto">${each(tabs,k=>`<button ${on(go(k))} data-settab="${k}" style="${css(chip(cur===k))}">${esc(L()[k])}</button>`)}</div>
+    ${({accounts:tplAccounts,pricing:tplPricing,geo:tplGeo,partners:tplPartners}[cur])()}`;
+}
+/* « Boutiques »: activity of the agency's shops, shortcut to accounts and to their settlement (solde) */
+function tplShops(){
+  const Lx=L(),d=state.data,shops=d.shops||[];
+  const stat=id=>{const os=d.orders.filter(o=>o.shop_id===id);return{n:os.length,live:os.filter(o=>!['livre','annule','restitue','perdu'].includes(o.status)).length,done:os.filter(o=>o.status==='livre').length,stock:os.filter(o=>o.in_stock).length,due:os.filter(o=>o.status==='livre').reduce((a,o)=>a+(o.amount_to_remit||0),0)};};
+  const settle=x=>()=>{goPage('brd');goBrdType('settlement');state.bform={...state.bform,open:true,party:'shop',shop_id:String(x.id),agency_id:String(x.agency_id||'')};render();};
+  const cols='minmax(0,1.4fr) 130px 80px 80px 80px 80px 120px 90px';
+  return `<div style="${CARD};overflow:hidden"><div style="padding:var(--pad);display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(Lx.shops)} (${shops.length})</b>
+    <button ${on(()=>{state.setTab='accounts';state.uform={...state.uform,role:'shop'};goPage('settings');})} style="${BTN_GHOST};padding:6px 10px">+ ${esc(Lx.newShopAccount)}</button></div>
+    <div style="overflow-x:auto"><div style="min-width:760px">
+    <div style="display:grid;grid-template-columns:${cols};gap:10px;padding:8px var(--pad);font-size:11.5px;color:var(--mute);background:var(--surface2);font-weight:600"><span>${esc(Lx.colShop)}</span><span>${esc(Lx.phone)}</span><span>${esc(Lx.parcelsTotal)}</span><span>${esc(Lx.inProgressK)}</span><span>${esc(Lx.deliveredK)}</span><span>${esc(Lx.stock)}</span><span style="text-align:end">${esc(Lx.dueShort)}</span><span></span></div>
+    ${shops.length?each(shops,x=>{const t=stat(x.id);return `<div style="display:grid;grid-template-columns:${cols};gap:10px;align-items:center;padding:9px var(--pad);border-top:1px solid var(--line);${x.active?'':'opacity:.55'}">
+      <span><b>${esc(x.shop_name)}</b><br><span style="font-size:11.5px;color:var(--mute)">${esc([x.name,agencyById(x.agency_id)?.name].filter(Boolean).join(' · '))}</span></span><span style="font-size:12.5px">${esc(fmtPhone(x.phone))}</span>
+      <span>${t.n}</span><span>${t.live}</span><span>${t.done}</span><span>${t.stock}</span><span style="text-align:end;font-weight:600">${esc(fmt(t.due))}</span>
+      <span style="text-align:end"><button ${on(settle(x))} style="${BTN_GHOST};padding:4px 8px;font-size:12px">${esc(Lx.settleK)}</button></span></div>`;}):empty()}
+    </div></div><div style="padding:8px var(--pad);font-size:12px;color:var(--mute)">${esc(Lx.shopsHint)}</div></div>`;
+}
+
 function tplAdmin(){
   const Lx=L(),p=state.page;
   if(!state.data)return `<div style="padding:40px;text-align:center;color:var(--mute)"><span class="spin"></span></div>`;
-  const page=({dash:tplDash,map:tplMap,orders:tplOrders,brd:tplBrd,drivers:tplDrivers,cash:tplCash,stats:tplStats,claims:tplClaims,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing,partners:tplPartners,journal:tplJournal}[p]||tplDash)();
+  const page=({dash:tplDash,map:tplMap,orders:tplOrders,stock:tplStock,brd:tplBrd,drivers:tplDrivers,shops:tplShops,cash:tplCash,stats:tplStats,claims:tplClaims,settings:tplSettings,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing,partners:tplPartners,journal:tplJournal}[p]||tplDash)();
   const dir=state.prefs.dir;
   return `<div class="shell" style="display:flex;flex-direction:${dir==='b'?'column':'row'};flex:1;min-height:0">
     ${tplNav()}
