@@ -23,7 +23,7 @@ const orders = async () => (await A('GET', 'admin/overview')).orders;
 const ord = async id => (await A('GET', 'orders/' + id)).order;
 const moves = async id => (await A('GET', 'stock/movements?order_id=' + id)).movements;
 const used = new Set();
-const pick = (list, f) => { const o = list.find(x => !used.has(x.id) && f(x)); if (o) used.add(o.id); return o; };
+const pick = (list, f) => { const o = list.find(x => !used.has(x.id) && x.kind !== 'pickup' && f(x)); if (o) used.add(o.id); return o; };
 const local = o => o.origin_city_id === o.dest_city_id;
 
 console.log('1. Entrée en stock — dépôt boutique, double scan');

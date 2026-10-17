@@ -176,7 +176,7 @@ async function refresh(silent){
       if(state.page==='brd')await loadBrdList().catch(()=>{});
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
     }else if(r==='driver'){state.drv=await api('driver/overview');startGeo();}
-    else if(r==='shop'){state.shop=await api('shop/overview');}
+    else if(r==='shop'){state.shop=await api('shop/overview');state.shopPickups=(await api('shop/pickups').catch(()=>({pickups:[]}))).pickups;}
     else if(r==='client'){state.trk=await api('track',{method:'POST',body:state.trackAuth});}
     if(r&&r!=='client')await loadNotifs();
   }catch(e){if(!silent)toast(e.message,'err');}
@@ -695,6 +695,7 @@ function tplShop(){
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:var(--gap)">
           ${kpiCard(Lx.monthOrders,String(k.month))}${kpiCard(Lx.deliveredK,k.finals?Math.round(k.delivered/k.finals*100)+' %':'—')}${kpiCard(Lx.inProgressK,String(inProg))}${kpiCard(Lx.toReceive,fmt(k.cod,u))}
         </div>
+        ${tplShopPickups()}
         <div style="${CARD};overflow:hidden">
           <div style="padding:var(--pad)"><b>${esc(Lx.myOrders)}</b></div>
           <div style="overflow-x:auto"><div style="min-width:640px">${s.orders.length?each(s.orders,o=>`

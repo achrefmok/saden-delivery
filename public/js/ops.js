@@ -178,6 +178,7 @@ function tplOrderOps(o){
     <span style="flex:1"></span>
     <button ${on(()=>{state.opsModal={kind:'report',order_id:o.id,ref:o.ref,type:'injoignable',note:''};render();})} style="${BTN_GHOST};font-size:12px;padding:6px 10px">⚠ ${esc(Lx.reportProblem)}</button>
     <button ${on(()=>{state.opsModal={kind:'task',order_id:o.id,ref:o.ref,type:'rappel',message:''};render();})} style="${BTN_GHOST};font-size:12px;padding:6px 10px">＋ ${esc(Lx.taskK)}</button>
+    ${o.kind!=='pickup'?`<button ${on(()=>askReason(Lx.genExchange+' · '+o.ref,false,desc=>act(async()=>{const r=await api(`orders/${o.id}/exchange`,{method:'POST',body:{description:desc}});toast(Lx.exchangeCreated+' : '+r.pickup.ref);},null)))} style="${BTN_GHOST};font-size:12px;padding:6px 10px">⇄ ${esc(Lx.genExchange)}</button>`:''}
     ${o.flagged_at?`<button ${on(unflag)} style="${BTN_GHOST};font-size:12px;padding:6px 10px">${esc(Lx.unflagK)}</button>`:`<button ${on(flag)} style="${BTN_GHOST};font-size:12px;padding:6px 10px;color:var(--rf)">⚑ ${esc(Lx.flagK)}</button>`}
   </div>${state.page!=='ops'?tplOpsModal():''}`;
 }
@@ -188,11 +189,25 @@ function tplTaskBadge(){
   const tc=state.taskCount||{open:0,due:0};
   return `<button ${on(()=>{state.opsTab='tasks';state.ops=null;goPage('ops');})} title="${esc(L().tasksTitle)}" aria-label="${esc(L().tasksTitle)}" data-taskbadge style="${css({...seg(false),border:'1px solid oklch(1 0 0 / .18)',position:'relative'})}">✔︎${tc.open?`<span style="position:absolute;top:-6px;inset-inline-end:-6px;background:${tc.due?'var(--rf)':'var(--orange)'};color:#fff;font-size:10.5px;font-weight:800;min-width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 4px">${tc.open>99?'99+':tc.open}</span>`:''}</button>`;
 }
+/* shop space: pickup requests (demande d'enlèvement) */
+function tplShopPickups(){
+  const Lx=L(),list=state.shopPickups||[];
+  const ask=()=>askReason(Lx.pickupRequest,false,comment=>act(async()=>{const r=await api('shop/pickups',{method:'POST',body:{comment}});toast(Lx.pickupRequested+' : '+r.manifest.ref+' ('+r.parcels+')');},null));
+  const STG={0:Lx.pkWaiting,1:Lx.pkToCollect,2:Lx.pkCollected,4:Lx.pkReceived,5:'Annulé'};
+  return `<div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:10px" data-shop-pickups>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>${esc(Lx.pickupsTitle)}</b>
+      <button ${on(ask)} style="${BTN_PRIMARY};padding:8px 14px">🚚 ${esc(Lx.pickupRequest)}</button></div>
+    ${list.length?each(list.slice(0,5),x=>`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;padding:6px 0;border-top:1px solid var(--line)">
+      <b style="font-family:var(--mono)">${esc(x.ref)}</b><span style="${css(badge(x.stage===4?'g':x.stage===5?'r':x.stage>=1?'o':'n'))}">${esc(STG[x.stage]||'')}</span>
+      <span>${x.n} ${esc(Lx.parcels)}${x.stage===4?' · '+x.received+' '+esc(Lx.received):''}</span><span style="color:var(--mute)">${esc(dtm(x.created_at))}${x.driver_name?' · '+esc(x.driver_name):''}</span></div>`):`<span style="font-size:12.5px;color:var(--mute)">${esc(Lx.noPickup)}</span>`}
+  </div>`;
+}
 const _loadNotifsOps=loadNotifs;
 loadNotifs=async function(){await _loadNotifsOps();await loadTaskCount();};
 
 Object.assign(K,{
-  ops:['Suivi colis','متابعة الطرود'],attemptsK:['Tentatives','المحاولات'],attemptsShort:['Tent.','محاولات'],problemK:['Problème','المشكلة'],noteK:['Note','ملاحظة'],callsK:['Appels','الاتصالات'],
+  ops:['Suivi colis','متابعة الطرود'],pickupsTitle:['Demandes d’enlèvement','طلبات الالتقاط'],pickupRequest:['Demander un enlèvement','طلب التقاط'],pickupRequested:['Demande envoyée','تم إرسال الطلب'],
+  pkWaiting:['En attente','في الانتظار'],pkToCollect:['Livreur annoncé','تم تعيين موزع'],pkCollected:['Enlevé','تم الالتقاط'],pkReceived:['Reçu à l’agence','استلم في الوكالة'],noPickup:['Aucune demande.','لا طلبات.'],attemptsK:['Tentatives','المحاولات'],attemptsShort:['Tent.','محاولات'],problemK:['Problème','المشكلة'],noteK:['Note','ملاحظة'],callsK:['Appels','الاتصالات'],
   treatK:['Traiter','معالجة'],treatedBy:['Traité par','عالجه'],resolutionK:['Traitement','المعالجة'],falseProblem:['Faux problème','مشكلة خاطئة'],hideDelivered:['Masquer les livrés','إخفاء المسلمة'],
   yes:['Oui','نعم'],no:['Non','لا'],problemsTitle:['Problèmes à traiter','مشاكل للمعالجة'],historyTitle:['Historique des problèmes','سجل المشاكل'],noProblem:['Aucun problème en attente.','لا توجد مشاكل.'],
   noHistory:['Aucun problème traité.','لا يوجد سجل.'],newTask:['Nouvelle tâche','مهمة جديدة'],parcelOpt:['Colis (facultatif)','الطرد (اختياري)'],kindK:['Type','النوع'],messageK:['Message','الرسالة'],
@@ -204,5 +219,5 @@ Object.assign(K,{
   unflagK:['Lever','إلغاء'],callTitle:['Appel client','اتصال بالحريف'],callResult:['Résultat de l’appel','نتيجة الاتصال'],treatTitle:['Traiter le problème','معالجة المشكلة'],
   nextStep:['Suite à donner','الإجراء التالي'],actReplan:['Nouvelle livraison (remettre en attente)','توصيل جديد'],actReturn:['Retour à l’expéditeur','إرجاع للمرسل'],actCancel:['Annuler la commande','إلغاء الطلب'],
   actNone:['Aucun changement de statut','بدون تغيير'],rdvOpt:['Rendez-vous (facultatif)','موعد (اختياري)'],rdvK:['Rendez-vous','الموعد'],reportProblem:['Signaler un problème','الإبلاغ عن مشكلة'],
-  taskK:['Tâche','مهمة'],flagK:['Signaler','إبلاغ'],flaggedK:['Signalé','مُبلّغ'],flagTitle:['Signaler le colis — motif','الإبلاغ عن الطرد'],
+  taskK:['Tâche','مهمة'],genExchange:['Générer échange','إنشاء تبديل'],exchangeCreated:['Échange créé','تم إنشاء التبديل'],flagK:['Signaler','إبلاغ'],flaggedK:['Signalé','مُبلّغ'],flagTitle:['Signaler le colis — motif','الإبلاغ عن الطرد'],
 });
