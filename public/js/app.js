@@ -173,6 +173,7 @@ async function refresh(silent){
       if(curPage()==='partners')[state.partners,state.webhooks]=await Promise.all([api('partners').then(r=>r.partners),api('webhooks').then(r=>r.deliveries)]);
       if(state.page==='stock')await loadStock().catch(()=>{});
       if(state.page==='ops')await loadOps().catch(()=>{});
+      if(state.page==='colis')await loadParcels().catch(()=>{});
       if(state.page==='brd')await loadBrdList().catch(()=>{});
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
     }else if(r==='driver'){state.drv=await api('driver/overview');startGeo();}
@@ -317,7 +318,7 @@ function tplLogin(){
 /* =========================================================
    ADMIN
    ========================================================= */
-const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['ops','SC'],['stock','SK'],['brd','BR'],['drivers','LV'],['shops','BQ'],['agencies','AG','admin'],['cash','CS'],['stats','ST'],['claims','RC'],['journal','JR','admin'],['settings','PA']];
+const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['colis','CL'],['ops','SC'],['stock','SK'],['brd','BR'],['drivers','LV'],['shops','BQ'],['agencies','AG','admin'],['cash','CS'],['stats','ST'],['claims','RC'],['journal','JR','admin'],['settings','PA']];
 /* « Paramètres » groups the configuration screens (each still follows its own permissions) */
 const SETTINGS=[['accounts'],['pricing'],['geo','admin'],['partners','admin']];
 const settingsFor=()=>SETTINGS.filter(x=>!x[1]||x[1]===role()).map(x=>x[0]);
@@ -329,7 +330,7 @@ function goPage(p){
   state.page=p;state.sel=null;state.selData=null;
   if(p!=='orders')state.q='';state.searchOpen=false;
   render();
-  if(['stats','accounts','agencies','geo','pricing','partners','journal','settings','stock','ops'].includes(p))refresh(true);
+  if(['stats','accounts','agencies','geo','pricing','partners','journal','settings','stock','ops','colis'].includes(p))refresh(true);
   scrollTo(0,0);
 }
 function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';render();api('orders/'+id).then(d=>{if(state.sel===id){state.selData=d;render();}}).catch(e=>toast(e.message,'err'));}
@@ -655,7 +656,7 @@ function tplShops(){
 function tplAdmin(){
   const Lx=L(),p=state.page;
   if(!state.data)return `<div style="padding:40px;text-align:center;color:var(--mute)"><span class="spin"></span></div>`;
-  const page=({dash:tplDash,map:tplMap,orders:tplOrders,stock:tplStock,ops:tplOps,brd:tplBrd,drivers:tplDrivers,shops:tplShops,cash:tplCash,stats:tplStats,claims:tplClaims,settings:tplSettings,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing,partners:tplPartners,journal:tplJournal}[p]||tplDash)();
+  const page=({dash:tplDash,map:tplMap,orders:tplOrders,stock:tplStock,ops:tplOps,colis:tplParcels,brd:tplBrd,drivers:tplDrivers,shops:tplShops,cash:tplCash,stats:tplStats,claims:tplClaims,settings:tplSettings,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing,partners:tplPartners,journal:tplJournal}[p]||tplDash)();
   const dir=state.prefs.dir;
   return `<div class="shell" style="display:flex;flex-direction:${dir==='b'?'column':'row'};flex:1;min-height:0">
     ${tplNav()}
