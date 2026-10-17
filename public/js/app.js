@@ -172,6 +172,7 @@ async function refresh(silent){
       if(curPage()==='cash')await loadCash();
       if(curPage()==='partners')[state.partners,state.webhooks]=await Promise.all([api('partners').then(r=>r.partners),api('webhooks').then(r=>r.deliveries)]);
       if(state.page==='stock')await loadStock().catch(()=>{});
+      if(state.page==='ops')await loadOps().catch(()=>{});
       if(state.page==='brd')await loadBrdList().catch(()=>{});
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
     }else if(r==='driver'){state.drv=await api('driver/overview');startGeo();}
@@ -257,7 +258,7 @@ function tplTopBar(){
   <div style="display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:0.04em">${brandLogo(34)}${esc(BRAND.name)}<span class="hide-sm" style="font-weight:500;font-size:13px;letter-spacing:0;color:oklch(0.8 0.02 262)">Delivery</span></div>
   ${when(r,`<div style="display:flex;flex-direction:column;line-height:1.2;min-width:0"><span style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${esc(u?(u.role==='shop'?u.shop_name:u.name):state.trackAuth?.ref)}</span><span style="font-size:11px;color:oklch(0.78 0.03 262)">${esc(roleL)}</span></div>`)}
   <div style="flex:1"></div>
-  ${tplBell()}
+  ${tplTaskBadge()}${tplBell()}
   ${when(installEvt,`<button ${on(doInstall)} style="${css(seg(true))}">⤓ <span class="hide-sm">${esc(Lx.install)}</span></button>`)}
   ${when(r==='admin'||r==='manager',segGroup([['a','A · Opérations'],['b','B · Aéré'],['c','C · Terrain']].map(([k,l])=>({label:l,st:seg(state.prefs.dir===k),go:()=>setPref({dir:k})})),'hide-sm'))}
   ${segGroup([['fr','FR'],['ar','عربي']].map(([k,l])=>({label:l,st:seg(lang()===k),go:()=>setPref({lang:k})})))}
@@ -316,7 +317,7 @@ function tplLogin(){
 /* =========================================================
    ADMIN
    ========================================================= */
-const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['stock','SK'],['brd','BR'],['drivers','LV'],['shops','BQ'],['agencies','AG','admin'],['cash','CS'],['stats','ST'],['claims','RC'],['journal','JR','admin'],['settings','PA']];
+const NAV=[['dash','TB'],['map','CA'],['orders','CO'],['ops','SC'],['stock','SK'],['brd','BR'],['drivers','LV'],['shops','BQ'],['agencies','AG','admin'],['cash','CS'],['stats','ST'],['claims','RC'],['journal','JR','admin'],['settings','PA']];
 /* « Paramètres » groups the configuration screens (each still follows its own permissions) */
 const SETTINGS=[['accounts'],['pricing'],['geo','admin'],['partners','admin']];
 const settingsFor=()=>SETTINGS.filter(x=>!x[1]||x[1]===role()).map(x=>x[0]);
@@ -328,7 +329,7 @@ function goPage(p){
   state.page=p;state.sel=null;state.selData=null;
   if(p!=='orders')state.q='';state.searchOpen=false;
   render();
-  if(['stats','accounts','agencies','geo','pricing','partners','journal','settings','stock'].includes(p))refresh(true);
+  if(['stats','accounts','agencies','geo','pricing','partners','journal','settings','stock','ops'].includes(p))refresh(true);
   scrollTo(0,0);
 }
 function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';render();api('orders/'+id).then(d=>{if(state.sel===id){state.selData=d;render();}}).catch(e=>toast(e.message,'err'));}
@@ -456,6 +457,7 @@ function tplOrderDetail(){
     <div style="padding:var(--pad);display:grid;grid-template-columns:1fr 1fr;gap:12px;border-bottom:1px solid var(--line)">
       ${each(facts,([k2,v])=>`<div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:11.5px;color:var(--mute)">${esc(k2)}</span><span style="font-weight:600;overflow-wrap:anywhere;${k2===Lx.otpCode?'font-family:var(--mono);letter-spacing:.15em':''}">${esc(v)}</span></div>`)}
     </div>
+    ${tplOrderOps(o)}
     ${when((sd.allowed||[]).length,()=>`<div class="no-print" style="padding:var(--pad);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px">${each(sd.allowed,a=>{const lbl=(ACTION[a.status]||ST[a.status]||[a.status,a.status])[li];const go=note=>act(()=>api(`orders/${o.id}/status`,{method:'POST',body:{status:a.status,note}}),Lx.saved);
       return `<button ${on(()=>a.note_required||a.status==='annule'?askReason(lbl+' · '+o.ref,a.note_required,go):go(''))} style="${BTN_GHOST};font-size:12.5px;padding:7px 11px;${['annule','perdu'].includes(a.status)?'color:var(--rf)':''}">${esc(lbl)}</button>`;})}</div>`)}
     ${when(canAssign,`<div style="padding:var(--pad);display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);background:var(--surface2)">
@@ -653,7 +655,7 @@ function tplShops(){
 function tplAdmin(){
   const Lx=L(),p=state.page;
   if(!state.data)return `<div style="padding:40px;text-align:center;color:var(--mute)"><span class="spin"></span></div>`;
-  const page=({dash:tplDash,map:tplMap,orders:tplOrders,stock:tplStock,brd:tplBrd,drivers:tplDrivers,shops:tplShops,cash:tplCash,stats:tplStats,claims:tplClaims,settings:tplSettings,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing,partners:tplPartners,journal:tplJournal}[p]||tplDash)();
+  const page=({dash:tplDash,map:tplMap,orders:tplOrders,stock:tplStock,ops:tplOps,brd:tplBrd,drivers:tplDrivers,shops:tplShops,cash:tplCash,stats:tplStats,claims:tplClaims,settings:tplSettings,accounts:tplAccounts,agencies:tplAgencies,geo:tplGeo,pricing:tplPricing,partners:tplPartners,journal:tplJournal}[p]||tplDash)();
   const dir=state.prefs.dir;
   return `<div class="shell" style="display:flex;flex-direction:${dir==='b'?'column':'row'};flex:1;min-height:0">
     ${tplNav()}

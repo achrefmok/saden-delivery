@@ -12,7 +12,8 @@
     "brand": "python scripts/brand.py",
     "create-admin": "node scripts/create-admin.js",
     "test:permissions": "node scripts/test-permissions.js",
-    "test:stock": "node scripts/test-stock.js"
+    "test:stock": "node scripts/test-stock.js",
+    "test:ops": "node scripts/test-ops.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
