@@ -10,10 +10,11 @@ function tplCash(){
   const f=state.cform,tab=state.cashTab||'tx';
   const drivers=c.drivers,shops=c.shops;
   const add=()=>act(async()=>{await api('cash',{method:'POST',body:{...state.cform,agency_id:cashAgencyId()}});state.cform={label:'',type:state.cform.type,amount:''};await loadCash();},Lx.saved);
+  const pickReceipt=e=>{const fl=e.target.files?.[0];if(!fl)return;if(fl.size>3e6)return toast(Lx.docTooBig,'err');const fr=new FileReader();fr.onload=()=>{state.cform={...state.cform,attachment:fr.result,attachmentName:fl.name};render();};fr.readAsDataURL(fl);};
   const prefill=o=>()=>{state.cform={...state.cform,...o};render();scrollTo(0,0);};
   const k=state.data.kpis,shopsToday=Math.max(0,k.remit_today),saden=k.saden_today,drv=k.drivers_today,tot=shopsToday+saden+drv||1;
   const parts=[[Lx.sClient,shopsToday,'var(--navy)'],[Lx.sSaden,saden,'var(--orange)'],[Lx.sDriver,drv,'oklch(0.7 0.1 150)']];
-  const tabs=[['tx',Lx.movements],['drivers',Lx.driverRemits],['shops',Lx.shopSettlements]];
+  const tabs=[['tx',Lx.movements],['drivers',Lx.driverRemits],['shops',Lx.shopSettlements],['closing',Lx.dayClosing]];
   const typeOpts=Object.keys(CASH_TYPES).map(t=>[t,li?CASH_TYPES[t][0]:t]);
   return `${when(role()==='admin',()=>`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="color:var(--mute)">${esc(Lx.agencyLbl)}</span><select class="fld" style="max-width:260px" ${onInput(e=>{state.cashAgency=e.target.value;state.cashSum=null;state._cashReq=null;render();},'cash-ag')}>${each(agencyOptions(),([v,l])=>`<option value="${v}"${v===cashAgencyId()?' selected':''}>${esc(l)}</option>`)}</select></div>`)}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:var(--gap)">
@@ -33,15 +34,16 @@ function tplCash(){
         ${when(['Encaissement','Paiement livreur'].includes(f.type),()=>field(Lx.driver,select('c-drv','cform','driver_id',[['','—'],...drivers.map(d=>[d.id,d.name])])))}
         ${when(f.type==='Règlement',()=>field(Lx.colShop,select('c-shop','cform','shop_id',[['',Lx.choose],...shops.map(s=>[s.id,s.shop_name])])))}
         ${when(f.type==='Transfert',()=>field(Lx.toAgency,select('c-to','cform','counterpart_agency_id',[['',Lx.choose],...agencyOptions(a=>a.id!==cashAgencyId())])))}
+        ${field(Lx.receiptK+' ('+Lx.optional+')',`<input class="fld" type="file" accept="image/*,application/pdf" ${onInput(pickReceipt,'c-file')}>`+(f.attachmentName?`<span style="font-size:11.5px;color:var(--gf)">✓ ${esc(f.attachmentName)}</span>`:''))}
         <button ${on(add)} style="${BTN_PRIMARY};min-height:42px">${spin()}+ ${esc(Lx.addMove)}</button>
       </div>
     </div>
     <div style="${CARD};overflow:hidden">
       <div style="display:flex;gap:4px;padding:var(--pad);flex-wrap:wrap">${each(tabs,([k2,l])=>`<button ${on(set({cashTab:k2}))} style="${css(chip(tab===k2))}">${esc(l)}</button>`)}</div>
-      ${tab==='tx'?`<div style="overflow-x:auto"><div style="min-width:640px">${c.tx.length?each(c.tx,t=>`
+      ${tab==='closing'?tplCashClosing():tab==='tx'?`<div style="overflow-x:auto"><div style="min-width:640px">${c.tx.length?each(c.tx,t=>`
         <div style="display:grid;grid-template-columns:56px minmax(0,1fr) 150px 140px;gap:12px;align-items:center;padding:10px var(--pad);border-top:1px solid var(--line)">
           <span style="font-family:var(--mono);font-size:12px;color:var(--mute)">${hm(t.created_at)}</span>
-          <span style="display:flex;flex-direction:column;min-width:0"><span>${esc(t.label)}</span><span style="font-size:12px;color:var(--mute)">${esc([t.driver_name,t.shop_name,t.counterpart_name&&('↔ '+t.counterpart_name),t.order_ref].filter(Boolean).join(' · '))}</span></span>
+          <span style="display:flex;flex-direction:column;min-width:0"><span>${esc(t.label)}${t.has_attachment?` <button ${on(()=>openReceipt(t.id))} title="${esc(Lx.receiptK)}" style="background:none;border:none;cursor:pointer;padding:0">📎</button>`:''}</span><span style="font-size:12px;color:var(--mute)">${esc([t.driver_name,t.shop_name,t.counterpart_name&&('↔ '+t.counterpart_name),t.order_ref].filter(Boolean).join(' · '))}</span></span>
           <span><span style="${css(badge((CASH_TYPES[t.type]||[0,'n'])[1]))}">${esc(li?(CASH_TYPES[t.type]||[t.type])[0]:t.type)}</span></span>
           <span style="text-align:end;font-weight:700;color:${t.amount>0?'var(--gf)':'var(--ink)'}">${t.amount>0?'+':'−'}${esc(fmt(Math.abs(t.amount),u))}</span></div>`):empty()}</div></div>`
       :tab==='drivers'?`<div style="overflow-x:auto"><div style="min-width:640px">
@@ -59,7 +61,55 @@ function tplCash(){
     </div>`;
 }
 
+/* ------------------------------------------------------------------ day closing (clôture de caisse) */
+async function loadClosing(){const ag=cashAgencyId();const [d,h]=await Promise.all([api('cash/closing?agency_id='+ag),api('cash/closings?agency_id='+ag)]);state.closing={ag,d,h:h.closings};}
+function tplCashClosing(){
+  const Lx=L(),u=Lx.tnd,c=state.closing;
+  if(!c||c.ag!==cashAgencyId()){if(state._clReq!==cashAgencyId()){state._clReq=cashAgencyId();loadClosing().then(render).catch(e=>toast(e.message,'err')).finally(()=>{state._clReq=null;});}return `<div style="padding:24px"><span class="spin"></span></div>`;}
+  const d=c.d,f=state.clf||(state.clf={counted:'',note:''});
+  const ST={conforme:['g',Lx.clConform],manque:['r',Lx.clShort],surplus:['w',Lx.clSurplus],rouverte:['n',Lx.clReopened]};
+  const close=()=>act(async()=>{const r=await api('cash/closing',{method:'POST',body:{agency_id:cashAgencyId(),counted:state.clf.counted,note:state.clf.note}});state.clf={counted:'',note:''};await loadClosing();toast(Lx.dayClosed+' : '+ST[r.status][1]);},null);
+  const reopen=k=>()=>askReason(Lx.reopenTitle,true,reason=>act(async()=>{await api(`cash/closings/${k.id}/reopen`,{method:'POST',body:{reason}});await loadClosing();},Lx.saved));
+  // live gap, updated in place while typing (no re-render: number inputs lose the caret)
+  const gapLine=v=>{const n=v===''||v==null?null:Number(String(v).replace(',','.'));const g=n==null||isNaN(n)?null:Math.round((n-d.theoretical)*1000)/1000;
+    return `<span id="cl-gap" style="font-weight:700;min-height:1.2em;color:${g==null?'inherit':g===0?'var(--gf)':g<0?'var(--rf)':'var(--wf)'}">${g==null?'':esc(Lx.gapK+' : '+fmt(g,u)+' — '+(g===0?Lx.clConform:g<0?Lx.clShort:Lx.clSurplus))}</span>`;};
+  const row=(l,v,b)=>`<div style="display:flex;justify-content:space-between;gap:8px;${b?'font-weight:700;font-size:15px':''}"><span>${esc(l)}</span><span>${esc(v)}</span></div>`;
+  return `<div style="padding:var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--gap)" data-closing>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <b>${esc(Lx.dayK)} ${esc(d.day)}</b>
+      ${row(Lx.openingBal,fmt(d.opening,u))}${row(Lx.income,'+ '+fmt(d.income,u))}${row(Lx.outflowK,'− '+fmt(d.outflow,u))}${row(Lx.theoreticalBal,fmt(d.theoretical,u),true)}
+      <span style="font-size:12px;color:var(--mute)">${d.movements} ${esc(Lx.movementsLow)}</span>
+    </div>
+    ${d.closing?`<div style="display:flex;flex-direction:column;gap:6px"><b>${esc(Lx.dayClosed)}</b><span style="${css(badge(ST[d.closing.status][0]))};align-self:flex-start">${esc(ST[d.closing.status][1])}</span>
+        ${row(Lx.countedK,fmt(d.closing.counted,u))}${row(Lx.gapK,fmt(d.closing.gap,u),true)}<span style="font-size:12.5px;color:var(--mute)">${esc(d.closing.note||'')}</span>
+        <span style="font-size:12px;color:var(--mute)">${esc(Lx.closedNote)}</span></div>`
+    :`<div style="display:flex;flex-direction:column;gap:8px">
+        ${field(Lx.countedK+' ('+u+')',`<input class="fld" type="number" step="0.001" min="0" ${onInput(e=>{state.clf={...state.clf,counted:e.target.value};const el=document.getElementById('cl-gap');if(el)el.outerHTML=gapLine(e.target.value);},'cl-count')} value="${esc(f.counted)}">`)}
+        ${gapLine(f.counted)}
+        ${field(Lx.noteK+' ('+Lx.ifGap+')',`<input class="fld" ${onInput(e=>{state.clf={...state.clf,note:e.target.value};},'cl-note')} value="${esc(f.note)}">`)}
+        <button ${on(close)} style="${BTN_PRIMARY}">${spin()}${esc(Lx.closeDay)}</button>
+        <span style="font-size:12px;color:var(--mute)">${esc(Lx.closeHint)}</span></div>`}
+    <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:4px"><b>${esc(Lx.closingHistory)}</b>
+      ${c.h.length?each(c.h,k=>`<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px">
+        <b style="font-family:var(--mono)">${esc(k.day)}</b><span style="${css(badge(ST[k.status][0]))}">${esc(ST[k.status][1])}</span>
+        <span>${esc(Lx.theoreticalBal)} ${esc(fmt(k.theoretical))} · ${esc(Lx.countedK)} ${esc(fmt(k.counted))} · <b>${esc(Lx.gapK)} ${esc(fmt(k.gap))}</b></span>
+        <span style="color:var(--mute);flex:1;min-width:160px">${esc([k.note,k.closed_by_name,dtm(k.closed_at)].filter(Boolean).join(' · '))}${k.reopened_at?' — '+esc(Lx.clReopened+' : '+(k.reopen_reason||'')+' ('+(k.reopened_by_name||'')+')'):''}</span>
+        ${role()==='admin'&&k.status!=='rouverte'?`<button ${on(reopen(k))} style="${BTN_GHOST};padding:4px 8px;font-size:12px">${esc(Lx.reopenK)}</button>`:''}</div>`):empty()}
+    </div></div>`;
+}
+async function openReceipt(id){
+  const w=window.open('','_blank');
+  try{const d=await api(`cash/${id}/attachment`);if(!w)return toast(L().popupBlocked,'err');
+    w.document.write(d.attachment.startsWith('data:application/pdf')?`<iframe src="${d.attachment}" style="border:0;width:100vw;height:100vh"></iframe>`:`<img src="${d.attachment}" style="max-width:100%">`);
+  }catch(e){w?.close();toast(e.message,'err');}
+}
+
 Object.assign(K,{
+  dayClosing:['Clôture du jour','إقفال اليوم'],dayK:['Journée du','يوم'],openingBal:['Solde d’ouverture','رصيد الافتتاح'],outflowK:['Sorties','المصاريف'],theoreticalBal:['Solde théorique','الرصيد النظري'],
+  movementsLow:['mouvements','حركات'],countedK:['Compté en caisse','المعدود'],closeDay:['Clôturer la journée','إقفال اليوم'],dayClosed:['Journée clôturée','تم الإقفال'],
+  closeHint:['Après la clôture, plus aucun mouvement ne peut être enregistré ce jour-là (réouverture par un administrateur, tracée).','بعد الإقفال لا يمكن تسجيل حركات.'],
+  closedNote:['Les nouveaux mouvements du jour sont bloqués.','الحركات الجديدة ممنوعة.'],clConform:['Conforme','مطابق'],clShort:['Manque','نقص'],clSurplus:['Surplus','فائض'],clReopened:['Rouverte','أعيد فتحها'],
+  closingHistory:['Historique des clôtures','سجل الإقفالات'],ifGap:['obligatoire si écart','إجباري عند الفارق'],reopenK:['Rouvrir','إعادة فتح'],reopenTitle:['Rouvrir la journée — motif','إعادة فتح اليوم — السبب'],receiptK:['Justificatif','وصل'],
   newMovement:['Nouveau mouvement','حركة جديدة'],toAgency:['Agence destinataire','الوكالة المستلمة'],month:['mois','الشهر'],today2:['aujourd’hui','اليوم'],
   driverRemits:['Remises livreurs','تسليم الموزعين'],shopSettlements:['Règlements boutiques','تسويات المتاجر'],codCollected:['COD encaissé','المحصل'],remitted:['Remis','المسلم'],
   toRemitDriver:['À remettre','للتسليم'],driverEarned:['Gains','المستحقات'],toPayDriver:['à payer','للدفع'],codRemitLabel:['Versement COD','تسليم المبالغ'],collectBtn:['Encaisser','تحصيل'],

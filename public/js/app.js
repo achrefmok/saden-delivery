@@ -49,7 +49,7 @@ const MS={affecte:['Nouvelle','جديدة','n'],accepte:['Acceptée','مقبول
 const CS=[['Nouvelle','جديدة','r'],['En cours','قيد المعالجة','o'],['Traitée','تمت المعالجة','i'],['Fermée','مغلقة','g']];
 const CATS=[['Retard','تأخير'],['Comportement du livreur','سلوك الموزع'],['Colis endommagé','طرد تالف'],["Problème d'encaissement",'مشكلة في الدفع'],["Problème d'adresse",'مشكلة في العنوان'],['Commande non livrée','طلب لم يُسلَّم'],['Autre','أخرى']];
 const BST=[['Brouillon','مسودة'],['Validé','مؤكد'],['En transit','في العبور'],['Arrivé','وصل'],['Clôturé','مغلق']];
-const CASH_TYPES={Encaissement:['التحصيل','g'],'Paiement livreur':['خلاص موزع','i'],'Dépense':['مصروف','r'],'Règlement':['تسوية','o'],Transfert:['تحويل','i'],Correction:['تصحيح','w']};
+const CASH_TYPES={Encaissement:['التحصيل','g'],'Apport de fonds':['إيداع أموال','g'],'Paiement livreur':['خلاص موزع','i'],'Dépense':['مصروف','r'],'Règlement':['تسوية','o'],Transfert:['تحويل','i'],Correction:['تصحيح','w']};
 const AGENCY_POS=[34.4250,8.7842]; // fallback map centre (Gafsa) when no agency has coordinates
 const VEHICLES=['Moto','Scooter','Voiture','Vélo','Camionnette'];
 const ACTIVE_ST=['affecte','accepte','ramasse','livraison','sur_place'],DRIVER_EXC=['absent','refuse','reporte','numero_incorrect','adresse_incorrecte','endommage'],EXC=[...DRIVER_EXC,'perdu'],RETURNS=['retour','retour_agence','restitue'];
@@ -174,6 +174,7 @@ async function refresh(silent){
       if(state.page==='stock')await loadStock().catch(()=>{});
       if(state.page==='ops')await loadOps().catch(()=>{});
       if(state.page==='colis')await loadParcels().catch(()=>{});
+      if(state.page==='dash')state.dops=await api('dashboard/ops'+(af?'?'+af:'')).catch(()=>state.dops);
       if(state.page==='brd')await loadBrdList().catch(()=>{});
       if(state.sel)state.selData=await api('orders/'+state.sel).catch(()=>null);
     }else if(r==='driver'){state.drv=await api('driver/overview');startGeo();}
@@ -330,7 +331,7 @@ function goPage(p){
   state.page=p;state.sel=null;state.selData=null;
   if(p!=='orders')state.q='';state.searchOpen=false;
   render();
-  if(['stats','accounts','agencies','geo','pricing','partners','journal','settings','stock','ops','colis'].includes(p))refresh(true);
+  if(['stats','accounts','agencies','geo','pricing','partners','journal','settings','stock','ops','colis','dash'].includes(p))refresh(true);
   scrollTo(0,0);
 }
 function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';render();api('orders/'+id).then(d=>{if(state.sel===id){state.selData=d;render();}}).catch(e=>toast(e.message,'err'));}

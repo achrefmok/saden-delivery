@@ -211,5 +211,50 @@ ok(sv.rows.length && !sv.rows.some(r => r.id === o3.id), 'autre agence : liste l
 ok((await S('POST', 'parcels/bulk-status', { ids: [o3.id], status: 'annule', note: 'x' })).errors.length === 1, 'autre agence : mise à jour refusée');
 ok((await SH('GET', 'parcels')).s === 403, 'boutique : pas d’accès');
 
+console.log('11. Statistiques avancées');
+const sa = await G('GET', 'stats/advanced');
+ok(sa.kpis.first_pass + sa.kpis.multi_pass === sa.kpis.delivered, `1er passage (${sa.kpis.first_pass}) + plusieurs tentatives (${sa.kpis.multi_pass}) = livrés (${sa.kpis.delivered})`);
+ok(sa.kpis.delivered_rate !== undefined || sa.kpis.delivery_rate != null, 'taux de livraison calculé');
+ok(Array.isArray(sa.problems) && sa.problems.some(x => x.type === 'numero_errone'), 'problèmes par type');
+ok(sa.shops.length <= 10 && sa.governorates.length && sa.agencies.length && sa.drivers.length && sa.days.length, 'top 10 expéditeurs, gouvernorats, agences, livreurs, volume quotidien');
+ok(sa.agencies.every(a => a.avg_days == null || a.avg_days >= 0), 'délais moyens par agence');
+ok((await SH('GET', 'stats/advanced')).s === 403, 'boutique : pas d’accès');
+
+console.log('12. Clôture de caisse');
+let cl = await G('GET', 'cash/closing');
+ok(cl.day && 'theoretical' in cl && Math.abs(cl.opening + cl.income - cl.outflow - cl.theoretical) < 0.001, `chiffres du jour cohérents (théorique ${cl.theoretical})`);
+r = await G('POST', 'cash', { type: 'Apport de fonds', label: 'Fonds de caisse', amount: 50, attachment: 'data:image/png;base64,iVBORw0KGgo=' });
+ok(r.id, 'apport de fonds avec justificatif');
+ok((await G('GET', `cash/${r.id}/attachment`)).attachment?.startsWith('data:image/png'), 'justificatif consultable');
+ok((await S('GET', `cash/${r.id}/attachment`)).s === 404, 'autre agence : justificatif invisible');
+cl = await G('GET', 'cash/closing');
+r = await G('POST', 'cash/closing', { counted: cl.theoretical - 10 });
+ok(r.s === 400, 'écart sans explication refusé');
+r = await G('POST', 'cash/closing', { counted: cl.theoretical - 10, note: 'Billet manquant, enquête' });
+ok(r.status === 'manque' && r.gap === -10, 'clôture avec manque de 10');
+ok((await G('POST', 'cash/closing', { counted: cl.theoretical })).s === 409, 'double clôture refusée');
+r = await G('POST', 'cash', { type: 'Dépense', label: 'Carburant', amount: 5 });
+ok(r.s === 409, 'mouvement refusé après clôture');
+const cid = (await G('GET', 'cash/closings')).closings[0].id;
+ok((await G('POST', `cash/closings/${cid}/reopen`, { reason: 'x' })).s === 403, 'responsable : réouverture refusée');
+ok((await A('POST', `cash/closings/${cid}/reopen`, {})).s === 400, 'motif de réouverture obligatoire');
+r = await A('POST', `cash/closings/${cid}/reopen`, { reason: 'Billet retrouvé' });
+ok(r.ok, 'réouverture par l’administrateur');
+r = await G('POST', 'cash', { type: 'Encaissement', label: 'Billet retrouvé', amount: 10 });
+ok(r.id, 'mouvement de nouveau possible');
+cl = await G('GET', 'cash/closing');
+r = await G('POST', 'cash/closing', { counted: cl.theoretical });
+ok(r.status === 'conforme', 'nouvelle clôture conforme');
+const hist2 = (await G('GET', 'cash/closings')).closings;
+ok(hist2.some(k => k.status === 'rouverte' && k.reopen_reason === 'Billet retrouvé') && hist2.some(k => k.status === 'conforme'), 'historique : clôture rouverte conservée');
+await A('POST', `cash/closings/${hist2.find(k => k.status === 'conforme').id}/reopen`, { reason: 'Fin du test' });
+
+console.log('13. Tableau de bord opérations');
+const dops = await G('GET', 'dashboard/ops');
+ok(['pickup_requests', 'returns_in_stock', 'exchanges_to_collect', 'in_preparation', 'to_deliver', 'received_today', 'open_problems', 'tasks_open', 'att0', 'att4'].every(k => k in dops), 'compteurs présents');
+const activeAtt = dops.att0 + dops.att1 + dops.att2 + dops.att3 + dops.att4;
+ok(activeAtt > 0 && dops.att3 >= 1, `colis actifs par tentative (${activeAtt}, dont ${dops.att3} à 3)`);
+ok((await SH('GET', 'dashboard/ops')).s === 403, 'boutique : pas d’accès');
+
 console.log(`\n${pass} OK, ${failN} échec(s)`);
 process.exit(failN ? 1 : 0);

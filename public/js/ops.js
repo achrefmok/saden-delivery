@@ -221,3 +221,35 @@ Object.assign(K,{
   actNone:['Aucun changement de statut','بدون تغيير'],rdvOpt:['Rendez-vous (facultatif)','موعد (اختياري)'],rdvK:['Rendez-vous','الموعد'],reportProblem:['Signaler un problème','الإبلاغ عن مشكلة'],
   taskK:['Tâche','مهمة'],genExchange:['Générer échange','إنشاء تبديل'],exchangeCreated:['Échange créé','تم إنشاء التبديل'],flagK:['Signaler','إبلاغ'],flaggedK:['Signalé','مُبلّغ'],flagTitle:['Signaler le colis — motif','الإبلاغ عن الطرد'],
 });
+
+/* dashboard: operations counters (pickups, returns, exchanges, preparation, stock, problems, tasks, attempts) */
+function tplDashOps(){
+  const Lx=L(),o=state.dops;
+  if(!o)return '';
+  const go=fn=>()=>{fn();};
+  const tile=(label,v,fn,tone)=>`<button ${on(go(fn))} style="${CARD};padding:12px;display:flex;flex-direction:column;gap:4px;text-align:start;cursor:pointer;min-width:0;color:var(--ink)">
+    <span style="font-size:12px;color:var(--mute)">${esc(label)}</span><b style="font-family:var(--disp);font-size:24px;${tone&&v?`color:var(--${tone}f)`:''}">${v}</b></button>`;
+  const brd=t=>()=>{goPage('brd');goBrdType(t);};
+  const colis=att=>()=>{state.pf={attempts:att};state.pTab='list';state.pl=null;goPage('colis');};
+  const ops=t=>()=>{state.opsTab=t;state.ops=null;goPage('ops');};
+  return `<div style="display:flex;flex-direction:column;gap:8px" data-dash-ops>
+    <b style="font-size:14px">${esc(Lx.opsToday)}</b>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px">
+      ${tile(Lx.dPickupReq,o.pickup_requests,brd('pickup'),'o')}${tile(Lx.dPickupProg,o.pickups_in_progress,brd('pickup'))}
+      ${tile(Lx.dReturns,o.returns_in_stock,brd('restitution'),'w')}${tile(Lx.dExchanges,o.exchanges_to_collect,brd('exchange'))}
+      ${tile(Lx.dPreparation,o.in_preparation,brd('dispatch'))}${tile(Lx.dToDeliver,o.to_deliver,()=>{state.stkTab='current';state.stk=null;goPage('stock');})}
+      ${tile(Lx.dOut,o.out_for_delivery,()=>goPage('map'))}${tile(Lx.dReceived,o.received_today,()=>{state.stkTab='moves';state.stk=null;goPage('stock');})}
+      ${tile(Lx.dProblems,o.open_problems,ops('problems'),'r')}${tile(Lx.dTasks,o.tasks_open+(o.tasks_due?` (${o.tasks_due} ${Lx.dueShortK})`:''),ops('tasks'),o.tasks_due?'r':null)}
+    </div>
+    <div style="${CARD};padding:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"><span style="font-size:12.5px;color:var(--mute);margin-inline-end:6px">${esc(Lx.byAttempts)}</span>
+      ${each([['0',o.att0],['1',o.att1],['2',o.att2],['3',o.att3],['4',o.att4]],([k,v])=>`<button ${on(colis(k))} style="${css(chip(false))}">${k==='4'?'+3':k} : <b>${v}</b></button>`)}</div>
+  </div>`;
+}
+const _tplDashBase=tplDash;
+tplDash=function(){return tplDashOps()+_tplDashBase();};
+Object.assign(K,{
+  opsToday:['Opérations','العمليات'],dPickupReq:['Demandes d’enlèvement','طلبات الالتقاط'],dPickupProg:['Enlèvements en cours','التقاطات جارية'],dReturns:['Retours à remettre aux boutiques','مرتجعات للمتاجر'],
+  dExchanges:['Échanges à récupérer','تبديلات للاسترجاع'],dPreparation:['Colis en préparation (expédition)','طرود قيد التحضير'],dToDeliver:['Colis à livrer (en stock)','طرود للتوصيل'],
+  dOut:['En cours de livraison','قيد التوصيل'],dReceived:['Reçus aujourd’hui','استلمت اليوم'],dProblems:['Problèmes ouverts','مشاكل مفتوحة'],dTasks:['Tâches ouvertes','مهام مفتوحة'],
+  dueShortK:['dues','مستحقة'],byAttempts:['Colis actifs par tentative','الطرود حسب المحاولات'],
+});
