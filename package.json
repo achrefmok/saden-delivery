@@ -14,7 +14,8 @@
     "test:permissions": "node scripts/test-permissions.js",
     "test:stock": "node scripts/test-stock.js",
     "test:ops": "node scripts/test-ops.js",
-    "test:shop": "node scripts/test-shop.js"
+    "test:shop": "node scripts/test-shop.js",
+    "test:fleet": "node scripts/test-fleet.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
