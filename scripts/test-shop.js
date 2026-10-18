@@ -99,7 +99,7 @@ ok((await A('PATCH', `users/${me.id}`, { rs_rate: 3 })).user, 'administrateur : 
 const sld = (await G('POST', 'manifests', { type: 'settlement', shop_id: me.id, period_from: '2020-01-01', period_to: '2030-12-31' })).manifest;
 let sd = await G('GET', `manifests/${sld.id}`);
 const t = sd.manifest.totals;
-ok(t.rs_rate === 3 && Math.abs(t.rs - Math.round(t.fees * 0.03 * 1000) / 1000) < 0.001 && Math.abs(t.balance - (t.due - t.rs - t.remitted_before)) < 0.001, `net = dû ${t.due} − retenue ${t.rs} − déjà versé ${t.remitted_before} = ${t.balance}`);
+ok(t.rs_rate === 3 && Math.abs(t.honoraires - (t.collected - t.due)) < 0.001 && Math.abs(t.rs - Math.round(t.honoraires * 0.03 * 1000) / 1000) < 0.001 && Math.abs(t.balance - (t.due - t.rs - t.remitted_before)) < 0.001, `net = dû ${t.due} − retenue ${t.rs} − déjà versé ${t.remitted_before} = ${t.balance}`);
 await G('POST', `manifests/${sld.id}/validate`, {});
 const pays = (await SH('GET', 'shop/manifests?type=settlement')).manifests;
 ok(pays.some(x => x.id === sld.id && x.totals.rs === t.rs), 'la boutique voit son paiement avec la retenue');

@@ -522,7 +522,7 @@ function brdPdfSpec(det){
     case 'settlement':{const tt=m.totals||{};columns=[c('#',7),c('Code',40,null,true),c('Client',50),c('COD',24,'right'),c(m.driver_id?'Commission':'Frais',24,'right'),c('Montant',26,'right')];
       rows=items.map((i,k)=>({code:i.ref,cells:[k+1,'',i.client_name,(+i.cod).toFixed(3),(+(m.driver_id?i.driver_share:i.delivery_fee)).toFixed(3),(+i.amount).toFixed(3)]}));
       totals=[`Commandes : ${tt.orders??0} - encaissé : ${fmt(tt.collected)} - frais : ${fmt(tt.fees)} - commissions : ${fmt(tt.commissions)} ${u}`,
-        ...(tt.party==='shop'?[`Dû à la boutique : ${fmt(tt.due)} ${u}`]:[]),`Déjà versé : ${fmt(tt.remitted_before)} ${u} - SOLDE : ${fmt(tt.balance)} ${u}`,...(tt.paid!=null?[`Montant validé : ${fmt(tt.paid)} ${u}`+(tt.gap?` (écart ${fmt(tt.gap)})`:'')]:[])];
+        ...(tt.party==='shop'?[`Honoraires : ${fmt(tt.honoraires??(tt.collected-tt.due))} ${u} - dû à la boutique : ${fmt(tt.due)} ${u} - retenue à la source ${tt.rs_rate||0} % : ${fmt(tt.rs||0)} ${u}`]:[]),`Déjà versé : ${fmt(tt.remitted_before)} ${u} - SOLDE : ${fmt(tt.balance)} ${u}`,...(tt.paid!=null?[`Montant validé : ${fmt(tt.paid)} ${u}`+(tt.gap?` (écart ${fmt(tt.gap)})`:'')]:[])];
       notes.push('Écriture de caisse liée au bordereau (aucune comptabilité parallèle).');signatures=[m.driver_id?'Livreur':'Boutique','Caisse / agence'];break;}
   }
   return {title:titles[t],ref:m.ref,subtitle:m.origin_agency_name,info,columns,rows,totals,notes,signatures,

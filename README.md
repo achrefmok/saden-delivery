@@ -26,6 +26,7 @@ Administrateur de production : **hachem.jaxdelivery@gmail.com** (création au pr
 - **Identité visuelle** : un seul point de configuration, `public/brand/` (voir plus bas).
 - **Suivi colis** : tentatives, file des problèmes (appels, rendez-vous, traitement, faux problème), tâches avec compteur, colis signalés / suspects / en souffrance.
 - **Colis** : liste paginée côté serveur, filtres avancés, liste de codes collée, colonnes au choix, étiquettes en masse (10×15, A4, Zebra ZPL), mise à jour de statut en masse, export Excel, matrice statuts × agences.
+- **Espace boutique** complet : accueil, création (téléphone 2, échange, import Excel), colis en attente, historique, réclamations, échanges, retours, paiements (net, retenue à la source), expéditions, statistiques, utilisateurs de la boutique.
 - **Enlèvement** (demande boutique) et **retour à l'expéditeur** (décharge signée), rapport de fin de journée, clôture de caisse journalière, statistiques avancées.
 - **Machine à états** serveur (`lib/status.js`) : transitions par rôle, motifs, annulation, flux retour, historique complet.
 - **Affectation intelligente** (`lib/assign.js`) : score détaillé, mode automatique par agence.
@@ -40,6 +41,7 @@ npm run seed              # données de démo dans .data/ (PGlite) — jamais da
 npm run dev               # http://localhost:3000 (base locale si DATABASE_URL absent, ou avec DB=local)
 npm run test:permissions  # 45 contrôles d'accès (serveur lancé)
 npm run test:stock        # 101 contrôles stock + bordereaux (serveur LOCAL, base fraîchement seedée)
+npm run test:shop         # 47 contrôles espace boutique (serveur LOCAL)
 npm run test:ops          # 101 contrôles suivi colis, enlèvement, restitution, liste colis, caisse (serveur LOCAL)
 npm run brand             # régénère logo, version N&B, favicon et icônes PWA depuis public/brand/logo-source.*
 ```

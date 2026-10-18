@@ -17,12 +17,36 @@ Seules les fonctionnalités du rapport JAX ont servi de cahier des charges : auc
 
 Nouveau menu : Tableau de bord, Carte live, Commandes & colis, **Colis**, **Suivi colis**, Stock, Bordereaux (9 types), Livreurs, Boutiques, Agences, Caisse, Statistiques, Réclamations, Journal, Paramètres.
 
+## 1 bis. Espace expéditeur (second rapport JAX, côté boutique)
+
+| Module JAX | Dans Saden |
+|---|---|
+| Accueil | « L'essentiel » (colis livrés, reçus par l'expéditeur, chez Saden : nombre, montant, %), « Suivi détaillé » (en livraison, reçus à l'entrepôt, en préparation au retour, soldés, en attente), suivi rapide par code. |
+| Créer des colis | Téléphone 2, case **colis d'échange** (colis `E` + code lié créé automatiquement), contrôle listant les champs manquants, **import Excel en masse** avec **modèle téléchargeable** (onglet des villes / zones) et rapport ligne par ligne. |
+| Colis en attente | Sélection, **étiquettes en masse** au format choisi, **modification** tant que le colis est en attente (prix recalculé), annulation groupée (jamais de suppression), demande d'enlèvement de la sélection. |
+| Historique | Même liste « Colis » que l'agence, limitée aux colis de la boutique : filtres (statut, gouvernorat / ville, tentatives, dates, **versé** oui / non), colonnes au choix dont **soldé**, téléphone 2, échange, réclamations, dates d'enlèvement / livraison / retour ; export Excel et **Outstanding** (livrés non soldés). Fiche colis : **parcours** (statut, date, employé), **problèmes**, **historique d'appels**, réclamer. |
+| Réclamations | Assistant en 3 étapes (code **ou** téléphone du client — choix si plusieurs colis —, type, envoi), une réclamation en cours par colis, historique. |
+| Échanges / Retours | Bordereaux d'échange et de retour de la boutique (colis, parcours, PDF, Excel) ; liste des colis d'échange. |
+| Paiements | Bordereaux de solde validés : colis livrés, reçus par l'expéditeur, CR encaissé, **honoraires**, reste à payer, **retenue à la source**, déjà versé, **net à payer** ; détail des colis, PDF et Excel ; colis marqués « soldés ». |
+| Expéditions | Demande d'enlèvement par **sélection** ou **scan** (douchette / caméra), historique (adresse, livreur, téléphone, statut), annulation tant que « à enlever », PDF. |
+| Statistiques | Raccourcis de période + dates, livrés / reçus / en cours, **délais de livraison** (< 24 h, 24–48 h, 48–72 h, > 72 h), problèmes et réclamations par type, gouvernorats. |
+| Paramètres | Profil (géré par l'agence), **format d'impression** des étiquettes (10×15 ou A4), **utilisateurs** de la boutique (administrateur / agent, activation) agissant au nom de la boutique. |
+
+**Retenue à la source** : taux réglable par l'administrateur sur chaque boutique (0 % par défaut, donc inactif tant qu'il n'est pas
+réglé), appliqué sur les honoraires (encaissé − dû à la boutique). La base exacte est **à valider avec votre comptable** avant usage.
+
+Migration supplémentaire `2026-10-18.shop` (additive) : `users.parent_id`, `shop_role`, `print_format`, `rs_rate` ; `orders.client_phone2`.
+Tests : `npm run test:shop` **47 / 47** ; parcours navigateur `t-shopui` (accueil, suivi rapide, création avec échange, import Excel,
+étiquettes, modification, historique, réclamation, expédition par sélection puis annulation, paiements, retours, échanges,
+statistiques, paramètres, mobile) ; les parcours existants qui passaient par l'ancienne page boutique ont été adaptés.
+Comportement conservé : le montant contre-remboursement reste facultatif dans le formulaire (vide = 0), comme avant.
+
 ## 2. Fichiers
 
 Créés : `lib/problems.js`, `lib/cash.js`, `lib/routes/ops.js`, `lib/routes/parcels.js`, `public/js/ops.js`, `public/js/parcels.js`,
-`public/js/stats-adv.js`, `scripts/test-ops.js`, `docs/AUDIT-JAX.md`, `docs/RAPPORT-JAX.md`.
+`public/js/stats-adv.js`, `public/js/shop.js`, `scripts/test-ops.js`, `scripts/test-shop.js`, `docs/AUDIT-JAX.md`, `docs/RAPPORT-JAX.md`.
 Modifiés : `lib/schema.js`, `lib/status.js`, `lib/flows.js`, `lib/domain.js`, `lib/api.js`, `lib/routes/manifests.js`, `lib/routes/finance.js`,
-`lib/routes/stats.js`, `public/js/app.js`, `public/js/manifests.js`, `public/js/cash.js`, `public/js/scan.js`, `public/index.html`, `public/sw.js`, `package.json`.
+`lib/routes/stats.js`, `lib/routes/shop.js`, `lib/routes/orders.js`, `lib/routes/accounts.js`, `lib/routes/pricing.js`, `lib/auth.js`, `lib/scope.js`, `public/js/app.js`, `public/js/parcels.js`, `public/js/manifests.js`, `public/js/cash.js`, `public/js/scan.js`, `public/index.html`, `public/sw.js`, `package.json`.
 
 ## 3. Migrations (uniquement additives)
 

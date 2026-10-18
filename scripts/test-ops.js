@@ -209,7 +209,7 @@ ok((await G('GET', 'parcels/matrix?by=shop')).rows.length >= 2, 'matrice par bou
 const sv = await S('GET', 'parcels?size=200');
 ok(sv.rows.length && !sv.rows.some(r => r.id === o3.id), 'autre agence : liste limitée à son périmètre');
 ok((await S('POST', 'parcels/bulk-status', { ids: [o3.id], status: 'annule', note: 'x' })).errors.length === 1, 'autre agence : mise à jour refusée');
-ok((await SH('GET', 'parcels')).s === 403, 'boutique : pas d’accès');
+{ const mine = (await SH('GET', 'parcels?size=200')).rows; ok(mine.length && new Set(mine.map(r => r.shop_name)).size === 1 && (await SH('GET', 'parcels/matrix')).s === 403, 'boutique : uniquement ses colis, pas de matrice'); }
 
 console.log('11. Statistiques avancées');
 const sa = await G('GET', 'stats/advanced');

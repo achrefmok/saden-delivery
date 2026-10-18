@@ -5,7 +5,7 @@ const L_=window.L; // Leaflet (captured before the i18n helper L() below)
    i18n
    ========================================================= */
 const K={vAdmin:['Admin','الإدارة'],vDriver:['Livreur','الموزع'],vShop:['Boutique','المتجر'],vClient:['Client','الحريف'],light:['Clair','فاتح'],dark:['Sombre','داكن'],
-dash:['Tableau de bord','لوحة القيادة'],settings:['Paramètres','الإعدادات'],shops:['Boutiques','المتاجر'],newShopAccount:['Nouvelle boutique','متجر جديد'],inProgressK:['En cours','جارية'],dueShort:['Livré à reverser','للتحويل'],settleK:['Solde','تسوية'],shopsHint:['Chiffres calculés sur les 500 dernières commandes ; le solde exact se fait par bordereau de solde.','الأرقام محسوبة على آخر 500 طلب ؛ التسوية الدقيقة عبر بوليصة التسوية.'],map:['Carte live','الخريطة المباشرة'],orders:['Commandes & colis','الطلبات والطرود'],brd:['Bordereaux','البوليصات'],drivers:['Livreurs','الموزعون'],cash:['Caisse','الخزينة'],stats:['Statistiques','الإحصائيات'],claims:['Réclamations','الشكاوى'],accounts:['Comptes','الحسابات'],
+dash:['Tableau de bord','لوحة القيادة'],phone2:['Téléphone 2','الهاتف 2'],missingFields:['Champs manquants','حقول ناقصة'],exchangeParcel:['Colis d’échange','طرد تبديل'],exchangeHint:['un article est récupéré chez le client à la livraison','تُسترجع سلعة من الحريف عند التسليم'],settings:['Paramètres','الإعدادات'],shops:['Boutiques','المتاجر'],newShopAccount:['Nouvelle boutique','متجر جديد'],inProgressK:['En cours','جارية'],dueShort:['Livré à reverser','للتحويل'],settleK:['Solde','تسوية'],shopsHint:['Chiffres calculés sur les 500 dernières commandes ; le solde exact se fait par bordereau de solde.','الأرقام محسوبة على آخر 500 طلب ؛ التسوية الدقيقة عبر بوليصة التسوية.'],map:['Carte live','الخريطة المباشرة'],orders:['Commandes & colis','الطلبات والطرود'],brd:['Bordereaux','البوليصات'],drivers:['Livreurs','الموزعون'],cash:['Caisse','الخزينة'],stats:['Statistiques','الإحصائيات'],claims:['Réclamations','الشكاوى'],accounts:['Comptes','الحسابات'],
 agencyLbl:['Agence','الوكالة'],search:['Colis, téléphone, client, bordereau…','طرد، هاتف، حريف، بوليصة…'],newParcel:['Nouveau colis','طرد جديد'],
 liveMap:['Carte live','الخريطة المباشرة'],alerts:['Alertes','التنبيهات'],recent:['Commandes récentes','الطلبات الأخيرة'],lastBrd:['Derniers bordereaux','آخر البوليصات'],seeAll:['Tout voir','عرض الكل'],
 colRef:['Réf.','المرجع'],colClient:['Client','الحريف'],colShop:['Boutique','المتجر'],colZone:['Zone','المنطقة'],colStatus:['Statut','الحالة'],colAmount:['COD','المبلغ'],
@@ -108,7 +108,7 @@ const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.
    state
    ========================================================= */
 const prefersDark=()=>{try{return matchMedia('(prefers-color-scheme: dark)').matches;}catch{return false;}};
-const emptyOrder=()=>({shop_id:'',origin_agency_id:'',sender_name:'',sender_phone:'',sender_address:'',client_name:'',client_phone:'',dest_city_id:'',zone_id:'',address:'',description:'',pieces:'1',external_ref:'',notes:'',cod:'',payment_mode:'cod',weight:'',parcel_type:'',lat:null,lng:null});
+const emptyOrder=()=>({shop_id:'',origin_agency_id:'',sender_name:'',sender_phone:'',sender_address:'',client_name:'',client_phone:'',client_phone2:'',exchange:false,exchange_description:'',dest_city_id:'',zone_id:'',address:'',description:'',pieces:'1',external_ref:'',notes:'',cod:'',payment_mode:'cod',weight:'',parcel_type:'',lat:null,lng:null});
 let state={
   prefs:{dir:'a',theme:prefersDark()?'dark':'light',lang:'fr',...store.get('saden.prefs',{})},
   session:store.get('saden.session',null), trackAuth:store.get('saden.track',null),
@@ -600,7 +600,10 @@ function tplOrderForm(key,withShop){
   const sh=role()==='shop'?state.session.user:shops.find(x=>x.id===+f.shop_id);
   const ag=role()==='admin'?agencyById(f.origin_agency_id)||homeAgency():myAgency();
   const dflt={name:sh?.shop_name||ag?.name||'',phone:sh?.phone?fmtPhone(sh.phone):'',address:sh?.address||''};
-  const submit=()=>act(async()=>{const r=await api('orders',{method:'POST',body:state[key]});state[key]={...emptyOrder(),shop_id:state[key].shop_id};delete state.quotes[key];if(key==='oform')state.modal=null;state.shopSent=r.order.ref;toast(Lx.orderCreated+' : '+r.order.ref);});
+  // « validation intelligente »: the missing fields are listed before anything is sent
+  const missing=()=>{const c=state[key];return [[!String(c.client_name||'').trim(),Lx.name],[String(c.client_phone||'').replace(/\D/g,'').length<8,Lx.phone],[!c.dest_city_id,Lx.destCity],[!String(c.address||'').trim(),Lx.address]].filter(x=>x[0]).map(x=>x[1]);};
+  const submit=()=>{const miss=missing();if(miss.length)return toast(Lx.missingFields+' : '+miss.join(', '),'err');
+    act(async()=>{const r=await api('orders',{method:'POST',body:state[key]});state[key]={...emptyOrder(),shop_id:state[key].shop_id};delete state.quotes[key];if(key==='oform')state.modal=null;state.shopSent=r.order.ref;toast(Lx.orderCreated+' : '+r.order.ref+(r.order.exchange_ref?' + '+r.order.exchange_ref:''));});};
   const sec=t=>`<div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:4px">${esc(t)}</div>`;
   const two=(a,b)=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${a}${b}</div>`;
   return `<div style="display:flex;flex-direction:column;gap:12px">
@@ -614,7 +617,7 @@ function tplOrderForm(key,withShop){
       </div></details>
     ${sec(Lx.recipient)}
     ${field(Lx.name,input(key+'-name',key,'client_name','placeholder="Ex. Salma Khemiri" autocomplete="off"'))}
-    ${field(Lx.phone,input(key+'-tel',key,'client_phone','type="tel" inputmode="tel" placeholder="+216 …" autocomplete="off"'))}
+    ${two(field(Lx.phone,input(key+'-tel',key,'client_phone','type="tel" inputmode="tel" placeholder="+216 …" autocomplete="off"')),field(Lx.phone2+' ('+Lx.optional+')',input(key+'-tel2',key,'client_phone2','type="tel" inputmode="tel" placeholder="+216 …" autocomplete="off"')))}
     ${two(field(Lx.destCity,select(key+'-city',key,'dest_city_id',cityOptions(),true)),field(Lx.colZone,select(key+'-zone',key,'zone_id',[['','—'],...zoneOptions(f.dest_city_id)],true)))}
     ${field(Lx.address,input(key+'-addr',key,'address','placeholder="Rue, quartier, repère"'))}
     <button ${on(()=>useGps(key))} style="padding:10px;border-radius:var(--r);border:1px dashed var(--line);background:transparent;font-weight:600;cursor:pointer;text-align:start;color:var(--ink)">◎ ${esc(f.lat!=null?'GPS · '+f.lat+', '+f.lng:Lx.useGps)}</button>
@@ -626,6 +629,8 @@ function tplOrderForm(key,withShop){
     ${two(field(Lx.payment,select(key+'-pm',key,'payment_mode',Object.keys(PAYMENT_MODES).map(k=>[k,pmL(k)]),true)),
       f.payment_mode==='prepaid'?field(Lx.cod+' ('+u+')',`<input class="fld" value="0,000" disabled>`):field(Lx.cod+' ('+u+')',inputQ(key+'-cod',key,'cod','inputmode="decimal" placeholder="0,000"')))}
     ${field(Lx.notes,`<textarea class="fld" rows="2" style="resize:vertical" ${onInput(e=>{state[key]={...state[key],notes:e.target.value};},key+'-notes')}>${esc(f.notes)}</textarea>`)}
+    <label style="display:flex;gap:8px;align-items:center;cursor:pointer" data-exchange-box><input type="checkbox" ${f.exchange?'checked':''} ${on(()=>{state[key]={...state[key],exchange:!state[key].exchange};render();})}> <span><b>${esc(Lx.exchangeParcel)}</b> <span style="font-size:12px;color:var(--mute)">— ${esc(Lx.exchangeHint)}</span></span></label>
+    ${when(f.exchange,()=>field(Lx.itemToCollect,input(key+'-exd',key,'exchange_description','placeholder="Ex. ancien modèle, taille 40"')))}
     ${tplQuote(key)}
     <button ${on(submit)} style="${BTN_PRIMARY};min-height:46px">${spin()}${esc(Lx.submit)}</button>
   </div>`;

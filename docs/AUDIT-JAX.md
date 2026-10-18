@@ -34,3 +34,17 @@ Branche de travail : `feature/jax-parity`. Rien n'est copié de JAX (code, texte
 | Rôles fins (caissier, réception, dispatcher, relieur…) | ⚠️ admin / responsable / livreur / boutique | À valider avec vous (voir rapport) |
 | Codes colis par gouvernorat (GAF…) | `SD-` | Conservé (changer le format casserait les étiquettes déjà imprimées et l'API partenaires) |
 | SMS, temps réel (Pusher), prestataires | ❌ | Hors périmètre de ce lot (pas de fournisseur SMS configuré ; actualisation toutes les 20 s conservée) |
+
+## Espace expéditeur (second rapport)
+
+| Fonctionnalité JAX | Saden avant | Décision |
+|---|---|---|
+| Accueil (l'essentiel, suivi détaillé, suivi rapide) | ⚠️ 4 indicateurs | **Créer** |
+| Création : téléphone 2, colis d'échange, contrôle, import Excel + modèle | ⚠️ formulaire unitaire | **Créer** |
+| Colis en attente : étiquettes en masse, modifier, supprimer | ❌ | **Créer** (annulation au lieu de suppression) |
+| Historique : filtres, colonnes, export, outstanding, parcours / problèmes / appels | ⚠️ liste simple | **Créer** (liste « Colis » partagée) |
+| Réclamations (assistant 3 étapes) | ⚠️ depuis le suivi public uniquement | **Créer** |
+| Échanges, retours, paiements (honoraires, RS 3 %, net) | ❌ côté boutique | **Créer** |
+| Expéditions (sélection / scan, historique, annulation) | ⚠️ demande « tout » | **Améliorer** |
+| Statistiques boutique (délais < 24 / 48 / 72 h…) | ❌ | **Créer** |
+| Paramètres : format d'impression, utilisateurs multiples | ❌ | **Créer** |

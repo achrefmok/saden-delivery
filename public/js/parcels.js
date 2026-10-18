@@ -3,16 +3,17 @@
    and the status × agency / shop / driver / city matrix. */
 
 const PCOLS=[['ref',['Code','الرمز'],1],['external_ref',['Réf. externe','مرجع خارجي']],['status',['Statut','الحالة'],1],['client_name',['Destinataire','المرسل إليه'],1],
-  ['client_phone',['Téléphone','الهاتف'],1],['address',['Adresse','العنوان']],['dest_city_name',['Ville','المدينة'],1],['dest_governorate',['Gouvernorat','الولاية']],['zone_name',['Zone','المنطقة']],
+  ['client_phone',['Téléphone','الهاتف'],1],['client_phone2',['Téléphone 2','الهاتف 2']],['address',['Adresse','العنوان']],['dest_city_name',['Ville','المدينة'],1],['dest_governorate',['Gouvernorat','الولاية']],['zone_name',['Zone','المنطقة']],
   ['shop_name',['Expéditeur','المرسل'],1],['pickup_address',['Adresse pickup','عنوان الالتقاط']],['current_agency_name',['Agence actuelle','الوكالة الحالية']],['origin_agency_name',['Agence de départ','وكالة الانطلاق']],
   ['driver_name',['Livreur','الموزع'],1],['description',['Description','الوصف']],['pieces',['Pièces','القطع']],['notes',['Commentaire','تعليق']],['attempts',['Tentatives','المحاولات'],1],
   ['open_problem',['Problème','المشكلة']],['cod',['CR','المبلغ'],1],['amount_to_remit',['CR après remise','الصافي']],['delivery_fee',['Frais','المصاريف']],['payment_mode',['Paiement','الدفع']],
-  ['in_stock',['En stock','في المخزون']],['created_at',['Créé le','أنشئ في'],1],['delivered_at',['Livré le','سُلّم في']],['manifests',['Bordereaux','البوليصات']]];
+  ['in_stock',['En stock','في المخزون']],['settled',['Soldé','مُسوّى']],['exchange_ref',['Échange','تبديل']],['claims',['Réclamations','الشكاوى']],['created_at',['Créé le','أنشئ في'],1],
+  ['picked_at',['Enlevé le','التقط في']],['delivered_at',['Livré le','سُلّم في']],['returned_at',['Retourné le','أرجع في']],['manifests',['Bordereaux','البوليصات']]];
 const PSTATUS=['attente','en_agence','affecte','accepte','ramasse','transit','arrive','livraison','livre','absent','refuse','reporte','numero_incorrect','adresse_incorrecte','endommage','retour','retour_agence','restitue','annule','perdu'];
 const pcolsOn=()=>{try{const v=JSON.parse(localStorage.getItem('saden.pcols')||'null');if(Array.isArray(v)&&v.length)return v;}catch{}return PCOLS.filter(c=>c[2]).map(c=>c[0]);};
 function pQuery(extra={}){
   const f=state.pf||{},qs=new URLSearchParams();
-  for(const k of ['q','status','shop_id','driver_id','dest_city_id','current_agency_id','attempts','cod_min','cod_max','from','to','delivered_from','delivered_to','in_stock','flagged','kind','sort'])if(f[k])qs.set(k,f[k]);
+  for(const k of ['q','status','shop_id','driver_id','dest_city_id','current_agency_id','attempts','cod_min','cod_max','from','to','delivered_from','delivered_to','in_stock','flagged','kind','sort','settled','outstanding'])if(f[k])qs.set(k,f[k]);
   if(f.refs)qs.set('refs',f.refs);
   if(role()==='admin'&&state.agencyFilter)qs.set('agency_id',state.agencyFilter);
   for(const [k,v] of Object.entries(extra))qs.set(k,v);
@@ -31,7 +32,8 @@ function tplParcels(){
   if(!state.pf)state.pf={};
   const need=tab==='list'?!state.pl:!state.pm;
   if(need&&state._pReq!==tab){state._pReq=tab;loadParcels().catch(e=>toast(e.message,'err')).finally(()=>{state._pReq=null;render();});}
-  const tabs=`<div class="no-print" style="display:flex;gap:6px">${each([['list',Lx.pList],['matrix',Lx.pMatrix]],([k,l])=>`<button ${on(()=>{state.pTab=k;reloadParcels();})} data-ptab="${k}" style="${css(chip(tab===k))}">${esc(l)}</button>`)}</div>`;
+  const isShop=role()==='shop';
+  const tabs=isShop?'':`<div class="no-print" style="display:flex;gap:6px">${each([['list',Lx.pList],['matrix',Lx.pMatrix]],([k,l])=>`<button ${on(()=>{state.pTab=k;reloadParcels();})} data-ptab="${k}" style="${css(chip(tab===k))}">${esc(l)}</button>`)}</div>`;
   return tabs+tplPFilters()+(tab==='list'?tplPList():tplPMatrix());
 }
 
@@ -48,10 +50,10 @@ function tplPFilters(){
       <button ${on(()=>{state.pf={};state.pfOpen=false;reloadParcels();})} style="${BTN_GHOST}">${esc(Lx.resetK)}</button>
     </div>
     ${when(open,()=>`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:8px;align-items:end">
-      ${field(Lx.colShop,select('pf-shop','pf','shop_id',[['',Lx.any],...(d.shops||[]).map(x=>[x.id,x.shop_name])]))}
-      ${field(Lx.driverK,select('pf-drv','pf','driver_id',[['',Lx.any],...(d.drivers||[]).map(x=>[x.id,x.name])]))}
+      ${when(role()!=='shop',()=>field(Lx.colShop,select('pf-shop','pf','shop_id',[['',Lx.any],...(d.shops||[]).map(x=>[x.id,x.shop_name])]))+field(Lx.driverK,select('pf-drv','pf','driver_id',[['',Lx.any],...(d.drivers||[]).map(x=>[x.id,x.name])])))}
       ${field(Lx.city,select('pf-city','pf','dest_city_id',[['',Lx.any],...cities]))}
-      ${field(Lx.currentAgency,select('pf-ag','pf','current_agency_id',[['',Lx.any],...agencyOptions()]))}
+      ${when(role()!=='shop',()=>field(Lx.currentAgency,select('pf-ag','pf','current_agency_id',[['',Lx.any],...agencyOptions()])))}
+      ${field(Lx.paidToShop,select('pf-settled','pf','settled',[['',Lx.any],['1',Lx.yes],['0',Lx.no]]))}
       ${field(Lx.attemptsK,select('pf-att','pf','attempts',[['',Lx.any],['0','0'],['1','1'],['2','2'],['3','3'],['4','+3']]))}
       ${field(Lx.codMin,input('pf-cmin','pf','cod_min','type="number" step="0.001"'))}${field(Lx.codMax,input('pf-cmax','pf','cod_max','type="number" step="0.001"'))}
       ${field(Lx.createdFrom,input('pf-from','pf','from','type="date"'))}${field(Lx.createdTo,input('pf-to','pf','to','type="date"'))}
@@ -73,7 +75,10 @@ function tplPList(){
   const toggle=id=>()=>{state.pSel=sel.includes(id)?sel.filter(x=>x!==id):[...sel,id];render();};
   const toggleAll=()=>{state.pSel=allOn?sel.filter(x=>!d.rows.some(r=>r.id===x)):[...new Set([...sel,...d.rows.map(r=>r.id)])];render();};
   const cell=(r,k)=>{const v=r[k];
-    if(k==='ref')return `<span ${on(()=>selectOrder(r.id))} style="font-family:var(--mono);font-size:12px;cursor:pointer;text-decoration:underline dotted">${esc(v)}</span>${r.flagged_at?' ⚑':''}`;
+    if(k==='settled')return v?`<span style="${css(badge('g'))}">${esc(L().yes)}</span>`:'';
+    if(['picked_at','returned_at'].includes(k))return esc(v?dtm(v):'—');
+    if(k==='claims')return v?String(v):'';
+    if(k==='ref')return `<span ${on(()=>role()==='shop'?openShopOrder(r.id):selectOrder(r.id))} style="font-family:var(--mono);font-size:12px;cursor:pointer;text-decoration:underline dotted">${esc(v)}</span>${r.flagged_at?' ⚑':''}`;
     if(k==='status')return `<span style="${css(stB(v))}">${esc(stL(v))}</span>`;
     if(k==='client_phone')return esc(fmtPhone(v));
     if(['cod','amount_to_remit','delivery_fee'].includes(k))return `<span style="font-weight:600">${esc(fmt(v))}</span>`;
@@ -95,9 +100,10 @@ function tplPList(){
     <button ${nsel?on(()=>bulkLabels('a6')):'disabled'} style="${BTN_GHOST};padding:6px 10px;font-size:12.5px">🏷 ${esc(Lx.labelsA6)}</button>
     <button ${nsel?on(()=>bulkLabels('a4')):'disabled'} style="${BTN_GHOST};padding:6px 10px;font-size:12.5px">🏷 ${esc(Lx.labelsA4)}</button>
     <button ${nsel?on(()=>bulkLabels('zpl')):'disabled'} style="${BTN_GHOST};padding:6px 10px;font-size:12.5px">🦓 Zebra (ZPL)</button>
-    <button ${nsel?on(()=>{state.bulkSt={status:'',note:''};render();}):'disabled'} style="${BTN_GHOST};padding:6px 10px;font-size:12.5px">⇆ ${esc(Lx.bulkStatus)}</button>
+    ${role()==='shop'?'':`<button ${nsel?on(()=>{state.bulkSt={status:'',note:''};render();}):'disabled'} style="${BTN_GHOST};padding:6px 10px;font-size:12.5px">⇆ ${esc(Lx.bulkStatus)}</button>`}
     ${nsel?`<button ${on(()=>{state.pSel=[];render();})} style="background:none;border:none;color:var(--of);cursor:pointer;font-size:12.5px">${esc(Lx.clearSel)}</button>`:''}
     <span style="flex:1"></span>
+    ${role()==='shop'?`<button ${on(()=>{state.pf={...(state.pf||{}),outstanding:'1'};exportParcels().finally(()=>{state.pf={...state.pf,outstanding:''};});})} style="${BTN_GHOST};padding:6px 10px;font-size:12.5px">⤓ Outstanding</button>`:''}
     <button ${on(exportParcels)} style="${BTN_GHOST};padding:6px 10px;font-size:12.5px">⤓ ${esc(Lx.exportXlsx)}</button>
     <button ${on(()=>{state.pColsOpen=!state.pColsOpen;render();})} style="${BTN_GHOST};padding:6px 10px;font-size:12.5px">▦ ${esc(Lx.shownFields)}</button></div>`;
   const colPicker=state.pColsOpen?`<div style="${CARD};padding:var(--pad);display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px" data-pcols>${each(PCOLS,([k,l])=>{const onn=pcolsOn().includes(k);
@@ -147,7 +153,7 @@ async function exportParcels(){
   try{
     const [{rows,capped}]=await Promise.all([api('parcels/export?'+pQuery()),loadLib('xlsx')]);
     const head=PCOLS.map(c=>c[1][0]);
-    const data=rows.map(r=>PCOLS.map(([k])=>{const v=r[k];if(k==='status')return stL(v);if(k==='open_problem')return v?pbL(v):'';if(k==='in_stock')return v?'oui':'';
+    const data=rows.map(r=>PCOLS.map(([k])=>{const v=r[k];if(k==='status')return stL(v);if(k==='open_problem')return v?pbL(v):'';if(k==='in_stock'||k==='settled')return v?'oui':'';if(['picked_at','returned_at'].includes(k))return v?new Date(v).toLocaleString('fr-FR'):'';
       if(['created_at','delivered_at'].includes(k))return v?new Date(v).toLocaleString('fr-FR'):'';if(k==='payment_mode')return pmL(v);return v??'';}));
     const ws=XLSX.utils.aoa_to_sheet([head,...data]);ws['!cols']=PCOLS.map(([k])=>({wch:['address','description','notes','manifests'].includes(k)?40:16}));
     const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Colis');
@@ -173,7 +179,7 @@ function tplPMatrix(){
 }
 
 Object.assign(K,{
-  colis:['Colis','الطرود'],bulkDone:['Mis à jour','تم التحديث'],bulkRefused:['Refusés','مرفوضة'],pList:['Les colis','الطرود'],pMatrix:['Matrice','المصفوفة'],moreFilters:['Plus de filtres','مرشحات إضافية'],launchSearch:['Lancer la recherche','بحث'],resetK:['Réinitialiser','إعادة'],
+  colis:['Colis','الطرود'],paidToShop:['Versé (soldé)','مدفوع'],bulkDone:['Mis à jour','تم التحديث'],bulkRefused:['Refusés','مرفوضة'],pList:['Les colis','الطرود'],pMatrix:['Matrice','المصفوفة'],moreFilters:['Plus de filtres','مرشحات إضافية'],launchSearch:['Lancer la recherche','بحث'],resetK:['Réinitialiser','إعادة'],
   currentAgency:['Agence actuelle','الوكالة الحالية'],codMin:['CR min','المبلغ الأدنى'],codMax:['CR max','المبلغ الأقصى'],createdFrom:['Créé du','أنشئ من'],createdTo:['Créé au','أنشئ إلى'],
   deliveredFrom:['Livré du','سُلّم من'],deliveredTo:['Livré au','سُلّم إلى'],kDelivery:['Livraison','توصيل'],kPickup:['À récupérer (échange)','للاسترجاع'],sortK:['Tri','الترتيب'],sNewest:['Plus récents','الأحدث'],
   sOldest:['Plus anciens','الأقدم'],sUpdated:['Dernière mise à jour','آخر تحديث'],sCod:['CR décroissant','المبلغ'],sAttempts:['Tentatives','المحاولات'],inStockOnly:['En stock uniquement','في المخزون فقط'],
