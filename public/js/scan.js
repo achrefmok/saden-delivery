@@ -5,6 +5,7 @@ const LIBS={
   qr:'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',
   html5qr:'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
   jspdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
 };
 const libLoads={};
 function loadLib(k){
@@ -19,19 +20,21 @@ function qrSvg(text,px=72){
 }
 
 /* ---------- printable label 10×15 cm ---------- */
-function labelHtml(o){
-  const q=qrcode(0,'M');q.addData(o.ref);q.make();
-  const qr=q.createSvgTag({cellSize:4,margin:0,scalable:true});
-  const u=L().tnd,cod=o.payment_mode==='prepaid'?L().paid:fmt(o.cod,u);
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Étiquette ${esc(o.ref)}</title><style>
-  @page{size:100mm 150mm;margin:0}*{box-sizing:border-box}html,body{margin:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif}
+/* 10×15 label: one label per page (A6 / thermal 100×150) or four per A4 sheet; same markup for both. */
+const LABEL_CSS=`
+  *{box-sizing:border-box}html,body{margin:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif}
   .l{width:100mm;height:150mm;padding:4mm;display:flex;flex-direction:column;gap:2.5mm;overflow:hidden}
   .row{display:flex;justify-content:space-between;align-items:center;gap:3mm}.box{border:0.4mm solid #000;border-radius:1.5mm;padding:2.5mm}
   .k{font-size:7pt;text-transform:uppercase;letter-spacing:.06em;color:#333}.v{font-size:10pt;font-weight:700}.big{font-size:15pt;font-weight:800}
   .qr{width:34mm;height:34mm}.qr svg{width:100%;height:100%}
   .bc{display:flex;justify-content:center}.bc svg{width:72mm;height:auto;display:block}
   @media screen{body{background:#ddd}.l{margin:10px auto;background:#fff;box-shadow:0 2px 10px #0003}}
-  </style></head><body><div class="l">
+  `;
+function labelBody(o){
+  const q=qrcode(0,'M');q.addData(o.ref);q.make();
+  const qr=q.createSvgTag({cellSize:4,margin:0,scalable:true});
+  const u=L().tnd,cod=o.payment_mode==='prepaid'?L().paid:fmt(o.cod,u);
+  return `<div class="l">
   <div class="row"><div style="display:flex;flex-direction:column;gap:1mm"><div style="display:flex;align-items:center;gap:2mm"><img src="${BRAND.logoPrint}" alt="" style="width:13mm;height:13mm;object-fit:contain"><b style="font-size:13pt;letter-spacing:.06em">${esc(BRAND.full.toUpperCase())}</b></div><div style="font-family:monospace;font-size:17pt;font-weight:700">${esc(o.ref)}</div>
     <div style="font-size:8pt">${esc(dm(o.created_at))} · ${esc(o.intercity?'INTER-VILLES':'LOCAL')}${o.external_ref?' · '+esc(o.external_ref):''}</div></div>
     <div class="qr">${qr}</div></div>
@@ -43,8 +46,39 @@ function labelHtml(o){
     <div class="box" style="text-align:center;min-width:24mm"><div class="k">Colis</div><div class="v">${o.pieces||1} pc${o.weight?' · '+o.weight+' kg':''}</div></div></div>
   <div style="font-size:8pt">${esc(o.description||'')}${o.notes?' — '+esc(o.notes):''}</div>
   <div style="margin-top:auto;display:flex;justify-content:space-between;font-size:7.5pt;border-top:0.3mm solid #000;padding-top:1.5mm"><span>${esc(o.origin_agency_name||'')} → ${esc(o.dest_agency_name||'')}</span><span>${esc(location.host)}/?t=${esc(o.ref)}</span></div>
-  </div><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>`;
+  </div>`;
 }
+function labelsHtml(list,format='a6'){
+  const a4=format==='a4';
+  const page=a4?`@page{size:A4;margin:0}.sheet{width:210mm;height:297mm;display:grid;grid-template-columns:105mm 105mm;grid-template-rows:148.5mm 148.5mm;align-items:center;justify-items:center;page-break-after:always}.sheet .l{height:146mm}@media screen{.sheet{margin:10px auto;background:#fff;box-shadow:0 2px 10px #0003}.sheet .l{margin:0;box-shadow:none;outline:0.2mm dashed #bbb}}`
+    :`@page{size:100mm 150mm;margin:0}.l{page-break-after:always}`;
+  const labels=list.map(labelBody);
+  const content=a4?Array.from({length:Math.ceil(labels.length/4)},(_,i)=>`<div class="sheet">${labels.slice(i*4,i*4+4).join('')}</div>`).join(''):labels.join('');
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Étiquettes (${list.length})</title><style>${page}${LABEL_CSS}</style></head><body>${content}<script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+}
+function labelHtml(o){return labelsHtml([o],'a6');}
+function printLabels(list,format){
+  const w=window.open('','_blank','width=900,height=900');
+  if(!w)return toast(L().popupBlocked,'err');
+  w.document.write('<p style="font-family:sans-serif">…</p>');
+  loadLib('qr').then(()=>{w.document.open();w.document.write(labelsHtml(list,format));w.document.close();}).catch(e=>{w.close();toast(e.message,'err');});
+}
+/* Zebra printers: ZPL II, 4×6 in (812×1218 dots at 203 dpi), Code 128 + QR. */
+function labelsZpl(list){
+  const f=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\^~\\]/g,' ').replace(/[^\x20-\x7E]/g,'').slice(0,60);
+  return list.map(o=>{const cod=o.payment_mode==='prepaid'?'PAYE':(+o.cod).toFixed(3)+' TND';
+    return ['^XA','^CI0','^PW812','^LL1218',
+      `^FO40,30^A0N,34,34^FD${f(BRAND.full.toUpperCase())}^FS`,`^FO40,75^A0N,60,60^FD${f(o.ref)}^FS`,
+      `^FO40,160^BY3^BCN,130,Y,N,N^FD${f(o.ref)}^FS`,`^FO560,20^BQN,2,5^FDQA,${f(location.host+'/?t='+o.ref)}^FS`,
+      '^FO30,350^GB752,330,4^FS',`^FO50,370^A0N,26,26^FDDESTINATAIRE^FS`,`^FO50,405^A0N,46,46^FD${f(o.client_name)}^FS`,
+      `^FO50,460^A0N,36,36^FD${f(fmtPhone(o.client_phone))}^FS`,`^FO50,510^FB700,3,0,L^A0N,28,28^FD${f(o.address)}^FS`,
+      `^FO50,610^A0N,44,44^FD${f([o.dest_city_name,o.zone_name].filter(Boolean).join(' - '))}^FS`,
+      `^FO40,710^A0N,26,26^FDEXPEDITEUR : ${f(o.sender_name||o.shop_name)}^FS`,`^FO40,750^A0N,26,26^FD${f(o.sender_phone?fmtPhone(o.sender_phone):'')}^FS`,
+      '^FO30,800^GB752,120,4^FS',`^FO50,820^A0N,26,26^FDA ENCAISSER (COD)^FS`,`^FO50,855^A0N,52,52^FD${f(cod)}^FS`,
+      `^FO520,855^A0N,36,36^FD${o.pieces||1} piece(s)^FS`,`^FO40,950^FB730,2,0,L^A0N,26,26^FD${f(o.description||'')}^FS`,
+      `^FO40,1150^A0N,24,24^FD${f((o.origin_agency_name||'')+' -> '+(o.dest_agency_name||''))}^FS`,'^XZ'].join('\n');}).join('\n');
+}
+function downloadText(name,text,type='text/plain'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 function printLabel(o){
   const w=window.open('','_blank','width=460,height=680');   // opened synchronously (popup blockers)
   if(!w)return toast(L().popupBlocked,'err');
@@ -160,7 +194,7 @@ function renderScan(){
   const exp=SC.expected||[],expRefs=exp.map(o=>o.ref);
   const missing=exp.filter(o=>!SC.scanned.includes(o.ref)),unexpected=SC.scanned.filter(r=>!expRefs.includes(r));
   const needAgency=staff&&!SC.handler&&(inv||['reception','return'].includes(SC.action))&&role()==='admin';
-  ui.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">📷 ${esc(Lx.scanner)}</b><button data-sact="close" class="sbtn">✕</button></div>
+  ui.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">${ico('camera',16)} ${esc(Lx.scanner)}</b><button data-sact="close" class="sbtn">✕</button></div>
     ${SC.title?`<div style="font-weight:600">${esc(SC.title)}</div>`:''}
     ${staff&&!SC.handler?`<label class="slab">${esc(Lx.scanAction)}<select class="fld" data-sch="action">${acts.map(([k,l])=>opt(k,l[li],SC.action)).join('')}</select></label>`:''}
     ${SC.extraUi?SC.extraUi():''}

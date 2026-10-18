@@ -7,8 +7,8 @@ PWA logistique multi-agences (gouvernorats → villes → zones → agences) : s
 | Rôle | Connexion | Accès |
 |---|---|---|
 | **Super admin** (`admin`) | e-mail ou téléphone | tout, avec filtre agence global ; agences, villes / zones, tarifs, comptes, API partenaires, journal |
-| **Responsable d'agence** (`manager`) | e-mail ou téléphone | tableau de bord, commandes, bordereaux, livreurs, caisse, statistiques, réclamations, comptes livreurs / boutiques — **de son agence uniquement** |
-| **Livreur** (`driver`) | téléphone | missions, scan, statuts et incidents (motif obligatoire), preuve OTP / photo / signature, GPS avec consentement |
+| **Responsable d'agence** (`manager`) | e-mail ou téléphone | tableau de bord, commandes, bordereaux, **livreurs (équipe en direct, performance, affectation groupée, fiche, messages)**, caisse, statistiques, réclamations, comptes livreurs / boutiques — **de son agence uniquement** |
+| **Livreur** (`driver`) | téléphone | application mobile à onglets : missions, enlèvements confirmés par scan, scanner, caisse, historique ; Google Maps / Waze, appel / SMS / WhatsApp avec résultat d'appel, statuts et incidents (motif obligatoire), preuve OTP / photo / signature, GPS avec consentement |
 | **Boutique** (`shop`) | téléphone | création de commandes (fiche complète + devis), suivi, annulation avant prise en charge, étiquettes |
 | **Client** | sans compte : n° de colis + téléphone (lien `/?t=SD-…`) | suivi, code de livraison, note et réclamation |
 | **Partenaire API** | clé `sk_live_…` | API `/api/v1` (voir [docs/API.md](docs/API.md)) |
@@ -23,7 +23,11 @@ Administrateur de production : **hachem.jaxdelivery@gmail.com** (création au pr
 - **Fiche colis complète**, **QR + étiquette 10×15**, **scan caméra** (réception, bordereau, expédition, arrivée, retour, inventaire, livraison, ouverture de fiche).
 - **Stock par agence** (`lib/stock.js`) : un colis n'est présent qu'après confirmation de sa réception (`orders.in_stock`) ; chaque entrée / sortie écrit un mouvement (`stock_movements`) dans la même transaction que le changement de statut ; double réception impossible ; anomalies (manquant, supplémentaire, endommagé, code inconnu) corrigées uniquement après validation.
 - **Bordereaux** (7 types, une seule table `manifests.type`) : expédition (remise au livreur), retour (motifs), échange (récupération liée), inter-agences (réception partielle / complète / avec anomalie, réserves), émission d'appel (sans changement de statut), inventaire (écarts), solde (écriture de caisse liée). Brouillons modifiables / supprimables ; annulation motivée avec contre-mouvements et contre-passation ; PDF A4 avec Code 128 sur le document et chaque ligne.
-- **Identité visuelle** : un seul point de configuration, `public/brand/` (voir plus bas).
+- **Identité visuelle** : logo dans `public/brand/` (voir plus bas) ; thème clair / sombre, palette et police dans `public/index.html`, icônes et illustrations vectorielles dans `public/js/icons.js`.
+- **Suivi colis** : tentatives, file des problèmes (appels, rendez-vous, traitement, faux problème), tâches avec compteur, colis signalés / suspects / en souffrance.
+- **Colis** : liste paginée côté serveur, filtres avancés, liste de codes collée, colonnes au choix, étiquettes en masse (10×15, A4, Zebra ZPL), mise à jour de statut en masse, export Excel, matrice statuts × agences.
+- **Espace boutique** complet : accueil, création (téléphone 2, échange, import Excel), colis en attente, historique, réclamations, échanges, retours, paiements (net, retenue à la source), expéditions, statistiques, utilisateurs de la boutique.
+- **Enlèvement** (demande boutique) et **retour à l'expéditeur** (décharge signée), rapport de fin de journée, clôture de caisse journalière, statistiques avancées.
 - **Machine à états** serveur (`lib/status.js`) : transitions par rôle, motifs, annulation, flux retour, historique complet.
 - **Affectation intelligente** (`lib/assign.js`) : score détaillé, mode automatique par agence.
 - **Caisse par agence** : remises COD des livreurs, règlements boutiques, transferts liés.
@@ -37,6 +41,8 @@ npm run seed              # données de démo dans .data/ (PGlite) — jamais da
 npm run dev               # http://localhost:3000 (base locale si DATABASE_URL absent, ou avec DB=local)
 npm run test:permissions  # 45 contrôles d'accès (serveur lancé)
 npm run test:stock        # 101 contrôles stock + bordereaux (serveur LOCAL, base fraîchement seedée)
+npm run test:shop         # 47 contrôles espace boutique (serveur LOCAL)
+npm run test:ops          # 101 contrôles suivi colis, enlèvement, restitution, liste colis, caisse (serveur LOCAL)
 npm run brand             # régénère logo, version N&B, favicon et icônes PWA depuis public/brand/logo-source.*
 ```
 

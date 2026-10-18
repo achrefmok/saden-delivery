@@ -64,7 +64,7 @@ function tplStockEntry(s){
     <form data-form="sscan" onsubmit="return false" style="display:flex;gap:6px;flex-wrap:wrap">
       <input class="fld" ${onInput(e=>{state.stkScanVal=e.target.value;},'stk-scan')} value="${esc(state.stkScanVal||'')}" placeholder="${esc(Lx.scanPh)}" autocomplete="off" autocapitalize="characters" style="font-family:var(--mono);flex:1;min-width:200px">
       <button ${on(submit)} style="${BTN_PRIMARY};padding:9px 16px">${esc(Lx.confirmEntry)}</button>
-      <button type="button" ${on(()=>openScanner(null,{title:Lx.receiveTitle,handler:ref=>stockReceive(ref)}))} style="${BTN_GHOST}">📷 ${esc(Lx.camera)}</button>
+      <button type="button" ${on(()=>openScanner(null,{title:Lx.receiveTitle,handler:ref=>stockReceive(ref)}))} style="${BTN_GHOST}">${ico('camera',16)} ${esc(Lx.camera)}</button>
     </form>
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:12.5px;color:var(--mute)">${esc(Lx.nextScan)}</span>${each([['ok',Lx.condOk],['damaged',Lx.condDamaged]],([k,l])=>`<button type="button" ${on(()=>{state.stkCond=k;render();})} style="${css(chip((state.stkCond||'ok')===k))}">${esc(l)}</button>`)}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">

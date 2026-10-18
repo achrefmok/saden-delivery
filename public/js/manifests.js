@@ -3,18 +3,21 @@
    lifecycle per type, draft edition / deletion, motivated cancellation, A4 PDF with Code 128 barcodes. */
 
 const li=()=>lang()==='ar'?1:0;
-const BTYPES=[['dispatch',['Expédition','الإرسال'],'EXP'],['return',['Retour','الإرجاع'],'RET'],['exchange',['Échange','التبديل'],'ECH'],['transfer',['Inter-agences','بين الوكالات'],'BRD'],
-  ['call',['Émission d’appel','الاتصالات'],'APL'],['inventory',['Inventaire','الجرد'],'INV'],['settlement',['Solde','التسوية'],'SLD']];
+const BTYPES=[['pickup',['Enlèvement','الالتقاط'],'ENV'],['dispatch',['Expédition','الإرسال'],'EXP'],['return',['Retour','الإرجاع'],'RET'],['exchange',['Échange','التبديل'],'ECH'],['transfer',['Inter-agences','بين الوكالات'],'BRD'],
+  ['call',['Émission d’appel','الاتصالات'],'APL'],['inventory',['Inventaire','الجرد'],'INV'],['settlement',['Solde','التسوية'],'SLD'],['restitution',['Retour expéditeur','إرجاع للمرسل'],'RST']];
+const TKINDS=[['normal',['Standard','عادي']],['pickup',['Pickup','التقاط']],['retour',['Retour','إرجاع']],['echange',['Échange','تبديل']],['adresse_erronee',['Adresse erronée','عنوان خاطئ']]];
+const tkL=k=>(TKINDS.find(x=>x[0]===k)||[k,[k||'—',k||'—']])[1][li()];
 const btL=t=>(BTYPES.find(x=>x[0]===t)||[t,[t,t]])[1][li()];
 // stage names per type (index = stage; 5 = annulé)
 const BSTAGE=[['Brouillon','مسودة','n'],['Validé','مؤكد','i'],['En transit','في العبور','o'],['Arrivé','وصل','w'],['Clôturé','مغلق','g'],['Annulé','ملغى','r']];
 const STAGE_BY_TYPE={
   dispatch:{1:['Validé','مؤكد'],4:['Remis au livreur','سُلّم للموزع']},return:{4:['Confirmé','مؤكد']},exchange:{1:['Remis au livreur','سُلّم للموزع']},
   call:{0:['En cours','جارٍ']},inventory:{0:['En cours','جارٍ']},settlement:{4:['Validé','مُصادق']},
+  pickup:{0:['Demande','طلب'],1:['À enlever','للالتقاط'],2:['Enlevé','تم الالتقاط'],4:['Reçu à l’agence','استلم في الوكالة']},restitution:{1:['À remettre','للتسليم'],4:['Reçu par l’expéditeur','استلمه المرسل']},
 };
 const bstL=(i,type)=>(STAGE_BY_TYPE[type]?.[i]||BSTAGE[i])[li()];
 const stageBadge=m=>`<span style="${css(badge(BSTAGE[m.stage][2]))}">${esc(bstL(m.stage,m.type))}</span>`;
-const STEPS={transfer:[0,1,2,3,4],dispatch:[0,1,4],return:[0,4],exchange:[0,1,4],call:[0,4],inventory:[0,4],settlement:[0,4]};
+const STEPS={pickup:[0,1,2,4],restitution:[0,1,4],transfer:[0,1,2,3,4],dispatch:[0,1,4],return:[0,4],exchange:[0,1,4],call:[0,4],inventory:[0,4],settlement:[0,4]};
 const RET_REASONS=[['absent',['Client absent','الحريف غائب']],['injoignable',['Client injoignable','تعذر الاتصال بالحريف']],['refus',['Refus du client','رفض الحريف']],
   ['adresse',['Adresse incorrecte','عنوان خاطئ']],['reporte',['Livraison reportée','توصيل مؤجل']],['boutique',['Retour demandé par la boutique','إرجاع بطلب المتجر']],['autre',['Autre','أخرى']]];
 const retL=k=>(RET_REASONS.find(x=>x[0]===k)||[k,[k||'—',k||'—']])[1][li()];
@@ -52,6 +55,7 @@ function loadBrdSrc(det){
   let p=null;
   if(m.type==='dispatch'||m.type==='exchange')p=api('stock?category=available'+ag).then(r=>r.parcels);
   else if(m.type==='return')p=api('stock/incoming?x=1'+ag).then(r=>r.drivers.filter(o=>o.driver_id===m.driver_id));
+  else if(m.type==='restitution')p=api('stock?category=returns&shop_id='+m.shop_id+ag).then(r=>r.parcels);
   if(p)p.then(list=>{if(state.selBrd===m.id){state.brdSrc={id:m.id,list};render();}}).catch(()=>{});
   else state.brdSrc={id:m.id,list:null};
 }
@@ -95,13 +99,16 @@ function tplBrd(){
         <span style="font-size:12.5px;color:var(--mute)">${dm(x.created_at)} · ${x.n} ${esc(Lx.lines)}${x.type==='transfer'&&x.stage>=2?` · ${x.received}/${x.n} ${esc(Lx.received)}`:''}${x.type==='inventory'?` · ${x.scanned} ${esc(Lx.counted)}`:''}${x.anomalies?` · ⚠ ${x.anomalies}`:''}</span>
         ${when(x.reception_state,()=>`<span>${recBadge(x.reception_state)}</span>`)}</div>`):`<div style="${CARD}">${empty(Lx.noBrd)}</div>`}
     </div>`;
-  return `${tabs}<div class="split" style="display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:var(--gap)">${list}${det?tplBrdDetail(det):`<div style="${CARD};padding:24px;color:var(--mute)">${state.selBrd!=null?'<span class="spin"></span>':esc(Lx.pickBrd)}</div>`}</div>`;
+  const eodBtn=t==='dispatch'?`<div class="no-print" style="display:flex;justify-content:flex-end"><button ${on(()=>openEod())} style="${BTN_GHOST}">📊 ${esc(Lx.eodReport)}</button></div>`:'';
+  return `${tabs}${eodBtn}${tplRstModal()}${tplEodModal()}<div class="split" style="display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:var(--gap)">${list}${det?tplBrdDetail(det):`<div style="${CARD};padding:24px;color:var(--mute)">${state.selBrd!=null?'<span class="spin"></span>':esc(Lx.pickBrd)}</div>`}</div>`;
 }
 function brdTitle(x){
   switch(x.type){
     case 'transfer':return `${x.origin_agency_name||x.from_city} → ${x.dest_agency_name||x.to_city}`;
     case 'dispatch':case 'exchange':case 'return':return (x.driver_name||L().noDriver)+' · '+(x.origin_agency_name||'');
     case 'settlement':return (x.driver_name||x.shop_name||'—')+' · '+(x.period_from||'')+' → '+(x.period_to||'');
+    case 'pickup':return (x.shop_name||L().allShops)+' · '+(x.driver_name||L().noDriver);
+    case 'restitution':return (x.shop_name||'—')+' · '+(x.origin_agency_name||'');
     default:return btL(x.type)+' · '+(x.origin_agency_name||'');
   }
 }
@@ -115,6 +122,10 @@ function tplBrdCreate(t){
     if(t==='transfer')Object.assign(body,{origin_agency_id:agencyId,dest_agency_id:c.dest_agency_id,carrier:c.carrier,driver_id:c.driver_id});
     if(['dispatch','exchange','return'].includes(t))body.driver_id=c.driver_id;
     if(t==='settlement')Object.assign(body,{driver_id:c.party==='driver'?c.driver_id:null,shop_id:c.party==='shop'?c.shop_id:null,period_from:c.period_from,period_to:c.period_to});
+    if(t==='pickup')Object.assign(body,{driver_id:c.driver_id,shop_id:c.shop_id||null,pickup_date:c.pickup_date||null,all_parcels:!!c.shop_id&&c.all_parcels!==false});
+    if(t==='restitution')Object.assign(body,{shop_id:c.shop_id,driver_id:c.driver_id});
+    if(['transfer','dispatch','pickup'].includes(t))body.vehicle_plate=c.vehicle_plate||undefined;
+    if(t==='transfer')body.transfer_kind=c.transfer_kind||'normal';
     const r=await api('manifests',{method:'POST',body});
     state.bform={...state.bform,open:false};await loadBrdList();selectBrd(r.manifest.id);
   },Lx.saved);
@@ -125,7 +136,11 @@ function tplBrdCreate(t){
     ${when(role()==='admin',()=>field(Lx.agencyLbl,select('b-ag','bform','agency_id',[['',Lx.choose],...agencyOptions()],true)))}
     ${when(t==='transfer',()=>field(Lx.to,select('b-to','bform','dest_agency_id',[['',Lx.choose],...agencyOptions(a=>a.id!==agencyId)]))+field(Lx.carrier,input('b-car','bform','carrier','placeholder="Sud Express Transport"'))
       +field(Lx.driverCarrier,select('b-drv','bform','driver_id',[['','—'],...drivers.map(x=>[x.id,x.name])])))}
-    ${when(['dispatch','exchange','return'].includes(t)&&agencyId,()=>field(Lx.driverK+(t==='return'?' *':''),tplDriverPicker(agencyId,b.driver_id,pickDrv,{allowNone:t!=='return'})))}
+    ${when(t==='transfer',()=>field(Lx.transferKind,select('b-tk','bform','transfer_kind',TKINDS.map(([k,l])=>[k,l[li()]]))))}
+    ${when(['pickup','restitution'].includes(t),()=>field(Lx.colShop+(t==='restitution'?' *':' ('+Lx.optional+')'),select('b-shop','bform','shop_id',[['',t==='pickup'?Lx.allShops:Lx.choose],...shops.map(x=>[x.id,x.shop_name])],true)))}
+    ${when(t==='pickup',()=>field(Lx.pickupDate,input('b-pd','bform','pickup_date','type="date"'))+(b.shop_id?`<label style="display:flex;gap:8px;align-items:center;font-size:12.5px"><input type="checkbox" ${b.all_parcels!==false?'checked':''} ${on(()=>{state.bform={...state.bform,all_parcels:b.all_parcels===false};render();})}> ${esc(Lx.allShopParcels)}</label>`:''))}
+    ${when(['transfer','dispatch','pickup'].includes(t),()=>field(Lx.vehiclePlate+' ('+Lx.optional+')',input('b-plate','bform','vehicle_plate','placeholder="123 TU 4567"')))}
+    ${when(['dispatch','exchange','return','pickup'].includes(t)&&agencyId,()=>field(Lx.driverK+(t==='return'?' *':''),tplDriverPicker(agencyId,b.driver_id,pickDrv,{allowNone:t!=='return'})))}
     ${when(t==='settlement',()=>`<div style="display:flex;gap:6px">${each([['driver',Lx.driverK],['shop',Lx.colShop]],([k,l])=>`<button type="button" ${on(()=>{state.bform={...state.bform,party:k};render();})} style="${css(chip(b.party===k))}">${esc(l)}</button>`)}</div>
       ${b.party==='driver'?field(Lx.driverK,select('b-sd','bform','driver_id',[['',Lx.choose],...drivers.map(x=>[x.id,x.name])])):field(Lx.colShop,select('b-ss','bform','shop_id',[['',Lx.choose],...shops.map(x=>[x.id,x.shop_name])]))}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${field(Lx.periodFrom,input('b-pf','bform','period_from','type="date"'))}${field(Lx.periodTo,input('b-pt','bform','period_to','type="date"'))}</div>`)}
@@ -153,7 +168,7 @@ function tplScanBox(m,hint){
     <form data-form="bscan" onsubmit="return false" style="display:flex;gap:6px;flex-wrap:wrap">
       <input class="fld" ${onInput(e=>{state.brdScanVal=e.target.value;},'brd-scan')} value="${esc(state.brdScanVal||'')}" placeholder="${esc(Lx.scanPh)}" autocomplete="off" autocapitalize="characters" style="font-family:var(--mono);flex:1;min-width:180px">
       <button ${on(submit)} style="${BTN_PRIMARY};padding:9px 14px">OK</button>
-      <button type="button" ${on(()=>openScanner(null,{title:m.ref+' · '+hint,handler:ref=>brdScan(m,ref)}))} style="${BTN_GHOST}">📷 ${esc(Lx.camera)}</button>
+      <button type="button" ${on(()=>openScanner(null,{title:m.ref+' · '+hint,handler:ref=>brdScan(m,ref)}))} style="${BTN_GHOST}">${ico('camera',16)} ${esc(Lx.camera)}</button>
     </form>
     <span style="font-size:12px;color:var(--mute)">${esc(hint)} — ${esc(Lx.usbHint)}</span>
     ${when((state.brdLog||[]).length,()=>`<div style="display:flex;flex-direction:column;gap:2px;font-size:12.5px" data-scanlog>${each(state.brdLog,r=>`<span style="color:${r.ok?'var(--gf)':'var(--rf)'}">${r.ok?'✓':'✕'} <b style="font-family:var(--mono)">${esc(r.ref)}</b> · ${esc(r.msg)}</span>`)}</div>`)}
@@ -187,6 +202,15 @@ function tplBrdDetail(det){
     if(S===1&&origin)actions.push([Lx.closeBrd,()=>post('close',{results:Object.fromEntries(items.filter(i=>i.role==='pickup').map(i=>[i.id,i.result]))})]);
   }
   if((t==='call'||t==='inventory')&&S===0&&origin)actions.push([t==='inventory'?Lx.closeInventory:Lx.closeBrd,()=>post('close')]);
+  if(t==='pickup'&&origin){
+    if(S===0)actions.push([Lx.announcePickup,()=>post('validate',null,Lx.pickupAnnounced)]);
+    if(S===1)actions.push([Lx.markCollected,()=>post('collected')]);
+    if(S===1||S===2)actions.push([Lx.closeReception,()=>post('close')]);
+  }
+  if(t==='restitution'&&origin){
+    if(S===0)actions.push([Lx.validate,()=>post('validate')]);
+    if(S===1)actions.push([Lx.handToSender,()=>{state.rstModal={id:m.id,ref:m.ref,signer:'',doc:null,docName:''};render();}]);
+  }
   if(t==='settlement'&&S===0&&origin){
     actions.push([Lx.recompute,()=>post('recompute')]);
     actions.push([Lx.validateSettlement,()=>post('validate',{amount:state.sldAmount===''||state.sldAmount==null?undefined:state.sldAmount,comment:state.sldComment||undefined},Lx.settlementDone)]);
@@ -204,6 +228,8 @@ function tplBrdDetail(det){
   if(S===0&&m.can_compose&&t!=='settlement')scanHint=t==='inventory'?Lx.hintCount:Lx.hintAdd;
   if(S===1&&origin&&['transfer','dispatch'].includes(t))scanHint=Lx.hintCheck;
   if(t==='transfer'&&[2,3].includes(S)&&dest)scanHint=Lx.hintReceive;
+  if(t==='pickup'&&[1,2].includes(S)&&origin)scanHint=Lx.hintPickupReceive;
+  if(t==='restitution'&&S===1&&origin)scanHint=Lx.hintCheck;
   const retForm=t==='return'&&S===0&&m.can_compose?`<div class="no-print" style="padding:var(--pad);border-bottom:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;align-items:end">
       ${field(Lx.returnReason,`<select class="fld" ${onInput(e=>{state.brdLine={...(state.brdLine||{}),reason:e.target.value};render();},'ret-reason')}>${each([['',Lx.choose],...RET_REASONS.map(([k,l])=>[k,l[li()]])],([v,l])=>`<option value="${esc(v)}"${(state.brdLine?.reason||'')===v?' selected':''}>${esc(l)}</option>`)}</select>`)}
       ${field(Lx.commentK+((state.brdLine?.reason)==='autre'?' *':''),`<input class="fld" ${onInput(e=>{state.brdLine={...(state.brdLine||{}),comment:e.target.value};},'ret-com')} value="${esc(state.brdLine?.comment||'')}">`)}
@@ -218,6 +244,8 @@ function tplBrdDetail(det){
       <div class="no-print" style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:flex-end">
         <button ${on(()=>exportManifestPdf(det))} style="${BTN_GHOST}">⤓ ${esc(Lx.pdf)}</button>
         <button ${on(()=>exportManifestPdf(det,true))} style="${BTN_GHOST}">🖨 ${esc(Lx.print)}</button>
+        ${when(m.has_signed_doc,()=>`<button ${on(()=>openSignedDoc(m.id))} style="${BTN_GHOST}">📎 ${esc(Lx.signedDoc)}</button>`)}
+        ${when(t==='dispatch',()=>`<button ${on(()=>openEod())} style="${BTN_GHOST}">📊 ${esc(Lx.eodReport)}</button>`)}
         ${each(actions,([l,fn])=>`<button ${on(fn)} style="${BTN_PRIMARY}">${spin()}${esc(l)}</button>`)}
         ${when(m.can_delete,()=>`<button ${on(del)} style="${BTN_GHOST};color:var(--rf)">🗑 ${esc(Lx.deleteDraft)}</button>`)}
         ${when(m.can_cancel,()=>`<button ${on(cancel)} style="${BTN_GHOST};color:var(--rf)">${esc(Lx.cancelBrd)}</button>`)}
@@ -229,7 +257,7 @@ function tplBrdDetail(det){
     <div style="padding:var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;border-bottom:1px solid var(--line)">
       ${each(info,([k2,v])=>`<div style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:11.5px;color:var(--mute)">${esc(k2)}</span><b style="font-weight:600;overflow-wrap:anywhere">${esc(v)}</b></div>`)}
     </div>
-    ${when(['dispatch','exchange','return'].includes(t)&&S===0&&m.can_compose,()=>`<details class="no-print" style="padding:var(--pad);border-bottom:1px solid var(--line)"${m.driver_id?'':' open'}><summary style="cursor:pointer;font-weight:600">${esc(Lx.changeDriver)}</summary><div style="margin-top:8px">${tplDriverPicker(m.origin_agency_id,m.driver_id,dd=>act(async()=>{await api('manifests/'+m.id,{method:'PATCH',body:{driver_id:dd?.id||null}});await reload();await loadBrdList();},Lx.saved),{allowNone:t!=='return'})}</div></details>`)}
+    ${when(['dispatch','exchange','return','pickup'].includes(t)&&(S===0||(t==='pickup'&&S===1))&&origin,()=>`<details class="no-print" style="padding:var(--pad);border-bottom:1px solid var(--line)"${m.driver_id?'':' open'}><summary style="cursor:pointer;font-weight:600">${esc(Lx.changeDriver)}</summary><div style="margin-top:8px">${tplDriverPicker(m.origin_agency_id,m.driver_id,dd=>act(async()=>{await api('manifests/'+m.id,{method:'PATCH',body:{driver_id:dd?.id||null}});await reload();await loadBrdList();},Lx.saved),{allowNone:t!=='return'})}</div></details>`)}
     ${when(t==='transfer'&&S>=3,()=>{const miss=items.filter(i=>!i.received_at);return miss.length?`<div style="padding:10px var(--pad);background:var(--rb);color:var(--rf);font-weight:600">${esc(Lx.missingParcels)} (${miss.length}) : ${esc(miss.map(i=>i.ref).join(', '))}</div>`:'';})}
     ${t==='settlement'?tplSettlement(det):''}
     ${retForm}${condToggle}
@@ -247,7 +275,7 @@ function tplBrdDetail(det){
 const HIST={'manifest.create':['Création','إنشاء'],'manifest.add':['Colis ajouté','إضافة طرد'],'manifest.remove':['Colis retiré','حذف طرد'],'manifest.validate':['Validation','تأكيد'],
   'manifest.ship':['Expédition','شحن'],'manifest.arrive':['Arrivée','وصول'],'manifest.receive':['Colis réceptionné','استلام طرد'],'manifest.close':['Clôture','إقفال'],'manifest.update':['Modification','تعديل'],
   'manifest.handover':['Remise au livreur','التسليم للموزع'],'manifest.confirm':['Retour confirmé','تأكيد الإرجاع'],'manifest.pickup':['Récupération ajoutée','إضافة استرجاع'],'manifest.call':['Appel','اتصال'],
-  'manifest.cancel':['Annulation','إلغاء'],'manifest.extra':['Colis supplémentaire','طرد زائد'],'manifest.delete':['Suppression du brouillon','حذف المسودة']};
+  'manifest.cancel':['Annulation','إلغاء'],'manifest.collected':['Enlevé chez l’expéditeur','تم الالتقاط'],'manifest.delivered':['Remis à l’expéditeur (signé)','سُلّم للمرسل'],'manifest.extra':['Colis supplémentaire','طرد زائد'],'manifest.delete':['Suppression du brouillon','حذف المسودة']};
 const histL=a=>(HIST[a]||[a,a])[li()];
 function histDetail(h){
   const a=h.after||{},b=h.before||{},o=a.order||b.order||a.code;
@@ -259,9 +287,12 @@ function brdInfo(det){
   const Lx=L(),u=Lx.tnd,m=det.manifest,items=det.items,t=m.type;
   const cod=items.reduce((a,i)=>a+(i.cod||0),0),n=items.filter(i=>i.expected!==false).length;
   const base=[[Lx.agencyLbl,m.origin_agency_name||'—'],[Lx.createdBy,(m.created_by_name||m.responsible||'—')+' · '+dtm(m.created_at)]];
-  if(t==='transfer')return [[Lx.from,m.origin_agency_name],[Lx.to,m.dest_agency_name],[Lx.carrier,m.carrier||'—'],[Lx.driverCarrier,m.driver_name||'—'],[Lx.count,n+' · '+items.reduce((a,i)=>a+(i.pieces||1),0)+' '+Lx.piecesShort],[Lx.totalCod,fmt(cod,u)],[Lx.received,items.filter(i=>i.received_at).length+' / '+n],[Lx.createdBy,(m.created_by_name||m.responsible||'—')+' · '+dtm(m.created_at)]];
-  if(t==='dispatch'||t==='exchange')return [...base,[Lx.driverK,m.driver_name?m.driver_name+' · '+fmtPhone(m.driver_phone):'—'],[Lx.count,String(n)],[Lx.totalCod,fmt(cod,u)],[Lx.handedAt,dtm(m.handed_at)],...(m.result?[[Lx.resultK,resL(m.result)]]:[])];
+  if(t==='transfer')return [[Lx.from,m.origin_agency_name],[Lx.to,m.dest_agency_name],[Lx.transferKind,tkL(m.transfer_kind||'normal')],[Lx.vehiclePlate,m.vehicle_plate||'—'],[Lx.carrier,m.carrier||'—'],[Lx.driverCarrier,m.driver_name||'—'],[Lx.count,n+' · '+items.reduce((a,i)=>a+(i.pieces||1),0)+' '+Lx.piecesShort],[Lx.totalCod,fmt(cod,u)],[Lx.received,items.filter(i=>i.received_at).length+' / '+n],[Lx.createdBy,(m.created_by_name||m.responsible||'—')+' · '+dtm(m.created_at)]];
+  if(t==='dispatch'||t==='exchange')return [...base,[Lx.driverK,m.driver_name?m.driver_name+' · '+fmtPhone(m.driver_phone):'—'],...(m.vehicle_plate?[[Lx.vehiclePlate,m.vehicle_plate]]:[]),[Lx.count,String(n)],[Lx.totalCod,fmt(cod,u)],[Lx.handedAt,dtm(m.handed_at)],...(m.result?[[Lx.resultK,resL(m.result)]]:[])];
   if(t==='return')return [...base,[Lx.driverK,m.driver_name||'—'],[Lx.count,String(n)],[Lx.confirmedAt,dtm(m.closed_at)]];
+  if(t==='pickup')return [...base,[Lx.colShop,m.shop_name?m.shop_name+(m.shop_phone?' · '+fmtPhone(m.shop_phone):''):Lx.allShops],[Lx.driverK,m.driver_name||'—'],[Lx.vehiclePlate,m.vehicle_plate||'—'],
+    [Lx.pickupDate,m.pickup_date||'—'],[Lx.count,String(n)],[Lx.received,items.filter(i=>i.received_at).length+' / '+n],[Lx.collectedAt,dtm(m.collected_at)],...(m.requested_by?[[Lx.requestedBy,Lx.byShopReq]]:[]),...(m.result?[[Lx.resultK,resL(m.result)]]:[])];
+  if(t==='restitution')return [...base,[Lx.colShop,m.shop_name||'—'],[Lx.count,String(n)],[Lx.signerK,m.signer_name||(m.has_signed_doc?Lx.signedDoc:'—')],[Lx.deliveredAt,dtm(m.signed_at)]];
   if(t==='call'){const done=items.filter(i=>i.call_result).length;return [...base,[Lx.count,String(n)],[Lx.calledK,done+' / '+n]];}
   if(t==='inventory'){const exp=items.filter(i=>i.expected).length,cnt=items.filter(i=>i.scanned_at).length,ex=items.filter(i=>!i.expected).length;
     return [...base,[Lx.theoretical,String(exp)],[Lx.counted,String(cnt)],[Lx.invMissing,String(items.filter(i=>i.expected&&!i.scanned_at).length)],[Lx.extraK,String(ex)],...(m.result?[[Lx.resultK,resL(m.result)]]:[])];}
@@ -315,11 +346,19 @@ function tplBrdLines(det){
       body=items.map(c=>row(cols,[ref(c),`<span>${esc(c.client_name)}</span>`,`<span>${st(c)}</span>`,
         `<span style="text-align:end;font-weight:700;color:${!c.expected?'var(--wf)':c.scanned_at?'var(--gf)':S===4?'var(--rf)':'var(--mute)'}">${!c.expected?'＋ '+esc(Lx.extraK):c.scanned_at?'✓ '+esc(hm(c.scanned_at)):S===4?esc(Lx.missingK):'…'}</span>`],
         !c.expected?'background:var(--wb)':S===4&&!c.scanned_at?'background:var(--rb)':'')).join('');break;
+    case 'pickup':case 'restitution':
+      cols='100px minmax(0,1fr) minmax(0,1fr) 100px 110px 110px';
+      body=items.map(c=>row(cols,[ref(c),`<span>${esc(c.client_name)}<br><span style="font-size:11.5px;color:var(--mute)">${esc(c.shop_name||'')}</span></span>`,`<span style="color:var(--mute)">${esc([c.dest_city_name,c.zone_name].filter(Boolean).join(' · '))}</span>`,
+        `<span style="text-align:end;font-weight:600">${esc(fmt(c.cod,u))}</span>`,`<span>${st(c)}</span>`,
+        `<span style="text-align:end">${edit?rm(c):t==='pickup'?(c.received_at?`<span style="color:var(--gf);font-weight:700">✓ ${esc(hm(c.received_at))}</span>`:c.anomaly==='manquant'?`<span style="color:var(--rf);font-weight:700">${esc(Lx.notCollectedK)}</span>`
+          :[1,2].includes(S)&&m.can_ship?`<button ${on(()=>act(async()=>{await api(`manifests/${m.id}/receive-pickup`,{method:'POST',body:{order_id:c.id}});await loadBrd(m.id);},Lx.saved))} style="${BTN_GHOST};padding:4px 8px;font-size:12px">${esc(Lx.receiveOne)}</button>`:'')
+          :c.confirmed_at?`<span style="color:var(--gf);font-weight:700">✓ ${esc(Lx.handedK)}</span>`:c.scanned_at?`<span style="color:var(--gf)">✓ ${esc(Lx.checkedK)}</span>`:''}</span>`],
+        t==='pickup'&&S===4&&!c.received_at?'background:var(--rb)':'')).join('');break;
     case 'settlement':
       cols='100px minmax(0,1fr) 110px 110px 110px';
       body=items.map(c=>row(cols,[ref(c),`<span>${esc(c.client_name)}</span>`,`<span style="text-align:end">${esc(fmt(c.cod))}</span>`,`<span style="text-align:end">${esc(fmt(m.driver_id?c.driver_share:c.delivery_fee))}</span>`,`<span style="text-align:end;font-weight:700">${esc(fmt(c.amount))}</span>`])).join('');break;
   }
-  const head={transfer:['Réf.',Lx.client,Lx.destK,'COD',Lx.statusK,''],dispatch:['Réf.',Lx.client,Lx.zoneK,'COD',Lx.statusK,''],return:['Réf.',Lx.client,Lx.statusK,Lx.returnReason,''],
+  const head={pickup:['Réf.',Lx.client,Lx.destK,'COD',Lx.statusK,''],restitution:['Réf.',Lx.client,Lx.destK,'COD',Lx.statusK,''],transfer:['Réf.',Lx.client,Lx.destK,'COD',Lx.statusK,''],dispatch:['Réf.',Lx.client,Lx.zoneK,'COD',Lx.statusK,''],return:['Réf.',Lx.client,Lx.statusK,Lx.returnReason,''],
     exchange:[Lx.roleK,'Réf.',Lx.client,Lx.statusK,Lx.resultK,''],call:['Réf.',Lx.client,Lx.phone,Lx.motiveK,Lx.resultK,Lx.commentK,''],inventory:['Réf.',Lx.client,Lx.statusK,Lx.countK],
     settlement:['Réf.',Lx.client,'COD',m.driver_id?Lx.commissionK:Lx.feesK,Lx.amountK]}[t];
   return `<div style="overflow-x:auto"><div style="min-width:${t==='call'?900:620}px">
@@ -333,8 +372,9 @@ function tplBrdPick(det){
   const items=det.items,pick=state.brdPick||[];
   let src;
   if(t==='transfer')src=d.orders.filter(o=>o.origin_agency_id===m.origin_agency_id&&o.dest_agency_id===m.dest_agency_id&&['attente','en_agence'].includes(o.status)&&!items.some(i=>i.id===o.id));
+  else if(t==='pickup')src=d.orders.filter(o=>o.origin_agency_id===m.origin_agency_id&&(!m.shop_id||o.shop_id===m.shop_id)&&['attente','affecte'].includes(o.status)&&!o.in_stock&&o.kind!=='pickup'&&!items.some(i=>i.id===o.id));
   else if(state.brdSrc?.id===m.id&&state.brdSrc.list)src=state.brdSrc.list.filter(o=>!items.some(i=>i.id===o.id));
-  else if(['dispatch','exchange','return'].includes(t))return `<div style="padding:var(--pad);border-top:1px solid var(--line)"><span class="spin"></span></div>`;
+  else if(['dispatch','exchange','return','restitution'].includes(t))return `<div style="padding:var(--pad);border-top:1px solid var(--line)"><span class="spin"></span></div>`;
   else src=null;
   const toggle=id=>()=>{state.brdPick=pick.includes(id)?pick.filter(x=>x!==id):[...pick,id];render();};
   const add=()=>act(async()=>{const body={order_ids:pick};if(t==='return'){Object.assign(body,state.brdLine||{});}
@@ -348,7 +388,7 @@ function tplBrdPick(det){
       </div></div>`:'';
   if(src==null)return pickup?`<div class="no-print" style="padding:var(--pad);border-top:1px solid var(--line)">${pickup}</div>`:'';
   return `<div class="no-print" style="padding:var(--pad);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(t==='return'?Lx.parcelsWithDriver:t==='transfer'?Lx.addParcels:Lx.stockAvailable)} (${src.length})</b>${when(pick.length,()=>`<button ${on(add)} style="${BTN_PRIMARY};padding:7px 12px">${spin()}+ ${pick.length}</button>`)}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(t==='return'?Lx.parcelsWithDriver:t==='transfer'?Lx.addParcels:t==='pickup'?Lx.parcelsAtShop:t==='restitution'?Lx.returnsInStock:Lx.stockAvailable)} (${src.length})</b>${when(pick.length,()=>`<button ${on(add)} style="${BTN_PRIMARY};padding:7px 12px">${spin()}+ ${pick.length}</button>`)}</div>
     ${t==='return'&&!(state.brdLine?.reason)?`<span style="font-size:12px;color:var(--wf)">${esc(Lx.pickReasonFirst)}</span>`:''}
     ${src.length?`<div style="display:flex;flex-direction:column;max-height:260px;overflow:auto">${each(src,o=>`<label style="display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer"><input type="checkbox" ${pick.includes(o.id)?'checked':''} ${on(toggle(o.id))}><span style="font-family:var(--mono);font-size:12px">${esc(o.ref)}</span><span style="flex:1">${esc(o.client_name)}</span><span style="${css(stB(o.status))}">${esc(stL(o.status))}</span>${o.driver_name&&t!=='return'?`<span style="font-size:12px;color:var(--mute)">${esc(o.driver_name)}</span>`:''}</label>`)}</div>`:`<span style="color:var(--mute);font-size:12.5px">${esc(Lx.noPickable)}</span>`}
     ${pickup}
@@ -388,16 +428,65 @@ function tplAnomalyActions(a,after){
   return `<span style="display:flex;gap:4px">${canFix?`<button ${on(()=>go(true))} style="${BTN_GHOST};padding:4px 8px;font-size:12px">${esc(a.kind==='manquant'?Lx.fixMissing:Lx.fixExtra)}</button>`:''}<button ${on(()=>go(false))} style="${BTN_GHOST};padding:4px 8px;font-size:12px">${esc(Lx.resolveK)}</button></span>`;
 }
 
+/* ------------------------------------------------------------------ restitution: discharge signed by the sender */
+function tplRstModal(){
+  const r=state.rstModal;if(!r)return '';
+  const Lx=L();
+  const pick=e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>3e6)return toast(Lx.docTooBig,'err');const fr=new FileReader();fr.onload=()=>{state.rstModal={...state.rstModal,doc:fr.result,docName:f.name};render();};fr.readAsDataURL(f);};
+  const go=()=>act(async()=>{const c=state.rstModal;await api(`manifests/${c.id}/delivered`,{method:'POST',body:{signer_name:c.signer,signed_doc:c.doc||undefined}});state.rstModal=null;await loadBrd(c.id);await loadBrdList();},Lx.saved);
+  return `<div class="no-print" style="position:fixed;inset:0;z-index:1500;background:oklch(0.1 0.03 262 / .55);display:flex;align-items:center;justify-content:center;padding:16px" data-rst-modal>
+    <div style="${CARD};width:min(460px,100%);padding:18px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;justify-content:space-between"><b style="font-size:16px">${esc(Lx.handToSender)} · ${esc(r.ref)}</b><button ${on(()=>{state.rstModal=null;render();})} style="${BTN_GHOST};padding:4px 9px">✕</button></div>
+      ${field(Lx.signerK,`<input class="fld" ${onInput(e=>{state.rstModal={...state.rstModal,signer:e.target.value};},'rst-signer')} value="${esc(r.signer||'')}">`)}
+      ${field(Lx.signedDoc+' ('+Lx.photoOrPdf+')',`<input class="fld" type="file" accept="image/*,application/pdf" capture="environment" ${onInput(pick,'rst-file')}>`)}
+      ${r.docName?`<span style="font-size:12.5px;color:var(--gf)">✓ ${esc(r.docName)}</span>`:''}
+      <span style="font-size:12px;color:var(--mute)">${esc(Lx.rstHint)}</span>
+      <button ${on(go)} style="${BTN_PRIMARY};min-height:44px">${spin()}${esc(Lx.confirmAction)}</button></div></div>`;
+}
+async function openSignedDoc(id){
+  const w=window.open('','_blank');
+  try{const d=await api(`manifests/${id}/document`);
+    if(!w)return toast(L().popupBlocked,'err');
+    w.document.write(d.signed_doc.startsWith('data:application/pdf')?`<iframe src="${d.signed_doc}" style="border:0;width:100vw;height:100vh"></iframe>`:`<img src="${d.signed_doc}" style="max-width:100%">`);
+  }catch(e){w?.close();toast(e.message,'err');}
+}
+/* ------------------------------------------------------------------ end-of-day report per driver */
+function openEod(){state.eod={date:new Date().toISOString().slice(0,10),data:null};render();loadEod();}
+async function loadEod(){const e=state.eod;if(!e)return;try{e.data=await api(`reports/end-of-day?date=${e.date}`+brdAgencyQ());}catch(x){toast(x.message,'err');}render();}
+function tplEodModal(){
+  const e=state.eod;if(!e)return '';
+  const Lx=L(),d=e.data;
+  const cols=[['name',Lx.driverK],['dispatched',Lx.eodDispatched],['delivered',Lx.eodDelivered],['failed',Lx.eodFailed],['returned',Lx.eodReturned],['in_hand',Lx.inHand],['cod_collected',Lx.collectedK2],['remitted',Lx.eodRemitted]];
+  const pdf=()=>buildPdf({title:'Rapport de fin de journée',ref:'EOD-'+d.date,subtitle:d.agency_name,info:[['Agence',d.agency_name],['Date',d.date]],
+    columns:[{t:'Livreur',w:40},{t:'Remis',w:16,align:'right'},{t:'Livrés',w:16,align:'right'},{t:'Échecs',w:16,align:'right'},{t:'Retours',w:16,align:'right'},{t:'En main',w:16,align:'right'},{t:'Encaissé',w:24,align:'right'},{t:'Versé',w:24,align:'right'}],
+    rows:d.drivers.map(r=>({cells:[r.name,r.dispatched,r.delivered,r.failed,r.returned,r.in_hand,(+r.cod_collected).toFixed(3),(+r.remitted).toFixed(3)]})),
+    totals:[`Total : ${d.totals.dispatched} remis - ${d.totals.delivered} livrés - ${d.totals.failed} échecs - ${d.totals.returned} retours - encaissé ${fmt(d.totals.cod_collected)} TND - versé ${fmt(d.totals.remitted)} TND`],
+    signatures:['Chef d’agence','Caisse']}).catch(x=>toast(x.message,'err'));
+  return `<div class="no-print" style="position:fixed;inset:0;z-index:1500;background:oklch(0.1 0.03 262 / .55);display:flex;align-items:center;justify-content:center;padding:16px" data-eod>
+    <div style="${CARD};width:min(900px,100%);padding:18px;display:flex;flex-direction:column;gap:12px;max-height:90vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:16px">${esc(Lx.eodReport)}${d?' · '+esc(d.agency_name||''):''}</b>
+        <span style="display:flex;gap:6px;align-items:center"><input class="fld" type="date" style="max-width:170px" ${onInput(x=>{state.eod={...state.eod,date:x.target.value,data:null};loadEod();},'eod-date')} value="${esc(e.date)}">
+        ${d?`<button ${on(pdf)} style="${BTN_GHOST}">⤓ PDF</button>`:''}<button ${on(()=>{state.eod=null;render();})} style="${BTN_GHOST};padding:4px 9px">✕</button></span></div>
+      ${!d?'<span class="spin"></span>':`<div style="overflow-x:auto"><div style="min-width:760px">
+        <div style="display:grid;grid-template-columns:minmax(0,1.6fr) repeat(7,minmax(70px,1fr));gap:8px;padding:8px;font-size:11.5px;color:var(--mute);background:var(--surface2);font-weight:600">${each(cols,([k,l],i)=>`<span style="${i?'text-align:end':''}">${esc(l)}</span>`)}</div>
+        ${d.drivers.length?each([...d.drivers,{...d.totals,name:Lx.totalK,_t:1}],r=>`<div style="display:grid;grid-template-columns:minmax(0,1.6fr) repeat(7,minmax(70px,1fr));gap:8px;padding:8px;border-top:1px solid var(--line);${r._t?'font-weight:700':''}">${each(cols,([k],i)=>`<span style="${i?'text-align:end':''}">${esc(['cod_collected','remitted'].includes(k)?fmt(r[k]):String(r[k]))}</span>`)}</div>`):empty(Lx.eodEmpty)}
+      </div></div>`}
+    </div></div>`;
+}
+
 /* ------------------------------------------------------------------ PDF (A4, Code 128 on the document and on every line) */
 function brdPdfSpec(det){
   const m=det.manifest,items=det.items,t=m.type,u='TND';
   const c=(tx,w,align,code)=>({t:tx,w,align,code});
   const cod=items.reduce((a,i)=>a+(i.cod||0),0);
   const titles={transfer:'Bordereau de transfert inter-agences',dispatch:'Bordereau d’expédition (remise au livreur)',return:'Bordereau de retour livreur',exchange:'Bordereau d’échange',
-    call:'Bordereau d’émission d’appel',inventory:'Bordereau d’inventaire',settlement:'Bordereau de solde'};
+    call:'Bordereau d’émission d’appel',inventory:'Bordereau d’inventaire',settlement:'Bordereau de solde',pickup:'Bordereau d’enlèvement',restitution:'Bordereau de retour à l’expéditeur'};
   const info=[['Type',btL(t)],['Statut',bstL(m.stage,t)],['Agence',m.origin_agency_name||'-'],['Créé par',(m.created_by_name||m.responsible||'-')+' le '+dtm(m.created_at)]];
   if(t==='transfer')info.push(['Destination',m.dest_agency_name],['Transporteur',m.carrier||'-'],['Chauffeur / livreur',m.driver_name||'-'],['Expédié le',dtm(m.shipped_at)],['Réception',m.reception_state?RECEPTION[m.reception_state][0]:'-'],['Clôturé le',dtm(m.closed_at)]);
   if(['dispatch','exchange','return'].includes(t))info.push(['Livreur',m.driver_name?m.driver_name+' (#'+m.driver_id+') '+fmtPhone(m.driver_phone):'-'],['Remis / confirmé le',dtm(m.handed_at||m.closed_at)]);
+  if(t==='pickup')info.push(['Boutique',m.shop_name||'Toutes'],['Livreur',m.driver_name||'-'],['Immatriculation',m.vehicle_plate||'-'],['Date d’enlèvement',m.pickup_date||'-']);
+  if(t==='restitution')info.push(['Boutique (expéditeur)',m.shop_name||'-'],['Reçu par',m.signer_name||(m.has_signed_doc?'décharge jointe':'-')],['Remis le',dtm(m.signed_at)]);
+  if(t==='transfer')info.push(['Type de transfert',tkL(m.transfer_kind||'normal')],['Immatriculation',m.vehicle_plate||'-']);
   if(t==='settlement')info.push([m.driver_id?'Livreur':'Boutique',m.driver_name||m.shop_name||'-'],['Période',(m.period_from||'')+' -> '+(m.period_to||'')],['Validé par',m.validated_by_name?m.validated_by_name+' le '+dtm(m.validated_at):'-']);
   if(m.result)info.push(['Résultat',resL(m.result)]);
   if(m.comment)info.push(['Commentaire',m.comment]);
@@ -411,6 +500,12 @@ function brdPdfSpec(det){
     case 'dispatch':columns=[c('#',7),c('Code',40,null,true),c('Destinataire',42),c('Téléphone',27),c('Zone / adresse',40),c('COD',20,'right')];
       rows=items.map((i,k)=>({code:i.ref,cells:[k+1,'',i.client_name,fmtPhone(i.client_phone),[i.zone_name,i.address].filter(Boolean).join(' - '),(+i.cod).toFixed(3)]}));
       totals=[`Total : ${items.length} colis - COD à encaisser ${cod.toFixed(3)} ${u}`];signatures=['Agence (remise)','Livreur (réception des colis)'];break;
+    case 'pickup':columns=[c('#',7),c('Code',40,null,true),c('Destinataire',42),c('Téléphone',27),c('Ville / zone',34),c('COD',20,'right'),c('Reçu',14)];
+      rows=items.map((i,k)=>({code:i.ref,cells:[k+1,'',i.client_name,fmtPhone(i.client_phone),[i.dest_city_name,i.zone_name].filter(Boolean).join(' / '),(+i.cod).toFixed(3),i.received_at?'oui':i.anomaly==='manquant'?'NON':'']}));
+      totals=[`Total : ${items.length} colis - COD ${cod.toFixed(3)} ${u} - reçus : ${items.filter(i=>i.received_at).length}`];signatures=['Expéditeur (remise)','Livreur (enlèvement)','Agence (réception)'];break;
+    case 'restitution':columns=[c('#',7),c('Code',40,null,true),c('Client',46),c('Statut',36),c('Remis',18)];
+      rows=items.map((i,k)=>({code:i.ref,cells:[k+1,'',i.client_name,stL(i.status),i.confirmed_at?'oui':'']}));
+      totals=[`Total : ${items.length} colis restitués`];signatures=['Agence (remise)','Expéditeur (reçu, cachet)'];break;
     case 'return':columns=[c('#',7),c('Code',40,null,true),c('Destinataire',40),c('Motif',50),c('Statut',30)];
       rows=items.map((i,k)=>({code:i.ref,cells:[k+1,'',i.client_name,retL(i.reason)+(i.comment?' - '+i.comment:''),st(i)]}));
       totals=[`Total : ${items.length} colis rapportés`];signatures=['Livreur (remise)','Agence (contrôle et entrée en stock)'];break;
@@ -427,7 +522,7 @@ function brdPdfSpec(det){
     case 'settlement':{const tt=m.totals||{};columns=[c('#',7),c('Code',40,null,true),c('Client',50),c('COD',24,'right'),c(m.driver_id?'Commission':'Frais',24,'right'),c('Montant',26,'right')];
       rows=items.map((i,k)=>({code:i.ref,cells:[k+1,'',i.client_name,(+i.cod).toFixed(3),(+(m.driver_id?i.driver_share:i.delivery_fee)).toFixed(3),(+i.amount).toFixed(3)]}));
       totals=[`Commandes : ${tt.orders??0} - encaissé : ${fmt(tt.collected)} - frais : ${fmt(tt.fees)} - commissions : ${fmt(tt.commissions)} ${u}`,
-        ...(tt.party==='shop'?[`Dû à la boutique : ${fmt(tt.due)} ${u}`]:[]),`Déjà versé : ${fmt(tt.remitted_before)} ${u} - SOLDE : ${fmt(tt.balance)} ${u}`,...(tt.paid!=null?[`Montant validé : ${fmt(tt.paid)} ${u}`+(tt.gap?` (écart ${fmt(tt.gap)})`:'')]:[])];
+        ...(tt.party==='shop'?[`Honoraires : ${fmt(tt.honoraires??(tt.collected-tt.due))} ${u} - dû à la boutique : ${fmt(tt.due)} ${u} - retenue à la source ${tt.rs_rate||0} % : ${fmt(tt.rs||0)} ${u}`]:[]),`Déjà versé : ${fmt(tt.remitted_before)} ${u} - SOLDE : ${fmt(tt.balance)} ${u}`,...(tt.paid!=null?[`Montant validé : ${fmt(tt.paid)} ${u}`+(tt.gap?` (écart ${fmt(tt.gap)})`:'')]:[])];
       notes.push('Écriture de caisse liée au bordereau (aucune comptabilité parallèle).');signatures=[m.driver_id?'Livreur':'Boutique','Caisse / agence'];break;}
   }
   return {title:titles[t],ref:m.ref,subtitle:m.origin_agency_name,info,columns,rows,totals,notes,signatures,
@@ -475,6 +570,14 @@ Object.assign(K,{
   amountPaid:['Montant réellement versé','المبلغ المدفوع فعلا'],gapHint:['Obligatoire si le montant diffère du solde','إجباري إذا اختلف المبلغ'],cashLinkHint:['La validation crée une seule écriture dans la Caisse, liée à ce bordereau.','تنشئ المصادقة قيدا واحدا في الصندوق.'],
   anomaliesK:['Anomalies','الإخلالات'],correctedK:['stock corrigé','تم تصحيح المخزون'],correctTitle:['Valider la correction de stock — justification','تأكيد تصحيح المخزون — التبرير'],resolveTitle:['Classer l’anomalie — explication','إغلاق الإخلال — التوضيح'],
   fixMissing:['Corriger : sortir du stock','تصحيح: إخراج من المخزون'],fixExtra:['Corriger : entrer en stock','تصحيح: إدخال للمخزون'],resolveK:['Classer','إغلاق'],
+  allShops:['Toutes les boutiques','كل المتاجر'],transferKind:['Type de transfert','نوع التحويل'],pickupDate:['Date d’enlèvement','تاريخ الالتقاط'],allShopParcels:['Ajouter tous les colis en attente de la boutique','إضافة كل طرود المتجر'],
+  vehiclePlate:['Immatriculation','رقم التسجيل'],announcePickup:['Valider (à enlever)','تأكيد (للالتقاط)'],pickupAnnounced:['Enlèvement annoncé au livreur','تم إعلام الموزع'],markCollected:['Marquer « enlevé »','تم الالتقاط'],
+  closeReception:['Clôturer la réception','إقفال الاستلام'],handToSender:['Remise à l’expéditeur','التسليم للمرسل'],hintPickupReceive:['Arrivée à l’agence : scannez chaque colis enlevé','الوصول: امسح كل طرد'],
+  signedDoc:['Décharge signée','الوصل الممضى'],eodReport:['Rapport fin de journée','تقرير نهاية اليوم'],collectedAt:['Enlevé le','التقط في'],requestedBy:['Demandé par','طلبه'],byShopReq:['la boutique','المتجر'],
+  signerK:['Signataire (nom)','اسم الممضي'],deliveredAt:['Remis le','سُلّم في'],notCollectedK:['NON ENLEVÉ','لم يلتقط'],parcelsAtShop:['Colis en attente chez les boutiques','طرود في انتظار الالتقاط'],
+  returnsInStock:['Retours en stock de cette boutique','مرتجعات المتجر في المخزون'],docTooBig:['Fichier trop volumineux (3 Mo max).','الملف كبير جدا'],photoOrPdf:['photo ou PDF','صورة أو PDF'],
+  rstHint:['Joignez la décharge signée (photo prise sur place) ou indiquez au moins le nom du signataire.','أرفق الوصل أو اسم الممضي.'],
+  eodDispatched:['Remis','سُلّم'],eodDelivered:['Livrés','مسلمة'],eodFailed:['Échecs','إخفاقات'],eodReturned:['Retours','مرتجعات'],eodRemitted:['Versé','مدفوع'],totalK:['Total','المجموع'],eodEmpty:['Aucune activité ce jour-là.','لا نشاط.'],
 });
 
 /* scanner actions related to transfer bordereaux (§9): need a bordereau */
