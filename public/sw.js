@@ -1,6 +1,6 @@
 // SADEN service worker: app shell offline, API always from network.
-const VERSION = 'saden-v8';
-const SHELL = ['/', '/index.html', '/js/app.js', '/js/geo-admin.js', '/js/pricing.js', '/js/scan.js', '/js/barcode.js', '/js/manifests.js', '/js/stock.js', '/js/ops.js', '/js/parcels.js', '/js/shop.js', '/js/partners.js', '/js/cash.js', '/js/stats.js', '/js/stats-adv.js', '/js/search.js', '/js/journal.js', '/js/claims.js', '/js/notifications.js', '/manifest.webmanifest', '/brand/brand.js', '/brand/logo.png', '/brand/logo-print.png', '/brand/favicon-64.png', '/icons/icon-192.png', '/icons/icon-512.png',
+const VERSION = 'saden-v9';
+const SHELL = ['/', '/index.html', '/js/icons.js', '/js/app.js', '/js/geo-admin.js', '/js/pricing.js', '/js/scan.js', '/js/barcode.js', '/js/manifests.js', '/js/stock.js', '/js/ops.js', '/js/parcels.js', '/js/fleet.js', '/js/driver-app.js', '/js/shop.js', '/js/partners.js', '/js/cash.js', '/js/stats.js', '/js/stats-adv.js', '/js/search.js', '/js/journal.js', '/js/claims.js', '/js/notifications.js', '/manifest.webmanifest', '/brand/brand.js', '/brand/logo.png', '/brand/logo-print.png', '/brand/favicon-64.png', '/icons/icon-192.png', '/icons/icon-512.png',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'];
 
 self.addEventListener('install', e => {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1b2a4e">
+<meta name="theme-color" content="#141a33">
 <meta name="description" content="SADEN Delivery — plateforme logistique : agence, livreurs, boutiques et suivi client.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -16,52 +16,80 @@
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <style>
-html,body{margin:0;background:#0d1426;-webkit-tap-highlight-color:transparent}
+/* SADEN — « Atelier » identity: midnight chrome, Saden orange accent, soft elevated surfaces, Plus Jakarta Sans. */
+html,body{margin:0;background:#0b1220;-webkit-tap-highlight-color:transparent}
 *{box-sizing:border-box}
 input,select,textarea,button{font:inherit;color:inherit}
 input,select,textarea{min-width:0}
 button{touch-action:manipulation}
-[data-sd]{--r:6px;--pad:12px;--gap:16px;--fs:13px;--kpi:26px;--font:'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;--disp:'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;--mono:'IBM Plex Mono',monospace;
---bg:oklch(0.975 0.004 255);--surface:oklch(0.997 0.002 255);--surface2:oklch(0.955 0.007 255);--ink:oklch(0.22 0.04 262);--mute:oklch(0.47 0.03 262);--line:oklch(0.9 0.01 262);
---navy:oklch(0.27 0.075 262);--orange:oklch(0.72 0.17 50);--onOrange:oklch(0.18 0.03 262);--stripe:oklch(0.9 0.012 262);--hdr:var(--surface);--hdrInk:var(--ink);
---gb:oklch(0.94 0.05 150);--gf:oklch(0.4 0.1 150);--ob:oklch(0.94 0.05 60);--of:oklch(0.47 0.14 45);--ib:oklch(0.94 0.03 258);--if:oklch(0.42 0.12 262);--rb:oklch(0.94 0.04 25);--rf:oklch(0.48 0.16 25);--wb:oklch(0.95 0.06 92);--wf:oklch(0.44 0.09 75);--nb:var(--surface2);--nf:var(--mute)}
-[data-sd][data-theme="dark"]{--bg:oklch(0.17 0.03 262);--surface:oklch(0.21 0.035 262);--surface2:oklch(0.25 0.035 262);--ink:oklch(0.95 0.01 262);--mute:oklch(0.74 0.02 262);--line:oklch(0.31 0.03 262);--navy:oklch(0.13 0.035 262);--stripe:oklch(0.27 0.03 262);
---gb:oklch(0.32 0.06 150);--gf:oklch(0.88 0.1 150);--ob:oklch(0.34 0.07 50);--of:oklch(0.88 0.11 60);--ib:oklch(0.32 0.06 262);--if:oklch(0.88 0.07 262);--rb:oklch(0.33 0.07 25);--rf:oklch(0.88 0.09 25);--wb:oklch(0.34 0.06 90);--wf:oklch(0.9 0.09 92)}
-[data-sd][data-d="b"]{--r:14px;--pad:18px;--gap:22px;--fs:14.5px;--kpi:34px;--font:'Manrope','IBM Plex Sans Arabic',sans-serif;--disp:'Manrope','IBM Plex Sans Arabic',sans-serif}
-[data-sd][data-d="c"]{--r:3px;--pad:14px;--gap:14px;--fs:14px;--kpi:42px;--font:'Barlow','IBM Plex Sans Arabic',sans-serif;--disp:'Barlow Condensed','IBM Plex Sans Arabic',sans-serif;--hdr:var(--navy);--hdrInk:oklch(0.98 0.005 262)}
-a{color:var(--orange)} a:hover{color:var(--ink)}
-.fld{padding:10px;border-radius:var(--r);border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
-.fld:focus,.btn:focus-visible{outline:2px solid var(--orange);outline-offset:1px}
+[data-sd]{--r:14px;--rs:10px;--pad:16px;--gap:18px;--fs:13.5px;--kpi:28px;
+--font:'Plus Jakarta Sans','IBM Plex Sans Arabic',system-ui,sans-serif;--disp:'Plus Jakarta Sans','IBM Plex Sans Arabic',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+--bg:oklch(0.975 0.006 260);--surface:#fff;--surface2:oklch(0.955 0.01 260);--ink:oklch(0.22 0.035 265);--mute:oklch(0.5 0.025 265);--line:oklch(0.91 0.012 262);
+--navy:oklch(0.22 0.05 268);--chipOn:var(--navy);--navy2:oklch(0.29 0.07 272);--chrome:linear-gradient(180deg,oklch(0.2 0.045 268),oklch(0.16 0.04 268));
+--orange:oklch(0.7 0.18 47);--orange2:oklch(0.64 0.19 40);--onOrange:#fff;--accentSoft:oklch(0.95 0.045 60);--stripe:oklch(0.92 0.012 262);
+--hdr:transparent;--hdrInk:var(--ink);--shadow:0 1px 2px oklch(0.2 0.03 265 / .05),0 6px 22px oklch(0.2 0.03 265 / .06);--shadow2:0 10px 34px oklch(0.2 0.03 265 / .14);
+--illuB:oklch(0.88 0.03 262);--illuC:oklch(0.97 0.01 262);--illuRoad:oklch(0.3 0.04 265);
+--gb:oklch(0.95 0.05 155);--gf:oklch(0.45 0.12 155);--ob:oklch(0.95 0.05 60);--of:oklch(0.5 0.15 45);--ib:oklch(0.95 0.035 255);--if:oklch(0.45 0.14 262);
+--rb:oklch(0.95 0.04 22);--rf:oklch(0.52 0.18 25);--wb:oklch(0.96 0.06 92);--wf:oklch(0.5 0.1 75);--nb:var(--surface2);--nf:var(--mute)}
+[data-sd][data-theme="dark"]{--bg:oklch(0.16 0.025 265);--surface:oklch(0.205 0.03 265);--surface2:oklch(0.245 0.032 265);--ink:oklch(0.95 0.01 262);--mute:oklch(0.72 0.02 262);--line:oklch(0.3 0.03 265);
+--navy:oklch(0.12 0.03 268);--chipOn:oklch(0.42 0.08 268);--navy2:oklch(0.2 0.04 270);--chrome:linear-gradient(180deg,oklch(0.13 0.03 268),oklch(0.1 0.025 268));--accentSoft:oklch(0.3 0.06 50);--stripe:oklch(0.27 0.03 262);
+--shadow:0 1px 2px oklch(0 0 0 / .3),0 8px 24px oklch(0 0 0 / .25);--shadow2:0 12px 36px oklch(0 0 0 / .45);--illuB:oklch(0.32 0.035 265);--illuC:oklch(0.42 0.04 265);--illuRoad:oklch(0.12 0.02 265);
+--gb:oklch(0.3 0.06 155);--gf:oklch(0.86 0.12 155);--ob:oklch(0.33 0.07 50);--of:oklch(0.86 0.12 60);--ib:oklch(0.31 0.06 262);--if:oklch(0.86 0.08 262);--rb:oklch(0.32 0.07 25);--rf:oklch(0.86 0.1 25);--wb:oklch(0.33 0.06 90);--wf:oklch(0.9 0.1 92)}
+[data-sd][data-d="b"]{--r:18px;--pad:20px;--gap:22px;--fs:14.5px;--kpi:32px}
+[data-sd][data-d="c"]{--r:10px;--pad:14px;--gap:14px;--fs:14px;--kpi:34px}
+[data-sd]{letter-spacing:-0.005em}
+a{color:var(--of)} a:hover{color:var(--ink)}
+.fld{padding:10px 12px;min-height:42px;border-radius:var(--rs);border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%;transition:border-color .15s,box-shadow .15s}
+.fld:hover{border-color:oklch(0.82 0.02 262)}
+.fld:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px oklch(0.7 0.18 47 / .18)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+button[data-h]{transition:transform .12s ease,box-shadow .15s ease,background-color .15s ease,filter .15s}
+button[data-h]:active{transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed!important}
+button[style*="var(--orange2)"]:not(:disabled):hover{filter:brightness(1.06);box-shadow:0 8px 20px oklch(0.7 0.18 47 / .32)!important}
+button[style*="--bg-ghost"]:not(:disabled):hover{border-color:oklch(0.8 0.03 262)!important;background:var(--surface2)!important}
+.navbtn:hover{background:oklch(1 0 0 / .07)!important;color:#fff!important}
+.lift{transition:transform .18s ease,box-shadow .18s ease}.lift:hover{transform:translateY(-2px);box-shadow:var(--shadow2)!important}
+.trow{transition:background-color .12s}.trow:hover{background:var(--surface2)!important}
+.ico{vertical-align:-3px}
 .map{position:relative;isolation:isolate;overflow:hidden;background:repeating-linear-gradient(135deg,var(--stripe) 0 1px,transparent 1px 12px),var(--surface2)}
 .map .leaflet-container{background:var(--surface2);font:inherit}
 [data-theme="dark"] .map .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
 @keyframes sp{to{transform:rotate(360deg)}}
-.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2000;max-width:min(92vw,460px);padding:12px 16px;border-radius:10px;font-weight:600;box-shadow:0 10px 30px oklch(0 0 0 / .3)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pg>*{animation:rise .28s ease both}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2000;max-width:min(92vw,460px);padding:12px 16px;border-radius:12px;font-weight:600;box-shadow:var(--shadow2)}
+[data-sd] ::-webkit-scrollbar{width:10px;height:10px}[data-sd] ::-webkit-scrollbar-thumb{background:oklch(0.8 0.02 262 / .7);border-radius:999px;border:2px solid transparent;background-clip:padding-box}
+.empty-state svg{width:100%;height:auto;display:block}
+.hero-illu svg{width:100%;height:auto;display:block}
 /* responsive */
 @media (max-width:900px){
   .split{grid-template-columns:minmax(0,1fr)!important}
   .span2{grid-column:auto!important}
   .shell{flex-direction:column!important}
   .shell>.nav-side,.shell>.nav-rail{width:auto!important;flex-direction:row!important;overflow-x:auto;padding:8px!important;gap:4px!important;position:sticky;top:0;z-index:5}
-  .shell>.nav-side>.nav-meta,.shell>.nav-rail>.nav-logo{display:none!important}
-  .shell>.nav-side>button{width:auto!important}
+  .shell>.nav-side .nav-meta,.shell>.nav-side .nav-group,.shell>.nav-rail>.nav-logo{display:none!important}
+  .shell>.nav-side button{width:auto!important}
   .shell>nav{position:sticky;top:0;z-index:5}
   .pg{padding:14px!important}
   .hdr{padding:12px 14px!important}
   .hdr h1{font-size:20px!important}
+  .login-hero{display:none!important}
 }
 @media (max-width:700px){ .hide-sm{display:none!important} .topbar{padding:8px 12px!important;gap:8px!important} }
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{ .no-print{display:none!important} body,[data-sd]{background:#fff!important} .pg{padding:0!important} }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script src="/brand/brand.js"></script>
+<script src="/js/icons.js"></script>
 <script src="/js/app.js"></script>
 <script src="/js/geo-admin.js"></script>
 <script src="/js/pricing.js"></script>
@@ -79,6 +107,8 @@ a{color:var(--orange)} a:hover{color:var(--ink)}
 <script src="/js/notifications.js"></script>
 <script src="/js/ops.js"></script>
 <script src="/js/parcels.js"></script>
+<script src="/js/fleet.js"></script>
+<script src="/js/driver-app.js"></script>
 <script src="/js/shop.js"></script>
 
 </body>

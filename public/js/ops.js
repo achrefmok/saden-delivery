@@ -63,10 +63,10 @@ function tplProblems(s){
       <span>${esc(p.client_name)}<br><span style="font-size:11.5px;color:var(--mute)">${esc(p.shop_name||'')} · ${esc(fmt(p.cod))}</span></span>
       <span style="font-size:12.5px">${telLink(p.client_phone)}</span>
       <span style="font-size:12.5px">${esc(p.note||'—')}<br><span style="font-size:11px;color:var(--mute)">${esc(dtm(p.created_at))}${p.created_by_name?' · '+esc(p.created_by_name):''}</span></span>
-      ${hist?`<span>📞 ${p.calls}</span><span style="font-size:12.5px">${esc(p.treated_by_name||'')}<br><span style="font-size:11px;color:var(--mute)">${esc(dtm(p.treated_at))}</span></span>
+      ${hist?`<span>${ico('phone',14)} ${p.calls}</span><span style="font-size:12.5px">${esc(p.treated_by_name||'')}<br><span style="font-size:11px;color:var(--mute)">${esc(dtm(p.treated_at))}</span></span>
         <span style="font-size:12.5px">${p.false_problem?`<span style="${css(badge('w'))}">${esc(Lx.falseProblem)}</span> `:''}${esc(p.resolution||'')}</span>`
       :`<span style="text-align:center;font-weight:700">${p.order_attempts}</span><span style="font-size:12.5px">${esc(p.driver_name||'—')}<br>${p.driver_phone?telLink(p.driver_phone):''}</span>
-        <span><button ${on(()=>{state.opsModal={kind:'call',p,outcome:'joint',note:''};render();})} style="${BTN_GHOST};padding:5px 9px;font-size:12px">📞 ${p.calls}</button></span>
+        <span><button ${on(()=>{state.opsModal={kind:'call',p,outcome:'joint',note:''};render();})} style="${BTN_GHOST};padding:5px 9px;font-size:12px">${ico('phone',14)} ${p.calls}</button></span>
         <span style="display:flex;gap:4px;justify-content:flex-end"><button ${on(()=>{state.opsModal={kind:'treat',p,resolution:'',action:'replan',rdv_at:'',false_problem:false};render();})} style="${BTN_PRIMARY};padding:6px 10px;font-size:12px">${esc(Lx.treatK)}</button></span>`}
     </div>`):empty(hist?Lx.noHistory:Lx.noProblem);
   return `${filters}<div style="${CARD};overflow:hidden"><div style="padding:var(--pad);display:flex;justify-content:space-between"><b>${esc(hist?Lx.historyTitle:Lx.problemsTitle)} (${list.length})</b></div>
@@ -187,7 +187,7 @@ function tplOrderOps(o){
 function tplTaskBadge(){
   if(!isStaff())return '';
   const tc=state.taskCount||{open:0,due:0};
-  return `<button ${on(()=>{state.opsTab='tasks';state.ops=null;goPage('ops');})} title="${esc(L().tasksTitle)}" aria-label="${esc(L().tasksTitle)}" data-taskbadge style="${css({...seg(false),border:'1px solid oklch(1 0 0 / .18)',position:'relative'})}">✔︎${tc.open?`<span style="position:absolute;top:-6px;inset-inline-end:-6px;background:${tc.due?'var(--rf)':'var(--orange)'};color:#fff;font-size:10.5px;font-weight:800;min-width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 4px">${tc.open>99?'99+':tc.open}</span>`:''}</button>`;
+  return `<button ${on(()=>{state.opsTab='tasks';state.ops=null;goPage('ops');})} title="${esc(L().tasksTitle)}" aria-label="${esc(L().tasksTitle)}" data-taskbadge style="${css({...seg(false),border:'1px solid oklch(1 0 0 / .18)',position:'relative'})}">${ico('checkCircle',17)}${tc.open?`<span style="position:absolute;top:-6px;inset-inline-end:-6px;background:${tc.due?'var(--rf)':'var(--orange)'};color:#fff;font-size:10.5px;font-weight:800;min-width:18px;height:18px;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 4px">${tc.open>99?'99+':tc.open}</span>`:''}</button>`;
 }
 /* shop space: pickup requests (demande d'enlèvement) */
 function tplShopPickups(){

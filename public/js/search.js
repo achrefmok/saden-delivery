@@ -37,7 +37,7 @@ function tplSearchBox(){
   const total=r?r.orders.length+r.manifests.length+r.shops.length+r.drivers.length:0;
   return `<div class="sbox no-print" style="position:relative;flex:1;min-width:180px;max-width:420px;display:flex;gap:6px">
     <input type="search" class="fld" ${onInput(onSearchInput,'q')} value="${esc(state.q)}" placeholder="${esc(Lx.search)}" autocomplete="off" style="background:var(--surface)">
-    <button ${on(()=>openScanner('lookup'))} title="${esc(Lx.scanOpen)}" style="${BTN_GHOST};padding:8px 10px">📷</button>
+    <button ${on(()=>openScanner('lookup'))} title="${esc(Lx.scanOpen)}" style="${BTN_GHOST};padding:8px 10px">${ico('camera',17)}</button>
     ${when(open,()=>`<div style="position:absolute;top:calc(100% + 4px);inset-inline:0;z-index:900;${CARD};box-shadow:0 12px 30px oklch(0 0 0 / .18);max-height:70vh;overflow:auto">
       ${total?group(Lx.parcelsTotal,r.orders,o=>row('order',o.id,`<span style="font-family:var(--mono)">${esc(o.ref)}</span> · ${esc(o.client_name)}`,`${esc(stL(o.status))} · ${esc(fmtPhone(o.client_phone))}${o.external_ref?' · '+esc(o.external_ref):''} · ${esc(o.shop_name||o.sender_name||'')}`))
         +group(Lx.brd,r.manifests,m=>row('manifest',m.id,`<span style="font-family:var(--mono)">${esc(m.ref)}</span>`,`${esc(btL(m.type||'transfer'))} · ${esc(m.from_city)}${m.to_city!==m.from_city?' → '+esc(m.to_city):''}`))

@@ -168,7 +168,7 @@ function tplScanBox(m,hint){
     <form data-form="bscan" onsubmit="return false" style="display:flex;gap:6px;flex-wrap:wrap">
       <input class="fld" ${onInput(e=>{state.brdScanVal=e.target.value;},'brd-scan')} value="${esc(state.brdScanVal||'')}" placeholder="${esc(Lx.scanPh)}" autocomplete="off" autocapitalize="characters" style="font-family:var(--mono);flex:1;min-width:180px">
       <button ${on(submit)} style="${BTN_PRIMARY};padding:9px 14px">OK</button>
-      <button type="button" ${on(()=>openScanner(null,{title:m.ref+' · '+hint,handler:ref=>brdScan(m,ref)}))} style="${BTN_GHOST}">📷 ${esc(Lx.camera)}</button>
+      <button type="button" ${on(()=>openScanner(null,{title:m.ref+' · '+hint,handler:ref=>brdScan(m,ref)}))} style="${BTN_GHOST}">${ico('camera',16)} ${esc(Lx.camera)}</button>
     </form>
     <span style="font-size:12px;color:var(--mute)">${esc(hint)} — ${esc(Lx.usbHint)}</span>
     ${when((state.brdLog||[]).length,()=>`<div style="display:flex;flex-direction:column;gap:2px;font-size:12.5px" data-scanlog>${each(state.brdLog,r=>`<span style="color:${r.ok?'var(--gf)':'var(--rf)'}">${r.ok?'✓':'✕'} <b style="font-family:var(--mono)">${esc(r.ref)}</b> · ${esc(r.msg)}</span>`)}</div>`)}

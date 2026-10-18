@@ -194,7 +194,7 @@ function renderScan(){
   const exp=SC.expected||[],expRefs=exp.map(o=>o.ref);
   const missing=exp.filter(o=>!SC.scanned.includes(o.ref)),unexpected=SC.scanned.filter(r=>!expRefs.includes(r));
   const needAgency=staff&&!SC.handler&&(inv||['reception','return'].includes(SC.action))&&role()==='admin';
-  ui.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">📷 ${esc(Lx.scanner)}</b><button data-sact="close" class="sbtn">✕</button></div>
+  ui.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:17px">${ico('camera',16)} ${esc(Lx.scanner)}</b><button data-sact="close" class="sbtn">✕</button></div>
     ${SC.title?`<div style="font-weight:600">${esc(SC.title)}</div>`:''}
     ${staff&&!SC.handler?`<label class="slab">${esc(Lx.scanAction)}<select class="fld" data-sch="action">${acts.map(([k,l])=>opt(k,l[li],SC.action)).join('')}</select></label>`:''}
     ${SC.extraUi?SC.extraUi():''}

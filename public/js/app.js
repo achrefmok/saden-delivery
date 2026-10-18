@@ -5,7 +5,7 @@ const L_=window.L; // Leaflet (captured before the i18n helper L() below)
    i18n
    ========================================================= */
 const K={vAdmin:['Admin','الإدارة'],vDriver:['Livreur','الموزع'],vShop:['Boutique','المتجر'],vClient:['Client','الحريف'],light:['Clair','فاتح'],dark:['Sombre','داكن'],
-dash:['Tableau de bord','لوحة القيادة'],phone2:['Téléphone 2','الهاتف 2'],missingFields:['Champs manquants','حقول ناقصة'],exchangeParcel:['Colis d’échange','طرد تبديل'],exchangeHint:['un article est récupéré chez le client à la livraison','تُسترجع سلعة من الحريف عند التسليم'],settings:['Paramètres','الإعدادات'],shops:['Boutiques','المتاجر'],newShopAccount:['Nouvelle boutique','متجر جديد'],inProgressK:['En cours','جارية'],dueShort:['Livré à reverser','للتحويل'],settleK:['Solde','تسوية'],shopsHint:['Chiffres calculés sur les 500 dernières commandes ; le solde exact se fait par bordereau de solde.','الأرقام محسوبة على آخر 500 طلب ؛ التسوية الدقيقة عبر بوليصة التسوية.'],map:['Carte live','الخريطة المباشرة'],orders:['Commandes & colis','الطلبات والطرود'],brd:['Bordereaux','البوليصات'],drivers:['Livreurs','الموزعون'],cash:['Caisse','الخزينة'],stats:['Statistiques','الإحصائيات'],claims:['Réclamations','الشكاوى'],accounts:['Comptes','الحسابات'],
+dash:['Tableau de bord','لوحة القيادة'],welcomeBack:['Bienvenue','مرحبا بك'],loginLead:['Connectez-vous à votre espace Saden.','سجّل الدخول إلى فضاء سادن.'],heroA:['Chaque colis suivi, du dépôt à la livraison.','كل طرد متابع من الإيداع إلى التسليم.'],heroB:['Traçabilité, rôles et caisse sécurisés.','تتبع وصلاحيات وخزينة مؤمنة.'],heroC:['Pilotage en temps réel des agences et livreurs.','قيادة مباشرة للوكالات والموزعين.'],phone2:['Téléphone 2','الهاتف 2'],missingFields:['Champs manquants','حقول ناقصة'],exchangeParcel:['Colis d’échange','طرد تبديل'],exchangeHint:['un article est récupéré chez le client à la livraison','تُسترجع سلعة من الحريف عند التسليم'],settings:['Paramètres','الإعدادات'],shops:['Boutiques','المتاجر'],newShopAccount:['Nouvelle boutique','متجر جديد'],inProgressK:['En cours','جارية'],dueShort:['Livré à reverser','للتحويل'],settleK:['Solde','تسوية'],shopsHint:['Chiffres calculés sur les 500 dernières commandes ; le solde exact se fait par bordereau de solde.','الأرقام محسوبة على آخر 500 طلب ؛ التسوية الدقيقة عبر بوليصة التسوية.'],map:['Carte live','الخريطة المباشرة'],orders:['Commandes & colis','الطلبات والطرود'],brd:['Bordereaux','البوليصات'],drivers:['Livreurs','الموزعون'],cash:['Caisse','الخزينة'],stats:['Statistiques','الإحصائيات'],claims:['Réclamations','الشكاوى'],accounts:['Comptes','الحسابات'],
 agencyLbl:['Agence','الوكالة'],search:['Colis, téléphone, client, bordereau…','طرد، هاتف، حريف، بوليصة…'],newParcel:['Nouveau colis','طرد جديد'],
 liveMap:['Carte live','الخريطة المباشرة'],alerts:['Alertes','التنبيهات'],recent:['Commandes récentes','الطلبات الأخيرة'],lastBrd:['Derniers bordereaux','آخر البوليصات'],seeAll:['Tout voir','عرض الكل'],
 colRef:['Réf.','المرجع'],colClient:['Client','الحريف'],colShop:['Boutique','المتجر'],colZone:['Zone','المنطقة'],colStatus:['Statut','الحالة'],colAmount:['COD','المبلغ'],
@@ -67,7 +67,7 @@ const when=(c,html)=>c?(typeof html==='function'?html():html):'';
 let HANDLERS=[];
 const on=fn=>{HANDLERS.push(fn);return `data-h="${HANDLERS.length-1}"`;};
 const onInput=(fn,key)=>{HANDLERS.push(fn);return `data-i="${HANDLERS.length-1}" data-k="${key}"`;};
-const badge=t=>({display:'inline-flex',alignItems:'center',padding:'3px 9px',borderRadius:999,fontSize:12,fontWeight:600,whiteSpace:'nowrap',background:`var(--${t}b)`,color:`var(--${t}f)`,border:'none'});
+const badge=t=>({display:'inline-flex',alignItems:'center',gap:5,padding:'3px 10px',borderRadius:999,fontSize:11.5,fontWeight:700,letterSpacing:'.01em',whiteSpace:'nowrap',background:`var(--${t}b)`,color:`var(--${t}f)`,border:'none'});
 const DOT={g:'oklch(0.66 0.15 150)',o:'var(--orange)',w:'oklch(0.78 0.14 85)',n:'oklch(0.62 0.02 262)',i:'oklch(0.6 0.13 262)',r:'oklch(0.62 0.18 25)'};
 const MAPC={g:'#3ea86a',o:'#ee8a3a',w:'#d9ad3c',n:'#8d94a5',i:'#5d7fd0',r:'#df5a4e',navy:'#22346b'};
 const dot=(t,s=10)=>({width:s,height:s,borderRadius:'50%',background:DOT[t],flexShrink:0,marginTop:s<12?5:0,display:'inline-block'});
@@ -235,33 +235,40 @@ function compressImage(file,max=1024,quality=0.7){return new Promise((res,rej)=>
    shared templates
    ========================================================= */
 let _L=null;const L=()=>_L;
-const CARD='background:var(--surface);border:1px solid var(--line);border-radius:var(--r)';
-const BTN_PRIMARY='padding:11px 16px;border-radius:var(--r);border:none;background:var(--orange);color:var(--onOrange);font-weight:700;cursor:pointer';
-const BTN_GHOST='padding:9px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;cursor:pointer';
-const seg=on=>({whiteSpace:'nowrap',padding:'6px 11px',borderRadius:6,border:'none',cursor:'pointer',fontSize:12.5,fontWeight:600,background:on?'var(--orange)':'transparent',color:on?'oklch(0.18 0.03 262)':'oklch(0.92 0.01 262)'});
-const chip=on=>({whiteSpace:'nowrap',padding:'7px 13px',borderRadius:999,border:'1px solid var(--line)',cursor:'pointer',fontWeight:600,fontSize:13,background:on?'var(--navy)':'var(--surface)',color:on?'oklch(0.98 0.005 262)':'var(--ink)'});
+const CARD='background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)';
+const BTN_PRIMARY='padding:10px 16px;min-height:42px;border-radius:var(--rs);border:none;background:linear-gradient(135deg,var(--orange),var(--orange2));color:var(--onOrange);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 12px oklch(0.7 0.18 47 / .25)';
+const BTN_GHOST='padding:9px 14px;min-height:40px;border-radius:var(--rs);border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;--bg-ghost:1';
+const seg=on=>({whiteSpace:'nowrap',padding:'6px 11px',borderRadius:8,border:'none',cursor:'pointer',fontSize:12.5,fontWeight:700,display:'inline-flex',alignItems:'center',gap:6,background:on?'var(--orange)':'transparent',color:on?'#fff':'oklch(0.86 0.02 262)'});
+const chip=on=>({whiteSpace:'nowrap',padding:'7px 14px',borderRadius:999,border:on?'1px solid transparent':'1px solid var(--line)',cursor:'pointer',fontWeight:650,fontSize:13,background:on?'var(--chipOn)':'var(--surface)',color:on?'#fff':'var(--ink)',boxShadow:on?'0 4px 12px oklch(0.22 0.05 268 / .25)':'none'});
 const pill=on=>({padding:'5px 11px',borderRadius:999,border:'none',cursor:'pointer',fontSize:12,fontWeight:600,background:on?'var(--navy)':'transparent',color:on?'oklch(0.98 0.005 262)':'var(--mute)'});
-const segGroup=(list,cls='')=>`<div class="${cls}" style="display:flex;gap:2px;background:oklch(0.22 0.035 262);padding:3px;border-radius:8px">${each(list,v=>`<button ${on(v.go)} style="${css(v.st)}">${esc(v.label)}</button>`)}</div>`;
-const kpiCard=(label,value,sub)=>`<div style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:6px;min-width:0"><span style="font-size:12px;color:var(--mute);font-weight:500">${esc(label)}</span><span style="font-family:var(--disp);font-size:var(--kpi);font-weight:700;line-height:1;overflow-wrap:anywhere">${esc(value)}</span>${when(sub!=null,`<span style="font-size:12px;color:var(--mute)">${esc(sub)}</span>`)}</div>`;
-const field=(label,inner)=>`<label style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font-size:12px;color:var(--mute)">${esc(label)}</span>${inner}</label>`;
+const segGroup=(list,cls='')=>`<div class="${cls}" style="display:flex;gap:2px;background:oklch(1 0 0 / .07);padding:3px;border-radius:10px;border:1px solid oklch(1 0 0 / .08)">${each(list,v=>`<button ${on(v.go)} style="${css(v.st)}">${esc(v.label)}</button>`)}</div>`;
+/* statistic card: icon tile (tone o / g / i / r / w / n), label, value, optional sub line */
+const KPI_ICON=[[/livr|deliver|سُلّم|مسلم/i,'checkCircle','g'],[/retour|return|مرتجع/i,'undo','w'],[/livreur|driver|موزع/i,'scooter','i'],[/encaiss|cod|caisse|solde|montant|revenu|cash|net|tnd|dt\b|reverser|versé/i,'wallet','o'],[/stock|entrep/i,'warehouse','i'],
+  [/problème|incident|anomal|manq|مشك/i,'alert','r'],[/tâche|task/i,'checkCircle','i'],[/taux|rate|%|passage|délai/i,'trend','g'],[/transfert|transit/i,'truck','i'],[/colis|commande|parcel|طرد|طلب/i,'box','o']];
+const kpiCard=(label,value,sub,icon,tone)=>{const m=KPI_ICON.find(([re])=>re.test(label));icon=icon||m?.[1]||'chart';tone=tone||m?.[2]||'n';
+  return `<div class="lift" style="${CARD};padding:var(--pad);display:flex;flex-direction:column;gap:10px;min-width:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="font-size:12.5px;color:var(--mute);font-weight:600">${esc(label)}</span>
+      <span style="width:34px;height:34px;border-radius:10px;background:var(--${tone}b);color:var(--${tone}f);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${ico(icon,18)}</span></div>
+    <span style="font-family:var(--disp);font-size:var(--kpi);font-weight:800;line-height:1;letter-spacing:-.02em;overflow-wrap:anywhere">${esc(value)}</span>${when(sub!=null&&sub!=='',`<span style="font-size:12px;color:var(--mute)">${esc(sub)}</span>`)}</div>`;};
+const field=(label,inner)=>`<label style="display:flex;flex-direction:column;gap:5px;min-width:0"><span style="font-size:12px;color:var(--mute);font-weight:600">${esc(label)}</span>${inner}</label>`;
 // input that also refreshes the live price quote of an order form
 const inputQ=(key,obj,prop,attrs='')=>`<input class="fld" ${onInput(e=>{state[obj]={...state[obj],[prop]:e.target.value};requestQuote(obj);},key)} value="${esc(state[obj][prop])}" ${attrs}>`;
 const input=(key,obj,prop,attrs='')=>`<input class="fld" ${onInput(e=>{state[obj]={...state[obj],[prop]:e.target.value};},key)} value="${esc(state[obj][prop])}" ${attrs}>`;
 const select=(key,obj,prop,opts,rerender=false)=>`<select class="fld" ${onInput(e=>{state[obj]={...state[obj],[prop]:e.target.value};if(rerender)render();},key)}>${each(opts,([v,l])=>`<option value="${esc(v)}"${String(v)===String(state[obj][prop])?' selected':''}>${esc(l)}</option>`)}</select>`;
 const stL=k=>(ST[k]||[k,k])[lang()==='ar'?1:0],stB=k=>badge((ST[k]||[0,0,'n'])[2]);
-const empty=msg=>`<div style="padding:18px var(--pad);color:var(--mute)">${esc(msg||L().empty)}</div>`;
+const empty=msg=>emptyState(msg||L().empty);
 const spin=()=>state.busy?'<span class="spin"></span> ':'';
 const mapBox=(key,h,extra='')=>`<div class="map" data-map="${key}" style="height:${h};${extra}"></div>`;
 
 function tplTopBar(){
   const Lx=L(),u=state.session?.user,r=role();
   const roleL={admin:Lx.vAdmin,manager:Lx.vManager,driver:Lx.vDriver,shop:Lx.vShop,client:Lx.vClient}[r]+(myAgency()?' · '+myAgency().name:'');
-  return `<header class="topbar no-print" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:10px 18px;padding-top:calc(10px + env(safe-area-inset-top));background:oklch(0.15 0.03 262);color:oklch(0.97 0.005 262)">
+  return `<header class="topbar no-print" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 18px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--chrome);color:#fff;border-bottom:1px solid oklch(1 0 0 / .07)">
   <div style="display:flex;align-items:center;gap:8px;font-family:var(--disp);font-weight:700;font-size:18px;letter-spacing:0.04em">${brandLogo(34)}${esc(BRAND.name)}<span class="hide-sm" style="font-weight:500;font-size:13px;letter-spacing:0;color:oklch(0.8 0.02 262)">Delivery</span></div>
   ${when(r,`<div style="display:flex;flex-direction:column;line-height:1.2;min-width:0"><span style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${esc(u?(u.role==='shop'?u.shop_name:u.name):state.trackAuth?.ref)}</span><span style="font-size:11px;color:oklch(0.78 0.03 262)">${esc(roleL)}</span></div>`)}
   <div style="flex:1"></div>
   ${tplTaskBadge()}${tplBell()}
-  ${when(installEvt,`<button ${on(doInstall)} style="${css(seg(true))}">⤓ <span class="hide-sm">${esc(Lx.install)}</span></button>`)}
+  ${when(installEvt,`<button ${on(doInstall)} style="${css(seg(true))}">${ico('download',15)}<span class="hide-sm">${esc(Lx.install)}</span></button>`)}
   ${when(r==='admin'||r==='manager',segGroup([['a','A · Opérations'],['b','B · Aéré'],['c','C · Terrain']].map(([k,l])=>({label:l,st:seg(state.prefs.dir===k),go:()=>setPref({dir:k})})),'hide-sm'))}
   ${segGroup([['fr','FR'],['ar','عربي']].map(([k,l])=>({label:l,st:seg(lang()===k),go:()=>setPref({lang:k})})))}
   ${segGroup([['light','☀'],['dark','☾']].map(([k,l])=>({label:l,st:seg(state.prefs.theme===k),go:()=>setPref({theme:k})})))}
@@ -299,12 +306,19 @@ function tplLogin(){
       ${field(Lx.phone,input('t-phone','track','phone','type="tel" inputmode="tel" placeholder="+216 …" required'))}
       <button ${on(submitTrack)} type="button" data-submit style="${BTN_PRIMARY};min-height:48px">${spin()}${esc(Lx.trackBtn)}</button></form>`;
   const tabs=[['staff',Lx.staffTab],['track',Lx.trackTab]];
-  return `<main style="flex:1;display:flex;align-items:center;justify-content:center;padding:28px 16px calc(28px + env(safe-area-inset-bottom))">
+  return `<main style="flex:1;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);min-height:0">
+    <section class="login-hero" style="background:var(--chrome);color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:space-between;gap:28px;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:auto -120px -160px auto;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,oklch(0.7 0.18 47 / .35),transparent 70%)"></div>
+      <div style="display:flex;align-items:center;gap:12px;position:relative">${brandLogo(52,14)}<div><b style="font-size:20px;letter-spacing:.02em">${esc(BRAND.full)}</b><div style="font-size:13px;color:oklch(0.78 0.03 262)">${esc(Lx.tagline)}</div></div></div>
+      <div class="hero-illu" style="max-width:520px;position:relative">${illu('hero')}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;position:relative">${each([['route',Lx.heroA],['shield',Lx.heroB],['chart',Lx.heroC]],([i,t])=>`<div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:oklch(0.85 0.02 262)"><span style="width:36px;height:36px;border-radius:10px;background:oklch(1 0 0 / .08);display:inline-flex;align-items:center;justify-content:center;color:var(--orange)">${ico(i,19)}</span>${esc(t)}</div>`)}</div>
+    </section>
+    <section style="display:flex;align-items:center;justify-content:center;padding:28px 16px calc(28px + env(safe-area-inset-bottom))">
     <div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px">
       <div style="display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center">
-        ${brandLogo(128,28)}
-        <b style="font-family:var(--disp);font-size:26px;letter-spacing:0.03em">${esc(BRAND.full)}</b>
-        <span style="color:var(--mute)">${esc(Lx.tagline)}</span>
+        ${brandLogo(96,24)}
+        <b style="font-family:var(--disp);font-size:26px;font-weight:800;letter-spacing:-0.02em">${esc(Lx.welcomeBack)}</b>
+        <span style="color:var(--mute)">${esc(Lx.loginLead)}</span>
       </div>
       <div style="${CARD};padding:18px;display:flex;flex-direction:column;gap:16px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface2);padding:4px;border-radius:var(--r)">
@@ -312,7 +326,7 @@ function tplLogin(){
         </div>
         ${err}${body}
       </div>
-    </div>
+    </div></section>
   </main>`;
 }
 
@@ -336,25 +350,38 @@ function goPage(p){
 }
 function selectOrder(id){state.sel=id;state.selData=null;state.page='orders';render();api('orders/'+id).then(d=>{if(state.sel===id){state.selData=d;render();}}).catch(e=>toast(e.message,'err'));}
 
+const NAV_ICON={dash:'home',map:'map',orders:'list',colis:'boxes',ops:'zap',stock:'warehouse',brd:'file',drivers:'scooter',shops:'store',agencies:'building',cash:'wallet',stats:'chart',claims:'chat',journal:'shield',settings:'settings',fleet:'scooter'};
+const NAV_GROUPS=[[['Pilotage','القيادة'],['dash','map']],[['Opérations','العمليات'],['orders','colis','ops','stock','brd']],[['Réseau','الشبكة'],['drivers','shops','agencies']],
+  [['Finance & analyse','المالية والتحليل'],['cash','stats']],[['Support','الدعم'],['claims','journal','settings']]];
 function tplNav(){
-  const Lx=L(),d=state.data,dir=state.prefs.dir;
+  const Lx=L(),d=state.data,dir=state.prefs.dir,li=lang()==='ar'?1:0;
   const nWait=d?d.orders.filter(o=>o.status==='attente').length:0,nClaim=d?d.claims.filter(c=>c.status===0).length:0;
   const items=navFor().map(([k,code])=>{const onn=state.page===k,count=k==='orders'?nWait:k==='claims'?nClaim:0;return{k,code,label:Lx[k],count,on:onn};});
-  const cnt=n=>when(n.count>0,`<span style="background:var(--orange);color:var(--onOrange);font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px">${n.count}</span>`);
-  if(dir==='a')return `<nav class="nav-side no-print" style="width:232px;flex-shrink:0;background:var(--navy);color:oklch(0.97 0.005 262);padding:18px 12px;display:flex;flex-direction:column;gap:4px">
-    <div class="nav-meta" style="padding:4px 12px 16px;display:flex;flex-direction:column;gap:2px"><div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.78 0.03 262)">${esc(Lx.agencyLbl)}</div><div style="font-weight:600;font-size:15px">${esc(scopeName())}</div></div>
-    ${each(items,n=>`<button ${on(()=>goPage(n.k))} style="${css({display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,width:'100%',padding:'9px 12px',border:'none',borderInlineStart:n.on?'3px solid var(--orange)':'3px solid transparent',borderRadius:'var(--r)',background:n.on?'oklch(1 0 0 / 0.1)':'transparent',color:n.on?'oklch(0.99 0 0)':'oklch(0.86 0.02 262)',fontWeight:n.on?600:500,cursor:'pointer',textAlign:'start',whiteSpace:'nowrap'})}"><span>${esc(n.label)}</span>${cnt(n)}</button>`)}
-    <div class="nav-meta" style="margin-top:auto;padding:12px;border-top:1px solid oklch(1 0 0 / 0.12);display:flex;flex-direction:column;gap:2px"><div style="font-weight:600">${esc(state.session.user.name)}</div><div style="font-size:12px;color:oklch(0.78 0.03 262)">${esc(role()==='manager'?Lx.vManager:Lx.vAdmin)}</div></div>
+  const cnt=n=>when(n.count>0,`<span style="background:var(--orange);color:#fff;font-size:11px;font-weight:800;padding:1px 7px;border-radius:999px;min-width:20px;text-align:center">${n.count}</span>`);
+  if(dir==='a'){
+    const btn=n=>`<button class="navbtn" ${on(()=>goPage(n.k))} style="${css({display:'flex',alignItems:'center',gap:11,width:'100%',padding:'9px 12px',border:'none',borderRadius:10,background:n.on?'linear-gradient(90deg,oklch(0.7 0.18 47 / .22),oklch(0.7 0.18 47 / .06))':'transparent',color:n.on?'#fff':'oklch(0.8 0.02 262)',fontWeight:n.on?700:550,cursor:'pointer',textAlign:'start',whiteSpace:'nowrap',boxShadow:n.on?'inset 3px 0 0 var(--orange)':'none'})}"><span style="color:${n.on?'var(--orange)':'inherit'};display:inline-flex">${ico(NAV_ICON[n.k]||'dot',18)}</span><span style="flex:1">${esc(n.label)}</span>${cnt(n)}</button>`;
+    const groups=NAV_GROUPS.map(([gl,keys])=>[gl,items.filter(n=>keys.includes(n.k))]).filter(g=>g[1].length);
+    const rest=items.filter(n=>!NAV_GROUPS.some(g=>g[1].includes(n.k)));
+    return `<nav class="nav-side no-print" style="width:244px;flex-shrink:0;background:var(--chrome);color:#fff;padding:16px 12px;display:flex;flex-direction:column;gap:2px;border-inline-end:1px solid oklch(1 0 0 / .06)">
+      <div class="nav-meta" style="margin:0 4px 12px;padding:12px;border-radius:12px;background:oklch(1 0 0 / .05);border:1px solid oklch(1 0 0 / .07);display:flex;gap:10px;align-items:center">
+        <span style="width:34px;height:34px;border-radius:10px;background:var(--orange);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${ico('building',18)}</span>
+        <div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:oklch(0.72 0.03 262)">${esc(Lx.agencyLbl)}</span><b style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(scopeName())}</b></div></div>
+      ${each(groups,([gl,list])=>`<div class="nav-group" style="padding:12px 12px 4px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:oklch(0.6 0.03 262)">${esc(gl[li])}</div>${each(list,btn)}`)}${each(rest,btn)}
+      <div class="nav-meta" style="margin-top:auto;padding:12px;border-radius:12px;display:flex;gap:10px;align-items:center;background:oklch(1 0 0 / .04)">
+        <span style="width:34px;height:34px;border-radius:50%;background:var(--navy2);display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">${esc(initials(state.session.user.name))}</span>
+        <div style="display:flex;flex-direction:column;min-width:0"><b style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(state.session.user.name)}</b><span style="font-size:11.5px;color:oklch(0.72 0.03 262)">${esc(role()==='manager'?Lx.vManager:Lx.vAdmin)}</span></div></div>
+    </nav>`;
+  }
+  if(dir==='c')return `<nav class="nav-rail no-print" style="width:92px;flex-shrink:0;background:var(--chrome);color:#fff;padding:14px 8px;display:flex;flex-direction:column;gap:4px;align-items:stretch">
+    <div class="nav-logo" style="height:40px;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:800;font-size:13px;color:var(--orange)">${esc((role()==='manager'?myAgency()?.name:agencyById(state.agencyFilter)?.name||'ALL').replace(/^Agence\s+/i,'').slice(0,3).toUpperCase())}</div>
+    ${each(items,n=>`<button class="navbtn" ${on(()=>goPage(n.k))} style="${css({display:'flex',flexDirection:'column',alignItems:'center',gap:5,padding:'10px 4px',border:'none',borderRadius:12,cursor:'pointer',background:n.on?'var(--orange)':'transparent',color:n.on?'#fff':'oklch(0.82 0.02 262)',minWidth:64})}">${ico(NAV_ICON[n.k]||'dot',22)}<span style="font-size:10.5px;line-height:1.15;text-align:center;font-weight:600">${esc(n.label)}</span></button>`)}
   </nav>`;
-  if(dir==='c')return `<nav class="nav-rail no-print" style="width:88px;flex-shrink:0;background:var(--navy);color:oklch(0.97 0.005 262);padding:14px 8px;display:flex;flex-direction:column;gap:6px;align-items:stretch">
-    <div class="nav-logo" style="height:40px;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:700;font-size:13px;color:var(--orange)">${esc((role()==='manager'?myAgency()?.name:agencyById(state.agencyFilter)?.name||'ALL').replace(/^Agence\s+/i,'').slice(0,3).toUpperCase())}</div>
-    ${each(items,n=>`<button ${on(()=>goPage(n.k))} style="${css({display:'flex',flexDirection:'column',alignItems:'center',gap:4,padding:'10px 4px',border:'none',borderRadius:'var(--r)',cursor:'pointer',background:n.on?'var(--orange)':'transparent',color:n.on?'oklch(0.18 0.03 262)':'oklch(0.88 0.02 262)',minWidth:64})}"><span style="font-family:var(--disp);font-size:20px;font-weight:700;line-height:1">${n.code}</span><span style="font-size:10.5px;line-height:1.15;text-align:center">${esc(n.label)}</span></button>`)}
-  </nav>`;
-  return `<nav class="no-print" style="display:flex;align-items:center;gap:6px;padding:10px 28px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto">
-    <div style="font-weight:700;padding-inline-end:18px;white-space:nowrap">${esc(scopeName())}</div>
-    ${each(items,n=>`<button ${on(()=>goPage(n.k))} style="${css({display:'flex',alignItems:'center',gap:6,padding:'8px 14px',borderRadius:999,border:'none',whiteSpace:'nowrap',cursor:'pointer',fontWeight:600,background:n.on?'var(--navy)':'transparent',color:n.on?'oklch(0.98 0.005 262)':'var(--mute)'})}">${esc(n.label)}${cnt(n)}</button>`)}
+  return `<nav class="no-print" style="display:flex;align-items:center;gap:4px;padding:8px 24px;background:var(--surface);border-bottom:1px solid var(--line);overflow-x:auto;box-shadow:var(--shadow)">
+    <div style="font-weight:800;padding-inline-end:14px;white-space:nowrap;display:flex;gap:8px;align-items:center">${ico('building',17)}${esc(scopeName())}</div>
+    ${each(items,n=>`<button ${on(()=>goPage(n.k))} style="${css({display:'flex',alignItems:'center',gap:7,padding:'8px 13px',borderRadius:999,border:'none',whiteSpace:'nowrap',cursor:'pointer',fontWeight:650,background:n.on?'var(--navy)':'transparent',color:n.on?'#fff':'var(--mute)'})}">${ico(NAV_ICON[n.k]||'dot',16)}${esc(n.label)}${cnt(n)}</button>`)}
   </nav>`;
 }
+const initials=n=>String(n||'?').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
 
 function driverRow(d){const t=DS[d.status]?.[2]||'n';return{...d,t,stLabel:(DS[d.status]||DS.off)[lang()==='ar'?1:0],pos:posOf(d),dist:km(posOf(d),agencyPos(agencyById(d.agency_id))||homePos())};}
 
@@ -659,6 +686,11 @@ function tplShops(){
     </div></div><div style="padding:8px var(--pad);font-size:12px;color:var(--mute)">${esc(Lx.shopsHint)}</div></div>`;
 }
 
+const PAGE_SUB={dash:['Vue d’ensemble de l’activité de l’agence','نظرة عامة على النشاط'],map:['Livreurs et colis en temps réel','الموزعون والطرود مباشرة'],orders:['Commandes du jour, affectation et suivi','طلبات اليوم والإسناد'],
+  colis:['Tous les colis, filtres avancés et actions groupées','كل الطرود مع المرشحات'],ops:['Problèmes, rendez-vous, tâches et colis à risque','المشاكل والمهام'],stock:['Entrées, stock présent, transferts et inventaires','المخزون والتحويلات'],
+  brd:['Documents de mouvement et de règlement','وثائق الحركة والتسوية'],drivers:['Équipe, performance, missions et caisse des livreurs','الفريق والأداء'],shops:['Expéditeurs de l’agence','متاجر الوكالة'],
+  agencies:['Réseau d’agences','شبكة الوكالات'],cash:['Mouvements, versements et clôture du jour','الحركات والإقفال'],stats:['Indicateurs et performance','المؤشرات والأداء'],
+  claims:['Service client','خدمة الحرفاء'],journal:['Traçabilité de toutes les actions','تتبع كل العمليات'],settings:['Comptes, tarifs, villes et API','الحسابات والتعريفات']};
 function tplAdmin(){
   const Lx=L(),p=state.page;
   if(!state.data)return `<div style="padding:40px;text-align:center;color:var(--mute)"><span class="spin"></span></div>`;
@@ -667,14 +699,15 @@ function tplAdmin(){
   return `<div class="shell" style="display:flex;flex-direction:${dir==='b'?'column':'row'};flex:1;min-height:0">
     ${tplNav()}
     <div style="flex:1;min-width:0;display:flex;flex-direction:column">
-      <div class="hdr no-print" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 24px;background:var(--hdr);color:var(--hdrInk);border-bottom:1px solid var(--line)">
-        <h1 style="margin:0;font-family:var(--disp);font-size:24px;font-weight:700;letter-spacing:-0.01em;flex:1;min-width:160px">${esc(Lx[p])}</h1>
+      <div class="hdr no-print" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:18px 28px 6px;background:var(--hdr);color:var(--hdrInk)">
+        <div style="flex:1;min-width:180px;display:flex;align-items:center;gap:12px"><span class="hide-sm" style="width:42px;height:42px;border-radius:12px;background:var(--accentSoft);color:var(--of);display:inline-flex;align-items:center;justify-content:center">${ico(NAV_ICON[p]||'dot',22)}</span>
+          <div style="display:flex;flex-direction:column;gap:1px;min-width:0"><h1 style="margin:0;font-family:var(--disp);font-size:24px;font-weight:800;letter-spacing:-0.02em">${esc(Lx[p])}</h1>${PAGE_SUB[p]?`<span class="hide-sm" style="font-size:12.5px;color:var(--mute)">${esc(PAGE_SUB[p][lang()==='ar'?1:0])}</span>`:''}</div></div>
         ${when(role()==='admin',()=>`<select class="fld no-print" ${onInput(e=>{state.agencyFilter=e.target.value;store.set('saden.agencyFilter',state.agencyFilter);state.sel=null;state.selData=null;state.stats=null;refresh();},'agf')} style="max-width:220px;background:var(--surface)" aria-label="${esc(Lx.agencyLbl)}">${each([['',Lx.allAgencies],...agencyOptions()],([v,l])=>`<option value="${esc(v)}"${String(v)===String(state.agencyFilter)?' selected':''}>${esc(l)}</option>`)}</select>`)}
         ${tplSearchBox()}
-        <button ${on(()=>openScanner())} style="${BTN_GHOST};padding:9px 14px;white-space:nowrap">📷 <span class="hide-sm">${esc(Lx.scanBtn)}</span></button>
-        <button ${on(()=>setState({modal:{type:'newOrder'},oform:{...emptyOrder(),shop_id:state.oform.shop_id}}))} style="${BTN_PRIMARY};padding:9px 16px;white-space:nowrap">+ ${esc(Lx.newParcel)}</button>
+        <button ${on(()=>openScanner())} style="${BTN_GHOST};padding:9px 14px;white-space:nowrap">${ico('scan',17)}<span class="hide-sm">${esc(Lx.scanBtn)}</span></button>
+        <button ${on(()=>setState({modal:{type:'newOrder'},oform:{...emptyOrder(),shop_id:state.oform.shop_id}}))} style="${BTN_PRIMARY};padding:9px 16px;white-space:nowrap">${ico('plus',17)}${esc(Lx.newParcel)}</button>
       </div>
-      <div class="pg" style="padding:24px;display:flex;flex-direction:column;gap:var(--gap)">${page}</div>
+      <div class="pg" style="padding:16px 28px 32px;display:flex;flex-direction:column;gap:var(--gap)">${page}</div>
     </div>
   </div>`;
 }
@@ -739,16 +772,17 @@ function tplDriver(){
     const toggle=()=>act(async()=>{const next=status==='off'||status==='pause'?'dispo':'pause';
       try{await api('me/status',{method:'POST',body:{status:next}});}
       catch(e){if(e.code==='gps_consent_required'){state.modal={type:'gpsConsent'};return;}throw e;}});
-    screen=`<div style="background:var(--navy);color:oklch(0.98 0.005 262);padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><b style="font-family:var(--disp);font-size:24px">${esc(Lx.hello)} ${esc(me.name.split(' ')[0])}</b>
+    screen=`<div style="background:var(--chrome);color:#fff;padding:18px 20px 20px;display:flex;flex-direction:column;gap:14px;border-radius:0 0 26px 26px;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:auto -60px -90px auto;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,oklch(0.7 0.18 47 / .35),transparent 70%);pointer-events:none"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative"><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:oklch(0.8 0.03 262)">${esc(Lx.dvHello)} · ${esc(dv.agency?.name||'')}</span><b style="font-family:var(--disp);font-size:24px;letter-spacing:-.02em">${esc(Lx.hello)} ${esc(me.name.split(' ')[0])}</b></span>
         <button ${on(toggle)} style="${css({minHeight:36,padding:'0 14px',borderRadius:999,border:'none',fontWeight:700,cursor:'pointer',background:status==='off'?'oklch(0.85 0.01 262)':avail?'oklch(0.66 0.15 150)':'oklch(0.78 0.14 85)',color:'oklch(0.18 0.03 262)',whiteSpace:'nowrap'})}">${esc(status==='off'?Lx.startShift:(DS[status]||DS.off)[li])}</button></div>
       <span style="font-size:12px;display:flex;align-items:center;gap:6px;color:oklch(0.82 0.03 262)"><span style="width:8px;height:8px;border-radius:50%;background:${geoSharing()&&!state.geoErr?'oklch(0.72 0.17 150)':'oklch(0.6 0.02 262)'}"></span>${esc(!geoSharing()?Lx.gpsNotShared:state.geoErr?Lx.gpsOff:Lx.gpsShare)}</span>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        ${each([[pending.length,Lx.toDeliver],[ms.filter(m=>m.status==='livre').length,Lx.done],[pending.reduce((a,m)=>a+m.cod,0).toLocaleString('fr-FR'),Lx.toCollect+' ('+u+')']],([v,l])=>`<div style="background:oklch(1 0 0 / 0.08);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:2px"><span style="font-family:var(--disp);font-size:22px;font-weight:700">${esc(v)}</span><span style="font-size:11px;color:oklch(0.85 0.02 262)">${esc(l)}</span></div>`)}
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;position:relative">
+        ${each([[pending.length,Lx.toDeliver,'box'],[dv.today?.delivered??ms.filter(m=>m.status==='livre').length,Lx.dvDoneToday,'checkCircle'],[pending.reduce((a,m)=>a+(m.payment_mode==='prepaid'?0:m.cod),0).toLocaleString('fr-FR'),Lx.toCollect+' ('+u+')','cash'],[(dv.cash?.to_remit||0).toLocaleString('fr-FR'),Lx.dvInHand+' ('+u+')','wallet']],([v,l,i])=>`<div style="background:oklch(1 0 0 / 0.08);border:1px solid oklch(1 0 0 / .08);border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center"><span style="color:var(--orange);display:inline-flex">${ico(i,20)}</span><span style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-family:var(--disp);font-size:20px;font-weight:800">${esc(v)}</span><span style="font-size:11px;color:oklch(0.85 0.02 262)">${esc(l)}</span></span></div>`)}
       </div>
     </div>
     <div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(Lx.missions)}</b><button ${on(()=>openScanner('delivery'))} style="${BTN_GHOST};padding:8px 12px">📷 ${esc(Lx.scanBtn)}</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(Lx.missions)}</b><button ${on(()=>openScanner('delivery'))} style="${BTN_GHOST};padding:8px 12px">${ico('camera',16)} ${esc(Lx.scanBtn)}</button></div>
       ${ms.length?each(ms,m=>`<div ${on(()=>setState({curId:m.id,lv:m.status==='livre'?'done':'detail',doneInfo:null}))} style="${CARD};padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;${ACTIVE_ST.includes(m.status)?'':'opacity:.7'}">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:15px">${esc(m.client_name)}</b><span style="${css(msB(m.status))}">${esc(msL(m.status))}</span></div>
         <span style="color:var(--mute);font-size:13px">${esc((m.zone_name?m.zone_name+' · ':'')+m.address)}</span>
@@ -767,7 +801,7 @@ function tplDriver(){
     const dest=orderPos(cm);
     screen=`<div style="flex:1;display:flex;flex-direction:column">
       <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface)">
-        <button ${on(set({lv:'home',curId:null}))} aria-label="←" style="min-width:44px;min-height:44px;border:none;background:var(--surface2);border-radius:var(--r);font-weight:700;cursor:pointer">←</button>
+        <button ${on(set({lv:'home',curId:null}))} aria-label="←" style="min-width:44px;min-height:44px;border:none;background:var(--surface2);border-radius:var(--r);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${ico('arrowLeft',20)}</button>
         <div style="display:flex;flex-direction:column"><span style="font-family:var(--mono);font-size:12px;color:var(--mute)">${esc(cm.ref)}</span><span style="${css(msB(cm.status))}">${esc(msL(cm.status))}</span></div>
       </div>
       ${mapBox('mission','180px')}
@@ -775,10 +809,7 @@ function tplDriver(){
         <div style="display:flex;flex-direction:column;gap:2px"><b style="font-family:var(--disp);font-size:22px">${esc(cm.client_name)}</b><span style="color:var(--mute)">${esc((cm.zone_name?cm.zone_name+' · ':'')+cm.address)}</span><span style="color:var(--mute);font-size:12.5px">${esc(cm.sender_name||cm.shop_name||Lx.agencyLbl)} · ${esc(fmtPhone(cm.client_phone))}</span></div>
         ${when(cm.description||cm.pieces>1||cm.notes,()=>`<div style="padding:10px 12px;border-radius:var(--r);background:var(--surface2);display:flex;flex-direction:column;gap:3px;font-size:13px">${when(cm.description||cm.pieces>1,()=>`<span><b>${esc(cm.description||Lx.parcel)}</b>${cm.pieces>1?' · '+cm.pieces+' '+esc(Lx.piecesShort):''}${cm.weight?' · '+cm.weight+' kg':''}</span>`)}${when(cm.notes,()=>`<span style="color:var(--mute)">📝 ${esc(cm.notes)}</span>`)}</div>`)}
         <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:var(--r);background:var(--ob);color:var(--of)"><span style="font-weight:600">${esc(Lx.toCollect)}</span><b style="font-family:var(--disp);font-size:22px">${esc(codL(cm))}</b></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(posOf(cm)?cm.lat+','+cm.lng:cm.address+', '+(cm.zone_name||'')+', '+(cm.dest_city_name||''))}" target="_blank" rel="noopener" style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:center">➤ ${esc(Lx.navigate)}</a>
-          <a href="${telHref(cm.client_phone)}" style="min-height:48px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:center">✆ ${esc(Lx.call)}</a>
-        </div>
+        ${dvContact(cm)}
         ${when(flow==='liste'&&ACTIVE_ST.includes(cm.status),`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${each(ACTS,([l,en,go],j)=>`<button ${en?on(go):''} ${en?'':'disabled'} style="${css({minHeight:j<4?60:48,gridColumn:'auto',borderRadius:'var(--r)',border:en&&j<4?'none':'1px solid var(--line)',background:en&&j<4?'var(--orange)':'var(--surface)',color:en&&j<4?'var(--onOrange)':'var(--ink)',fontWeight:700,fontSize:j<4?16:13.5,opacity:en?1:0.4,cursor:en?'pointer':'default'})}">${esc(Lx[l])}</button>`)}</div>`)}
         ${when(flow!=='liste',`<div style="display:flex;flex-direction:column;gap:10px">
           ${when(n,`<div style="display:flex;gap:4px">${each(STEPS,(k,j)=>`<span style="flex:1;height:5px;border-radius:3px;background:${j<=STEPS.indexOf(cm.status)?'var(--orange)':'var(--surface2)'}"></span>`)}</div>
@@ -795,7 +826,7 @@ function tplDriver(){
       act(async()=>{await api(`orders/${cm.id}/status`,{method:'POST',body});state.lv='done';state.doneInfo={ref:cm.ref,client:cm.client_name,cod:codL(cm)};});};
     const box=(okv)=>css({minHeight:220,borderRadius:'var(--r)',border:okv?'2px solid var(--gf)':'2px dashed var(--line)',background:okv?'var(--gb)':'repeating-linear-gradient(135deg,var(--stripe) 0 1px,transparent 1px 10px)',color:okv?'var(--gf)':'var(--mute)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'var(--mono)',fontSize:12,cursor:'pointer',textAlign:'center',padding:8,overflow:'hidden'});
     screen=`<div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:14px">
-      <div style="display:flex;align-items:center;gap:10px"><button ${on(set({lv:'detail'}))} style="min-width:44px;min-height:44px;border:none;background:var(--surface2);border-radius:var(--r);font-weight:700;cursor:pointer">←</button><b style="font-family:var(--disp);font-size:20px">${esc(Lx.proof)}</b></div>
+      <div style="display:flex;align-items:center;gap:10px"><button ${on(set({lv:'detail'}))} style="min-width:44px;min-height:44px;border:none;background:var(--surface2);border-radius:var(--r);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center">${ico('arrowLeft',20)}</button><b style="font-family:var(--disp);font-size:20px">${esc(Lx.proof)}</b></div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface2);padding:4px;border-radius:var(--r)">
         ${each([['otp',Lx.otp],['photo',Lx.photo],['sign',Lx.sign]],([k,l])=>`<button ${on(set({proofMode:k}))} style="min-height:44px;border-radius:var(--r);border:none;font-weight:600;cursor:pointer;background:${pm===k?'var(--surface)':'transparent'};color:${pm===k?'var(--ink)':'var(--mute)'}">${esc(l)}</button>`)}
       </div>
@@ -812,14 +843,14 @@ function tplDriver(){
   }else{
     const info=state.doneInfo||{ref:cm.ref,client:cm.client_name,cod:codL(cm)};
     screen=`<div style="flex:1;padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center">
-      <div style="width:96px;height:96px;border-radius:50%;background:var(--gb);color:var(--gf);display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:700">✓</div>
+      <div class="hero-illu" style="width:200px">${illu('success')}</div>
       <b style="font-family:var(--disp);font-size:26px">${esc(Lx.deliveredOk)}</b>
       <span style="color:var(--mute)">${esc(info.ref)} · ${esc(info.client)}</span>
       <span style="font-weight:600">${esc(Lx.collect)} : ${esc(info.cod)}</span>
       <button ${on(set({lv:'home',curId:null,doneInfo:null}))} style="margin-top:12px;width:100%;min-height:56px;border-radius:var(--r);border:none;background:var(--navy);color:oklch(0.98 0.005 262);font-weight:700;font-size:16px;cursor:pointer">${esc(Lx.nextMission)}</button>
     </div>`;
   }
-  return `<main style="flex:1;display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)"><div style="width:100%;max-width:520px;display:flex;flex-direction:column;background:var(--bg);border-inline:1px solid var(--line)">${screen}</div></main>`;
+  return driverShell(screen,lv);
 }
 
 /* =========================================================

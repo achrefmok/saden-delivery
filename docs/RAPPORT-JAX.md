@@ -41,10 +41,47 @@ Tests : `npm run test:shop` **47 / 47** ; parcours navigateur `t-shopui` (accuei
 statistiques, paramètres, mobile) ; les parcours existants qui passaient par l'ancienne page boutique ont été adaptés.
 Comportement conservé : le montant contre-remboursement reste facultatif dans le formulaire (vide = 0), comme avant.
 
+## 1 ter. Espace responsable d'agence, application livreur et nouvelle identité visuelle
+
+**Responsable d'agence — page « Livreurs »** (API `/api/fleet/*`, limitée à son agence ; l'administrateur choisit l'agence) :
+
+| Vue | Contenu |
+|---|---|
+| Équipe | Statut en direct (disponible, en livraison, pause, hors ligne), zone, batterie, dernière position ; missions, livrés et échecs du jour, colis en main, taux de réussite, caisse à reverser ; boutons fiche, appel, message. |
+| Performance | Tableau **triable** sur 7 / 30 / 90 jours : colis traités, livrés, échecs, taux de réussite, livrés au 1er passage, durée moyenne de tournée, encaissé, problèmes, appels, note, réclamations. |
+| Affectation | Colis sans livreur (en attente, reçus en agence, arrivés) avec recherche et filtre par zone, sélection multiple, choix du livreur avec sa charge ; chaque colis passe par la machine à états, les refus sont listés. |
+| Fiche livreur | Aperçu (indicateurs + activité des 30 derniers jours livrés / échecs), missions (retrait d'un colis encore « affecté », motif facultatif), enlèvements, historique, caisse (encaissé, versé, à reverser, versements), avis clients. |
+| Avis clients | Les anciennes cartes (note, dernier commentaire) sont conservées dans cet onglet. |
+
+**Livreur — application mobile** (barre d'onglets en bas) :
+Missions (en-tête : à livrer, livrés aujourd'hui, à encaisser, caisse en main ; colis à rapporter à l'agence), Enlèvements
+(boutique, adresse, itinéraire, appel, progression ; chaque colis confirmé **par scan** ou d'un geste → « ramassé », bordereau
+« enlevé » quand tout est pris), Scanner (ouvre la mission), Caisse (en main, encaissé aujourd'hui / total, versé, détail),
+Historique (livrés / échecs, preuve, encaissé, par jour). Dans une mission : **Google Maps et Waze**, **appel, SMS, WhatsApp**,
+2e numéro du client, **résultat d'appel noté** (visible par l'agence et la boutique), parcours de statuts et preuves
+OTP / photo / signature inchangés.
+
+**Synchronisation et permissions** : tout passe par les mêmes tables (statuts, appels, bordereaux, caisse, notifications). Le
+responsable n'agit que sur les livreurs et colis de son agence ; le livreur ne voit et ne touche que ses colis ; la boutique n'a
+pas accès à la flotte ; l'administrateur voit tout avec le filtre agence. Message du responsable → notification du livreur.
+
+**Identité visuelle** remplacée : palette « minuit + orange Saden » (clair et sombre), police Plus Jakarta Sans, cartes à ombre
+douce, boutons en dégradé, menu latéral groupé (Pilotage, Opérations, Réseau, Finance & analyse, Support) avec icônes vectorielles
+(`public/js/icons.js`, plus d'emoji), en-têtes de page avec icône et sous-titre, tuiles statistiques avec icône et ton, page de
+connexion illustrée, états vides illustrés, tableaux triables, animations discrètes (désactivées si « réduire les animations »).
+
+Défauts du rapport JAX évités : téléphones contrôlés côté serveur (8 chiffres, y compris le 2e numéro), message explicite pour un
+COD négatif, envoi de réclamation désactivé tant que les champs requis manquent, impossible de se désactiver soi-même, historique
+du livreur incluant livrés **et** échecs, dates calculées dans le fuseau de Tunis.
+
+Migration supplémentaire `2026-10-18.fleet` (additive) : table `order_calls` (journal d'appels du livreur, RLS activée).
+Tests : `npm run test:fleet` **33 / 33** ; parcours navigateur `t-fleetui` (équipe, tri, affectation groupée, retrait, message,
+application livreur : liens de navigation et de contact, appel noté, onglets, mode sombre).
+
 ## 2. Fichiers
 
 Créés : `lib/problems.js`, `lib/cash.js`, `lib/routes/ops.js`, `lib/routes/parcels.js`, `public/js/ops.js`, `public/js/parcels.js`,
-`public/js/stats-adv.js`, `public/js/shop.js`, `scripts/test-ops.js`, `scripts/test-shop.js`, `docs/AUDIT-JAX.md`, `docs/RAPPORT-JAX.md`.
+`public/js/stats-adv.js`, `public/js/shop.js`, `public/js/icons.js`, `public/js/fleet.js`, `public/js/driver-app.js`, `lib/routes/fleet.js`, `scripts/test-ops.js`, `scripts/test-shop.js`, `scripts/test-fleet.js`, `docs/AUDIT-JAX.md`, `docs/RAPPORT-JAX.md`.
 Modifiés : `lib/schema.js`, `lib/status.js`, `lib/flows.js`, `lib/domain.js`, `lib/api.js`, `lib/routes/manifests.js`, `lib/routes/finance.js`,
 `lib/routes/stats.js`, `lib/routes/shop.js`, `lib/routes/orders.js`, `lib/routes/accounts.js`, `lib/routes/pricing.js`, `lib/auth.js`, `lib/scope.js`, `public/js/app.js`, `public/js/parcels.js`, `public/js/manifests.js`, `public/js/cash.js`, `public/js/scan.js`, `public/index.html`, `public/sw.js`, `package.json`.
 
@@ -64,7 +101,9 @@ Modifiés : `lib/schema.js`, `lib/status.js`, `lib/flows.js`, `lib/domain.js`, `
 | `npm run test:ops` (nouveau, API) | **101 / 101** — tentatives et problème automatique, appels, traitement + RDV → tâche, faux problème, tâches et compteur, signalés / suspects / en souffrance, enlèvement de bout en bout (demande boutique, livreur, enlevé, réception par scan, non enlevés remis en attente), restitution avec décharge, transfert typé, rapport de fin de journée, générer échange, liste paginée, codes collés, filtres, export, étiquettes, mise à jour en masse (transitions refusées listées), matrice, statistiques avancées, clôture de caisse (écart justifié, double clôture, blocage, réouverture admin), tableau de bord ; permissions (autre agence, boutique) à chaque étape. |
 | `npm run test:stock` (mission précédente) | **101 / 101** |
 | `npm run test:permissions` | **45 / 45** |
-| Parcours navigateur | **21 / 21** — les 17 existants + `t-opsui` (file des problèmes, appel, traitement, tâches, fiche colis), `t-lotbui` (demande d'enlèvement côté boutique puis traitement complet par l'agence, rapport de fin de journée, générer échange), `t-colisui` (codes collés, étiquettes 10×15 et A4, fichier ZPL, mise à jour en masse, export Excel, colonnes, matrice), `t-defui` (tableau de bord, statistiques avancées, clôture de caisse). Aucune erreur JavaScript, aucun débordement en 390 px. |
+| `npm run test:fleet` | **33 / 33** |
+| `npm run test:shop` | **47 / 47** |
+| Parcours navigateur | **23 / 23** (dont `t-shopui` et `t-fleetui`) ; historiquement **21 / 21** — les 17 existants + `t-opsui` (file des problèmes, appel, traitement, tâches, fiche colis), `t-lotbui` (demande d'enlèvement côté boutique puis traitement complet par l'agence, rapport de fin de journée, générer échange), `t-colisui` (codes collés, étiquettes 10×15 et A4, fichier ZPL, mise à jour en masse, export Excel, colonnes, matrice), `t-defui` (tableau de bord, statistiques avancées, clôture de caisse). Aucune erreur JavaScript, aucun débordement en 390 px. |
 
 Les téléchargements des tests (Excel, ZPL, PDF) sont dirigés vers le dossier de test, jamais vers le dossier Téléchargements.
 
